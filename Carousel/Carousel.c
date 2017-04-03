@@ -37,12 +37,15 @@
 
 /* Define handle to a vertex buffer object */
 GLuint VBO;
+GLuint VCO;
 
 /* Define handle to a color buffer object */
-GLuint CBO; 
+GLuint CBO;
+GLuint CCO; 
 
 /* Define handle to an index buffer object */
 GLuint IBO;
+GLuint ICO;
 
 GLuint VAO;
 
@@ -68,8 +71,7 @@ float RotateZ[16];
 float InitialTransform[16];
 
 
-GLfloat vertex_buffer_data[] = { /* 8 cube vertices XYZ */
-    
+GLfloat vertex_buffer_data[] = { /* base plate */
     -2.0, -2.0, -0.5,
      2.0, -2.0, -0.5,
      2.0,  2.0, -0.5,
@@ -88,18 +90,12 @@ GLfloat vertex_buffer_data[] = { /* 8 cube vertices XYZ */
      0.0, -3.0, -1.0,
      3.0,  0.0, -1.0,
      0.0,  3.0, -1.0,
-    -3.0,  0.0, -1.0,
-
-    //Mittelstange
-    
-
-    
-
-         
+    -3.0,  0.0, -1.0,      
 
 };   
 
-GLfloat color_buffer_data[] = { /* RGB color values for 8 vertices */
+
+GLfloat color_buffer_data[] = { /* baseplate */
     1.0, 1.0, 0.0,
     1.0, 1.0, 0.0,
     1.0, 1.0, 0.0,
@@ -110,7 +106,7 @@ GLfloat color_buffer_data[] = { /* RGB color values for 8 vertices */
     1.0, 1.0, 0.0,    
 }; 
 
-GLushort index_buffer_data[] = { /* Indices of 6*2 triangles (6 sides) */
+GLushort index_buffer_data[] = { /* baseplate */
 	0, 1, 3,
     1, 2, 3,
     0, 8, 1,
@@ -141,11 +137,6 @@ GLushort index_buffer_data[] = { /* Indices of 6*2 triangles (6 sides) */
     7,11, 3,
     15, 0, 4,
     15, 0, 11,
-    
-   
-
-  
-    
 	    
 };
 
@@ -445,7 +436,7 @@ int main(int argc, char** argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(600, 600);
     glutInitWindowPosition(400, 400);
-    glutCreateWindow("CG Proseminar - Rotating Cube");
+    glutCreateWindow("CG Proseminar - Carousel by Manuel Buchauer, Davide De Sclavis and Lukas Dötlinger");
 
     /* Initialize GL extension wrangler */
     glewExperimental = GL_TRUE;

@@ -37,15 +37,15 @@
 
 /* Define handle to a vertex buffer object */
 GLuint VBO;
-GLuint VCO;
+GLuint VBO2; 
 
 /* Define handle to a color buffer object */
 GLuint CBO;
-GLuint CCO; 
+GLuint CBO2; 
 
 /* Define handle to an index buffer object */
 GLuint IBO;
-GLuint ICO;
+GLuint IBO2;
 
 GLuint VAO;
 
@@ -58,10 +58,15 @@ static const char* VertexShaderString;
 static const char* FragmentShaderString;
 
 GLuint ShaderProgram;
+GLuint ShaderProgram2; /* Shader for second Model */
 
 float ProjectionMatrix[16]; /* Perspective projection matrix */
 float ViewMatrix[16]; /* Camera view matrix */ 
 float ModelMatrix[16]; /* Model matrix */ 
+
+float ProjectionMatrix2[16]; /* Perspective projection matrix */
+float ViewMatrix2[16]; /* Camera view matrix */ 
+float Model2Matrix[16]; /* Model2 matrix */
 
 /* Transformation matrices for initial position */
 float TranslateOrigin[16];
@@ -70,6 +75,7 @@ float RotateX[16];
 float RotateZ[16];
 float InitialTransform[16];
 
+/* Buffers for first Model */
 
 GLfloat vertex_buffer_data[] = { /* base plate */
     -2.0, -2.0, -1.5,
@@ -482,15 +488,48 @@ GLushort index_buffer_data[] = { /* baseplate */
 	80,84,76,
 	88,73,77,
 	88,73,84,
-
-
-
-
- 
- 
-  
-    
 	    
+};
+
+/* Buffers for second Model */
+
+GLfloat vertex_buffer_data2[] = {  
+    -0.3, -0.3,  0.3, 
+     0.3, -0.3,  0.3, 
+     0.3,  0.3,  0.3, 
+    -0.3,  0.3,  0.3, 
+ 
+    -0.3, -0.3, -0.3, 
+     0.3, -0.3, -0.3, 
+     0.3,  0.3, -0.3, 
+    -0.3,  0.3, -0.3, 
+};    
+ 
+GLfloat color_buffer_data2[] = {  
+    1.0, 0.0, 0.0, 
+    1.0, 1.0, 0.0, 
+    1.0, 1.0, 0.0, 
+    1.0, 1.0, 0.0, 
+    1.0, 0.0, 0.0, 
+    1.0, 0.0, 0.0, 
+    1.0, 1.0, 0.0, 
+};  
+ 
+GLushort index_buffer_data2[] = { 
+
+  0,1,4,
+  1,5,4,  
+  1,2,5,
+  2,5,6,
+  2,3,6,
+  3,6,7,
+  0,3,7,
+  0,4,7,
+  0,1,3,
+  1,2,3,
+  4,5,7,
+  5,6,7,
+
 };
 
 /*----------------------------------------------------------------*/
@@ -523,8 +562,15 @@ void Display()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     GLint size; 
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-
-    /* Associate program with shader matrices */
+    
+    /*
+    setShaderMatrix(ShaderProgram, "ProjectionMatrix", ProjectionMatrix);
+	setShaderMatrix(ShaderProgram, "ViewMatrix", ViewMatrix);
+	setShaderMatrix(ShaderProgram, "ModelMatrix", ModelMatrix);*/
+	
+	
+	
+    /* Associate first Model with shader matrices */
     GLint projectionUniform = glGetUniformLocation(ShaderProgram, "ProjectionMatrix");
     if (projectionUniform == -1) 
     {
@@ -547,14 +593,72 @@ void Display()
         fprintf(stderr, "Could not bind uniform ModelMatrix\n");
         exit(-1);
     }
-    glUniformMatrix4fv(RotationUniform, 1, GL_TRUE, ModelMatrix);  
-
+    glUniformMatrix4fv(RotationUniform, 1, GL_TRUE, ModelMatrix); 
+    
     /* Issue draw command, using indexed triangle list */
     glDrawElements(GL_TRIANGLES, size/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-
+    
     /* Disable attributes */
     glDisableVertexAttribArray(vPosition);
-    glDisableVertexAttribArray(vColor);   
+    glDisableVertexAttribArray(vColor); 
+    
+    /* Swap between front and back buffer */ 
+    glutSwapBuffers();
+    
+    
+    
+    /** Second Model **/
+	glEnableVertexAttribArray(vPosition);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glEnableVertexAttribArray(vColor);
+    glBindBuffer(GL_ARRAY_BUFFER, CBO2);
+    glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
+    GLint size2; 
+    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size2);
+    
+    /*
+	// link projection-matrice to shader (to be able to use it in the shader)
+	setShaderMatrix(ShaderProgram2, "ProjectionMatrix2", ProjectionMatrix2);
+	// link view-matrice to shader
+	setShaderMatrix(ShaderProgram2, "ViewMatrix2", ViewMatrix2);
+	// link model-matrice to shader
+	setShaderMatrix(ShaderProgram2, "Model2Matrix", Model2Matrix);*/
+	
+    /* Associate second Model with shader matrices */
+    GLint projectionUniform2 = glGetUniformLocation(ShaderProgram2, "ProjectionMatrix2");
+    if (projectionUniform == -1) 
+    {
+        fprintf(stderr, "Could not bind uniform ProjectionMatrix2\n");
+	exit(-1);
+    }
+    glUniformMatrix4fv(projectionUniform, 1, GL_TRUE, ProjectionMatrix2);
+    
+    GLint ViewUniform2 = glGetUniformLocation(ShaderProgram2, "ViewMatrix2");
+    if (ViewUniform == -1) 
+    {
+        fprintf(stderr, "Could not bind uniform ViewMatrix2\n");
+        exit(-1);
+    }
+    glUniformMatrix4fv(ViewUniform, 1, GL_TRUE, ViewMatrix2);
+   
+    GLint RotationUniform2 = glGetUniformLocation(ShaderProgram2, "Model2Matrix");
+    if (RotationUniform == -1) 
+    {
+        fprintf(stderr, "Could not bind uniform Model2Matrix\n");
+        exit(-1);
+    }
+    glUniformMatrix4fv(RotationUniform, 1, GL_TRUE, Model2Matrix); 
+
+    /* Issue draw command, using indexed triangle list */
+    glDrawElements(GL_TRIANGLES, size2 / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+
+    /* Disable attributes */
+    glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);  
 
     /* Swap between front and back buffer */ 
     glutSwapBuffers();
@@ -579,7 +683,9 @@ void OnIdle()
 
     /* Apply model rotation; finally move cube down */
     MultiplyMatrix(RotationMatrixAnim, InitialTransform, ModelMatrix);
+    MultiplyMatrix(RotationMatrixAnim, InitialTransform, Model2Matrix);
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
+    MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
 
     /* Request redrawing forof window content */  
     glutPostRedisplay();
@@ -599,7 +705,8 @@ void SetupDataBuffers()
 
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-
+	
+	/* First Model */
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data), vertex_buffer_data, GL_STATIC_DRAW);
@@ -611,6 +718,20 @@ void SetupDataBuffers()
     glGenBuffers(1, &CBO);
     glBindBuffer(GL_ARRAY_BUFFER, CBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data), color_buffer_data, GL_STATIC_DRAW);
+
+	/* Second Model */
+	glGenBuffers(1, &VBO2);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &IBO2);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data2), index_buffer_data2, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &CBO2);
+    glBindBuffer(GL_ARRAY_BUFFER, CBO2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
+
 }
 
 
@@ -669,6 +790,7 @@ void CreateShaderProgram()
 {
     /* Allocate shader object */
     ShaderProgram = glCreateProgram();
+    ShaderProgram2 = glCreateProgram();
 
     if (ShaderProgram == 0) 
     {
@@ -683,12 +805,15 @@ void CreateShaderProgram()
     /* Separately add vertex and fragment shader to program */
     AddShader(ShaderProgram, VertexShaderString, GL_VERTEX_SHADER);
     AddShader(ShaderProgram, FragmentShaderString, GL_FRAGMENT_SHADER);
+    AddShader(ShaderProgram2, VertexShaderString, GL_VERTEX_SHADER);
+    AddShader(ShaderProgram2, FragmentShaderString, GL_FRAGMENT_SHADER);
 
     GLint Success = 0;
     GLchar ErrorLog[1024];
 
     /* Link shader code into executable shader program */
     glLinkProgram(ShaderProgram);
+    glLinkProgram(ShaderProgram2);
 
     /* Check results of linking step */
     glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
@@ -713,6 +838,7 @@ void CreateShaderProgram()
 
     /* Put linked shader program into drawing pipeline */
     glUseProgram(ShaderProgram);
+    glUseProgram(ShaderProgram2);
 }
 
 
@@ -744,6 +870,9 @@ void Initialize(void)
     SetIdentityMatrix(ProjectionMatrix);
     SetIdentityMatrix(ViewMatrix);
     SetIdentityMatrix(ModelMatrix);
+    SetIdentityMatrix(ProjectionMatrix2);
+    SetIdentityMatrix(ViewMatrix2);
+    SetIdentityMatrix(Model2Matrix);
 
     /* Set projection transform */
     float fovy = 45.0;
@@ -751,12 +880,14 @@ void Initialize(void)
     float nearPlane = 1.0; 
     float farPlane = 50.0;
     SetPerspectiveMatrix(fovy, aspect, nearPlane, farPlane, ProjectionMatrix);
-
+	SetPerspectiveMatrix(fovy, aspect, nearPlane, farPlane, ProjectionMatrix2);
+	
     /* Set viewing transform */
     float camera_disp = -10.0;
     SetTranslation(0.0, 0.0, camera_disp, ViewMatrix);
+    SetTranslation(0.0, 0.0, camera_disp, ViewMatrix2);
 
-    /* Translate and rotate cube onto tip */
+    /* Translate and rotate carousel into right position */
     SetTranslation(0, 0, 1, TranslateOrigin);
     SetRotationX(-90, RotateX);
     SetRotationZ(0, RotateZ);	

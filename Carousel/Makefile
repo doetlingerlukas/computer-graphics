@@ -9,4 +9,6 @@ Carousel: $(OBJ)
 
 clean:
 	rm -f *.o Carousel 
-.PHONY: all clean
+run: clean Carousel
+	./Carousel
+.PHONY: all clean run

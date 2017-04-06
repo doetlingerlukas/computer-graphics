@@ -602,9 +602,6 @@ void Display()
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor); 
     
-    /* Swap between front and back buffer */ 
-    glutSwapBuffers();
-    
     
     
     /** Second Model **/
@@ -628,30 +625,6 @@ void Display()
 	// link model-matrice to shader
 	setShaderMatrix(ShaderProgram2, "Model2Matrix", Model2Matrix);*/
 	
-    /* Associate second Model with shader matrices */
-    GLint projectionUniform2 = glGetUniformLocation(ShaderProgram2, "ProjectionMatrix2");
-    if (projectionUniform == -1) 
-    {
-        fprintf(stderr, "Could not bind uniform ProjectionMatrix2\n");
-	exit(-1);
-    }
-    glUniformMatrix4fv(projectionUniform, 1, GL_TRUE, ProjectionMatrix2);
-    
-    GLint ViewUniform2 = glGetUniformLocation(ShaderProgram2, "ViewMatrix2");
-    if (ViewUniform == -1) 
-    {
-        fprintf(stderr, "Could not bind uniform ViewMatrix2\n");
-        exit(-1);
-    }
-    glUniformMatrix4fv(ViewUniform, 1, GL_TRUE, ViewMatrix2);
-   
-    GLint RotationUniform2 = glGetUniformLocation(ShaderProgram2, "Model2Matrix");
-    if (RotationUniform == -1) 
-    {
-        fprintf(stderr, "Could not bind uniform Model2Matrix\n");
-        exit(-1);
-    }
-    glUniformMatrix4fv(RotationUniform, 1, GL_TRUE, Model2Matrix); 
 
     /* Issue draw command, using indexed triangle list */
     glDrawElements(GL_TRIANGLES, size2 / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
@@ -918,8 +891,8 @@ int main(int argc, char** argv)
     glutInitContextProfile(GLUT_CORE_PROFILE);
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-    glutInitWindowSize(600, 600);
-    glutInitWindowPosition(400, 400);
+    glutInitWindowSize(800, 800);
+    glutInitWindowPosition(600, 600);
     glutCreateWindow("CG Proseminar - Carousel by Manuel Buchauer, Davide De Sclavis and Lukas Dötlinger");
 
     /* Initialize GL extension wrangler */

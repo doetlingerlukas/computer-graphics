@@ -852,32 +852,58 @@ void Display()
 
 void OnIdle()
 {
+	/* print function for classic printf debugging */
 	void print_matrix(float* matrix) {
-  printf("[\n");
-  for (int i = 0; i < 4; i++) {
-    printf("  [%8f,\t%8f,\t%8f,\t%8f],\n", matrix[i*4], matrix[i*4 + 1], matrix[i*4 + 2], matrix[i*4 + 3]);
-  }
-  printf("]\n");
-}
+		printf("[\n");
+		for (int i = 0; i < 4; i++) {
+			printf("  [%8f,\t%8f,\t%8f,\t%8f],\n", matrix[i*4], matrix[i*4 + 1], matrix[i*4 + 2], matrix[i*4 + 3]);
+		}
+		printf("]\n");
+	}
 	
     float angle = (glutGet(GLUT_ELAPSED_TIME) / 1000.0) * (180.0/M_PI); 
     float RotationMatrixAnim[16];
+    
+    float TranslationMatrixMove2[16];
+    float TranslationMatrixMove3[16];
+    float TranslationMatrixMove4[16];
+    float TranslationMatrixMove5[16];
+    float TranslationMatrixSlide[16];
 
     /* Time dependent rotation */
     SetRotationY(angle, RotationMatrixAnim);
+    
+    /* Move the cubes */
+    SetTranslation(0.0, 0.0, 2.8, TranslationMatrixMove2);
+    SetTranslation(0.0, 0.0, -2.8, TranslationMatrixMove3);
+    SetTranslation(2.8, 0.0, 0.0, TranslationMatrixMove4);
+    SetTranslation(-2.8, 0.0, 0.0, TranslationMatrixMove5);
+    
+    /* Sliding animation */
+    SetTranslation(0.0, sinf(angle/100), 0.0, TranslationMatrixSlide);
 
-    /* Apply model rotation; finally move cube down */
-    //SetTranslation(1.0, sinf(angle)*2, 0.0, ModelMatrix);
+    /* Apply carousel rotation; finally move carousel down */
     MultiplyMatrix(RotationMatrixAnim, InitialTransform, ModelMatrix);
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
     
-    SetTranslation(1.0, sinf(angle/100), 0.0, Model2Matrix);
-    print_matrix(RotationMatrixAnim);
-	//MultiplyMatrix(RotationMatrixAnim, InitialTransform, Model2Matrix);
-    MultiplyMatrix(RotationMatrixAnim, InitialTransform, Model3Matrix);
-    MultiplyMatrix(RotationMatrixAnim, InitialTransform, Model4Matrix);
-    MultiplyMatrix(RotationMatrixAnim, InitialTransform, Model5Matrix);
-    //MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
+    /* Applay Transformation on the cubes */
+	MultiplyMatrix(TranslationMatrixMove2, InitialTransform, Model2Matrix);
+    MultiplyMatrix(TranslationMatrixMove3, InitialTransform, Model3Matrix);
+    MultiplyMatrix(TranslationMatrixMove4, InitialTransform, Model4Matrix);
+    MultiplyMatrix(TranslationMatrixMove5, InitialTransform, Model5Matrix);
+    
+    MultiplyMatrix(RotationMatrixAnim, Model2Matrix, Model2Matrix);
+    MultiplyMatrix(RotationMatrixAnim, Model3Matrix, Model3Matrix);
+    MultiplyMatrix(RotationMatrixAnim, Model4Matrix, Model4Matrix);
+    MultiplyMatrix(RotationMatrixAnim, Model5Matrix, Model5Matrix);
+    
+    MultiplyMatrix(TranslationMatrixSlide, Model2Matrix, Model2Matrix);
+    MultiplyMatrix(TranslationMatrixSlide, Model3Matrix, Model3Matrix);
+    MultiplyMatrix(TranslationMatrixSlide, Model4Matrix, Model4Matrix);
+    MultiplyMatrix(TranslationMatrixSlide, Model5Matrix, Model5Matrix);
+    
+    
+    MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslateDown, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);

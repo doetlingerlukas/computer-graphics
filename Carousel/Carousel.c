@@ -1,20 +1,19 @@
 /******************************************************************
 *
-* RotatingCube.c
+* Carousel.c
 *
-* Description: This example demonstrates a colored, rotating
-* cube in shader-based OpenGL. The use of transformation
-* matrices, perspective projection, and indexed triangle sets 
-* are shown.
+* by Davide De Sclavis und Lukas Dötlinger
+*
+* The Carousel.c displays a Carousel with some basic objects
+* that are moving up ad down.
 *
 * Computer Graphics Proseminar SS 2017
-* 
+*
 * Interactive Graphics and Simulation Group
 * Institute of Computer Science
 * University of Innsbruck
 *
 *******************************************************************/
-
 
 /* Standard includes */
 #include <stdio.h>
@@ -26,29 +25,22 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
-
-
 /* Local includes */
 #include "LoadShader.h"   /* Provides loading function for shader code */
-#include "Matrix.h"  
-
+#include "Matrix.h"
 
 /*----------------------------------------------------------------*/
 
 /* Define handle to a vertex buffer object */
-GLuint VBO;
-GLuint VBO2, VBO3, VBO4, VBO5; 
+GLuint VBO, VBO2, VBO3, VBO4, VBO5;
 
 /* Define handle to a color buffer object */
-GLuint CBO;
-GLuint CBO2, CBO3, CBO4, CBO5; 
+GLuint CBO, CBO2, CBO3, CBO4, CBO5;
 
 /* Define handle to an index buffer object */
-GLuint IBO;
-GLuint IBO2, IBO3, IBO4, IBO5;
+GLuint IBO, IBO2, IBO3, IBO4, IBO5;
 
 GLuint VAO;
-
 
 /* Indices to vertex attributes; in this case positon and color */ 
 enum DataID {vPosition = 0, vColor = 1}; 
@@ -84,10 +76,9 @@ float InitialTransform[16];
 
 /* Buffers for first Model */
 
-
 GLfloat vertex_buffer_data[] = { 
     
-     /*basisplatte*/
+	 /*Baseplate*/
     -2.0, -2.0, -1.5,
      2.0, -2.0, -1.5,
      2.0,  2.0, -1.5,
@@ -109,8 +100,7 @@ GLfloat vertex_buffer_data[] = {
     -3.0,  0.0, -2.0,
   
 
-    /*Topplate*/
-
+	 /*Topplate*/
     -2.0, -2.0, 2.0,
      2.0, -2.0, 2.0,
      2.0,  2.0, 2.0,
@@ -132,71 +122,69 @@ GLfloat vertex_buffer_data[] = {
     -3.0,  0.0, 2.2,
 
      
-     0.0,  0.0, 4.0, //32
+     0.0,  0.0, 4.0, //index 32
 
 
-    //Mittelstange
-     0.2,  0.2,-1.5,//33
+	 /*Center pole*/
+     0.2,  0.2,-1.5,//index 33
     -0.2,  0.2,-1.5,
     -0.2, -0.2,-1.5,
      0.2, -0.2,-1.5,
     
-     0.2,  0.2, 2.0,//37
+     0.2,  0.2, 2.0,//index 37
     -0.2,  0.2, 2.0,
     -0.2, -0.2, 2.0,
      0.2, -0.2, 2.0,
  
 
-     /*1.stange*/
-    -1.9, -1.9, -1.5,//41
+	 /*1st pole*/
+    -1.9, -1.9, -1.5,//index 41
     -1.9, -1.8, -1.5,
     -1.8, -1.8, -1.5,
     -1.8, -1.9, -1.5,
 
-    -1.9, -1.9, 2.0,//45
+    -1.9, -1.9, 2.0,//index 45
     -1.9, -1.8, 2.0,
     -1.8, -1.8, 2.0,
     -1.8, -1.9, 2.0,
     
 
-   /*2.stange*/
-    1.9, 1.9, -1.5,//49
+	/*2nd pole*/
+    1.9, 1.9, -1.5,//index 49
     1.9, 1.8, -1.5,
     1.8, 1.8, -1.5,
     1.8, 1.9, -1.5,
     
-    1.9, 1.9,  2.0,//53
+    1.9, 1.9,  2.0,//index 53
     1.9, 1.8,  2.0,
     1.8, 1.8,  2.0,
     1.8, 1.9,  2.0,
-
-  /*3.stange*/
-    1.9, -1.9, -1.5,//57
+	/*3rd pole*/
+    1.9, -1.9, -1.5,//index 57
     1.9, -1.8, -1.5,
     1.8, -1.8, -1.5,
     1.8, -1.9, -1.5,
     
-    1.9, -1.9, 2.0,//61
+    1.9, -1.9, 2.0,//index 61
     1.9, -1.8, 2.0,
     1.8, -1.8, 2.0,
     1.8, -1.9, 2.0,
 
 
-   /*4.stange*/
-    -1.9, 1.9, -1.5,//65
+	/*4th pole*/
+    -1.9, 1.9, -1.5,//index 65
     -1.9, 1.8, -1.5,
     -1.8, 1.8, -1.5,
     -1.8, 1.9, -1.5,
     
-    -1.9, 1.9, 2.0,//69
+    -1.9, 1.9, 2.0,//index 69
     -1.9, 1.8, 2.0,
     -1.8, 1.8, 2.0,
     -1.8, 1.9, 2.0,
 
     
-    /*unterste*/
-
-    -2.2, -2.2, -1.85,//73
+	/*Groundplate*/
+    -2.2, -2.2, -1.85,//index 73
      2.2, -2.2, -1.85,
      2.2,  2.2, -1.85,
     -2.2,  2.2, -1.85,
@@ -218,9 +206,8 @@ GLfloat vertex_buffer_data[] = {
      
      
 
-    /*Zusatzstangen*/
-     /*5.Stange*/
-     0.0, -2.9, 2.2, //89
+	 /*5th plole*/
+     0.0, -2.9, 2.2, //index 89
      0.0, -2.8, 2.2,
      0.1, -2.8, 2.2,
      0.1, -2.9, 2.2,
@@ -230,8 +217,8 @@ GLfloat vertex_buffer_data[] = {
      0.1, -2.8, -1.5,
      0.1, -2.9, -1.5,
 
-     /*6.Stange*/
-     0.0, 2.9, 2.2, //97
+	 /*6th pole*/
+     0.0, 2.9, 2.2, //index 97
      0.0, 2.8, 2.2,
     -0.1, 2.8, 2.2,
     -0.1, 2.9, 2.2,
@@ -242,8 +229,8 @@ GLfloat vertex_buffer_data[] = {
     -0.1, 2.9, -1.5,
 
 
-      /*7.Stange*/
-     2.9, 0.0, 2.2,//105
+	 /*7th pole*/
+     2.9, 0.0, 2.2,//index 105
      2.9, 0.1, 2.2,
      2.8, 0.1, 2.2,
      2.8, 0.0, 2.2,
@@ -252,10 +239,9 @@ GLfloat vertex_buffer_data[] = {
      2.9, 0.1, -1.5,
      2.8, 0.1, -1.5,
      2.8, 0.0, -1.2,
-
     
-    /*8.Stange*/
-     -2.9,  0.0, 2.2,//113
+	 /*8th pole*/
+     -2.9,  0.0, 2.2,//index 113
      -2.9, -0.1, 2.2,
      -2.8, -0.1, 2.2,
      -2.8,  0.0, 2.2,
@@ -263,7 +249,7 @@ GLfloat vertex_buffer_data[] = {
      -2.9,  0.0, -1.5,
      -2.9, -0.1, -1.5,
      -2.8, -0.1, -1.5,
-     -2.8,  0.0, -1.5, //120  
+     -2.8,  0.0, -1.5, //index 120  
 
     
        
@@ -272,7 +258,7 @@ GLfloat vertex_buffer_data[] = {
 
 GLfloat color_buffer_data[] = { 
     
-    /*BasisPlatte*/
+	/*Baseplate*/
     0.0, 0.0, 1.0,
     1.0, 0.0, 0.0,
     1.0, 1.0, 0.0,
@@ -291,7 +277,7 @@ GLfloat color_buffer_data[] = {
     1.0, 1.0, 0.0,
     
  
-   /*topplatte*/
+	/*Topplate*/
     0.0, 1.0, 1.0,
     0.0, 1.0, 1.0,
     1.0, 0.0, 0.0,
@@ -310,11 +296,11 @@ GLfloat color_buffer_data[] = {
     0.0, 1.0, 0.0,
 
 
-   //Spitze
+	/*Peek*/
     0.0, 1.0, 0.0,
 
 
-   //mittelstange
+	/*mittelstange*/
     1.0,1.0,0.0,
     1.0,1.0,0.0,
     1.0,1.0,0.0,
@@ -324,7 +310,7 @@ GLfloat color_buffer_data[] = {
     1.0,1.0,0.0,
     1.0,1.0,0.0,
 
-  //1.stange
+	/*1st pole*/
     1.0,0.0,0.0,
     1.0,0.0,0.0,
     1.0,0.0,0.0,
@@ -333,17 +319,8 @@ GLfloat color_buffer_data[] = {
     1.0,0.0,0.0, 
     1.0,0.0,0.0,
     1.0,0.0,0.0,
-//2.Stange
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0, 
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-   
-//3.Stange
+	
+	/*2nd pole*/
     1.0,0.0,0.0,
     1.0,0.0,0.0,
     1.0,0.0,0.0,
@@ -353,7 +330,17 @@ GLfloat color_buffer_data[] = {
     1.0,0.0,0.0,
     1.0,0.0,0.0,
    
-//4.Stange
+	/*3rd pole*/
+    1.0,0.0,0.0,
+    1.0,0.0,0.0,
+    1.0,0.0,0.0,
+    1.0,0.0,0.0,
+    1.0,0.0,0.0,
+    1.0,0.0,0.0, 
+    1.0,0.0,0.0,
+    1.0,0.0,0.0,
+   
+	/*4th pole*/
     1.0,0.0,0.0,
     1.0,0.0,0.0,
     1.0,0.0,0.0,
@@ -363,28 +350,25 @@ GLfloat color_buffer_data[] = {
     1.0,0.0,0.0,
     1.0,0.0,0.0,
     	
+   /*Groundplate*/
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
+   0.0,1.0,0.0,
 
-//unterplatte
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   
-
-/*Zusatzstangen*/
-//5.Stange
+	/*5th pole*/
     0.0,0.5,1.0,
     0.0,0.5,1.0,
     0.0,0.5,1.0,
@@ -394,7 +378,7 @@ GLfloat color_buffer_data[] = {
     0.0,0.5,1.0,
     0.0,0.5,1.0,
 
-//6.Stange
+	/*6th pole*/
     0.0,0.5,1.0,
     0.0,0.5,1.0,
     0.0,0.5,1.0,
@@ -404,7 +388,7 @@ GLfloat color_buffer_data[] = {
     0.0,0.5,1.0,
     0.0,0.5,1.0,
 
-//7.Stange
+	/*7th pole*/
     0.0,0.5,1.0,
     0.0,0.5,1.0,
     0.0,0.5,1.0,
@@ -414,7 +398,7 @@ GLfloat color_buffer_data[] = {
     0.0,0.5,1.0,
     0.0,0.5,1.0,
 
-//8.Stange
+	/*8th pole*/
    0.0,0.5,1.0,
     0.0,0.5,1.0,
     0.0,0.5,1.0,
@@ -430,7 +414,7 @@ GLfloat color_buffer_data[] = {
 
 GLushort index_buffer_data[] = { 
     
-   /* baseplate */
+	/*Baseplate*/
     0, 1, 3,
     1, 2, 3,
     0, 8, 1,
@@ -463,7 +447,7 @@ GLushort index_buffer_data[] = {
    15, 0,11,
   
 
-/*topplate*/
+	/*Topplate*/
     16,17,19,
     17,18,19,
     16,24,17,
@@ -495,7 +479,7 @@ GLushort index_buffer_data[] = {
     31,16,20,
     31,16,27,
     
-   /*dach*/ 
+    /*Roof*/
    19,26,32,
    26,18,32,
    18,25,32,
@@ -506,7 +490,7 @@ GLushort index_buffer_data[] = {
    27,19,32,
    
 
-/*mittelstange*/
+   /*center pole*/
    33,34,37,
    38,37,34,
    34,35,38,
@@ -516,8 +500,7 @@ GLushort index_buffer_data[] = {
    36,33,40,
    37,40,33,
 
-  /*stangen*/
-  //1
+   /*1st pole*/
    41,44,45,
    45,48,44,
    41,42,45,
@@ -527,7 +510,7 @@ GLushort index_buffer_data[] = {
    43,44,48,
    48,47,43,
 
-//2
+   /*2nd pole*/
    49,52,53,
    53,56,52,
    49,50,53,
@@ -538,7 +521,7 @@ GLushort index_buffer_data[] = {
    56,55,51,
 
    
-//3
+   /*3rd pole*/
    57,60,61,
    61,64,60,
    57,58,61,
@@ -548,7 +531,7 @@ GLushort index_buffer_data[] = {
    59,60,64,
    64,63,59,
 
-//4
+   /*4th pole*/
    65,68,69,
    69,72,68,
    65,66,69,
@@ -557,7 +540,8 @@ GLushort index_buffer_data[] = {
    70,71,67,
    67,68,72,
    72,71,67,
-//5
+   
+   /*5th pole*/
    89,92,93,
    93,96,92,
    89,90,93,
@@ -567,7 +551,7 @@ GLushort index_buffer_data[] = {
    91,92,96,
    96,95,91,
 
-//6
+    /*6th pole*/
 	97,100,101,
 	101,104,100,
 	97,98,101,
@@ -577,7 +561,7 @@ GLushort index_buffer_data[] = {
 	99,100,104,
 	104,103,99,
 
-//7
+	/*7th pole*/
 	105,108,109,
 	109,112,108,
 	105,106,109,
@@ -587,7 +571,7 @@ GLushort index_buffer_data[] = {
 	107,108,112,
 	112,111,107,
 
-//8
+	/*8th pole*/
 	113,116,117,
 	117,120,116,
 	113,114,117,
@@ -597,8 +581,7 @@ GLushort index_buffer_data[] = {
 	115,116,120,
 	120,119,115,
 	
-/*unterste Platte*/
-	   
+	/*Groundplate*/	   
 	73,74,76,
 	74,75,76,
 	73,81,74,
@@ -631,8 +614,8 @@ GLushort index_buffer_data[] = {
 
 	    
 };
-/* Buffers for second Model */
-
+/*	Buffers for second model
+	Cubes on poles			*/
 GLfloat vertex_buffer_data2[] = {  
     -0.3, -0.3,  0.3, 
      0.3, -0.3,  0.3, 

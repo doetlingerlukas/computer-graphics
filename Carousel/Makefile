@@ -1,5 +1,5 @@
 CC = gcc
-OBJ = Carousel.o LoadShader.o Matrix.o
+OBJ = Carousel.o LoadShader.o Matrix.o Setup.o
 CFLAGS = -g -Wall -Wextra
 
 LDLIBS=-lm -lglut -lGLEW -lGL

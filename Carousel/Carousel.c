@@ -2,7 +2,7 @@
 *
 * Carousel.c
 *
-* by Davide De Sclavis und Lukas Dötlinger
+* by Davide De Sclavis, Manuel Buchauer und Lukas Dötlinger
 *
 * The Carousel.c displays a Carousel with some basic objects
 * that are moving up ad down.
@@ -28,6 +28,7 @@
 /* Local includes */
 #include "LoadShader.h"   /* Provides loading function for shader code */
 #include "Matrix.h"
+#include "Setup.h"
 
 /*----------------------------------------------------------------*/
 
@@ -834,16 +835,7 @@ void Display()
 *******************************************************************/
 
 void OnIdle()
-{
-	/* print function for classic printf debugging */
-	void print_matrix(float* matrix) {
-		printf("[\n");
-		for (int i = 0; i < 4; i++) {
-			printf("  [%8f,\t%8f,\t%8f,\t%8f],\n", matrix[i*4], matrix[i*4 + 1], matrix[i*4 + 2], matrix[i*4 + 3]);
-		}
-		printf("]\n");
-	}
-	
+{	
     float angle = (glutGet(GLUT_ELAPSED_TIME) / 1000.0) * (180.0/M_PI); 
     float RotationMatrixAnim[16];
     
@@ -923,7 +915,7 @@ void SetupDataBuffers()
     glGenBuffers(1, &CBO);
     glBindBuffer(GL_ARRAY_BUFFER, CBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data), color_buffer_data, GL_STATIC_DRAW);
-
+    
 	/* Second Model */
 	glGenBuffers(1, &VBO2);
     glBindBuffer(GL_ARRAY_BUFFER, VBO2);

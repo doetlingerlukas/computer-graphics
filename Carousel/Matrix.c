@@ -22,9 +22,10 @@
 /******************************************************************
 *
 * print function for classic printf debugging
+* Not working on ZID PCs
 *
 *******************************************************************/
-
+/*
 void print_matrix(float* matrix) 
 {
 	printf("[\n");
@@ -33,7 +34,7 @@ void print_matrix(float* matrix)
 	}
 	printf("]\n");
 }
-	
+*/
 /******************************************************************
 *
 * SetIdentityMatrix

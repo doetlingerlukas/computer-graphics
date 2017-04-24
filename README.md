@@ -11,5 +11,5 @@ Now following commands are avaliable:
 
 	- make: complie the programm
 	- clean: removes all the compiled files
-	- **make run**: This is the recommended command! 
-					**It builds and executes to programm!**
+	- make run: This is the recommended command! 
+					It builds and executes to programm!

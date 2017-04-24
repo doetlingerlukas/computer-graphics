@@ -29,6 +29,7 @@
 #include "LoadShader.h"   /* Provides loading function for shader code */
 #include "Matrix.h"
 #include "Setup.h"
+#include "OBJParser.h"
 
 /*----------------------------------------------------------------*/
 
@@ -658,6 +659,9 @@ GLushort index_buffer_data2[] = {
 
 /*----------------------------------------------------------------*/
 
+GLfloat* vertex_buffer_data3;
+GLushort* index_buffer_data3;
+obj_scene_data data3;
 
 /******************************************************************
 *
@@ -801,18 +805,21 @@ void Display()
 	glEnableVertexAttribArray(vPosition);
     glBindBuffer(GL_ARRAY_BUFFER, VBO5);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
+	/*
     glEnableVertexAttribArray(vColor);
     glBindBuffer(GL_ARRAY_BUFFER, CBO5);
     glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
+	*/
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO5);
     GLint size5; 
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size5);
     
     /* Associate first Model with shader matrices */
     GLint RotationUniform5 = glGetUniformLocation(ShaderProgram5, "ModelMatrix");
     glUniformMatrix4fv(RotationUniform5, 1, GL_TRUE, Model5Matrix);
+
+	/* Only draw lines. At this point necessary for drawing the obj file */
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     /* Issue draw command, using indexed triangle list */
     glDrawElements(GL_TRIANGLES, size5 / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
@@ -955,7 +962,7 @@ void SetupDataBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, CBO4);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
 
-	/* Fifth Model */
+	/* Fifth Model *//*
 	glGenBuffers(1, &VBO5);
     glBindBuffer(GL_ARRAY_BUFFER, VBO5);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
@@ -967,6 +974,14 @@ void SetupDataBuffers()
     glGenBuffers(1, &CBO5);
     glBindBuffer(GL_ARRAY_BUFFER, CBO5);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
+	*/
+	glGenBuffers(1, &VBO5);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO5);
+    glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
+    
+    glGenBuffers(1, &IBO5);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO5);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 
 }
 
@@ -1104,6 +1119,44 @@ void CreateShaderProgram()
 
 void Initialize(void)
 {   
+	int i;
+    int success;
+
+	/* Load first OBJ model */
+    char* filename1 = "models/pig.obj"; 
+    success = parse_obj_scene(&data3, filename1);
+
+    if(!success)
+        printf("Could not load file. Exiting.\n");
+        
+    /*  Copy mesh data from structs into appropriate arrays */ 
+    int vert = data3.vertex_count;
+    int indx = data3.face_count;
+
+    vertex_buffer_data3 = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    index_buffer_data3 = (GLushort*) calloc (indx*3, sizeof(GLushort));
+  
+    /* Vertices */
+    for(i=0; i<vert; i++)
+    {
+        vertex_buffer_data3[i*3] = (GLfloat)(*data3.vertex_list[i]).e[0];
+	vertex_buffer_data3[i*3+1] = (GLfloat)(*data3.vertex_list[i]).e[1];
+	vertex_buffer_data3[i*3+2] = (GLfloat)(*data3.vertex_list[i]).e[2];
+    }
+
+    /* Indices */
+    for(i=0; i<indx; i++)
+    {
+	index_buffer_data3[i*3] = (GLushort)(*data3.face_list[i]).vertex_index[0];
+	index_buffer_data3[i*3+1] = (GLushort)(*data3.face_list[i]).vertex_index[1];
+	index_buffer_data3[i*3+2] = (GLushort)(*data3.face_list[i]).vertex_index[2];
+    }
+    
+    
+    
+	
+	
+	
     /* Set background (clear) color to dark blue */ 
     glClearColor(0.0, 0.0, 0.8, 0.0);
 

@@ -851,6 +851,8 @@ void OnIdle()
     float TranslationMatrixMove4[16];
     float TranslationMatrixMove5[16];
     float TranslationMatrixSlide[16];
+    float RotationMatrix[16];
+    float ScalingMatrix[16];
 
     /* Time dependent rotation */
     SetRotationY(angle, RotationMatrixAnim);
@@ -859,7 +861,10 @@ void OnIdle()
     SetTranslation(0.0, 0.0, 2.8, TranslationMatrixMove2);
     SetTranslation(0.0, 0.0, -2.8, TranslationMatrixMove3);
     SetTranslation(2.8, 0.0, 0.0, TranslationMatrixMove4);
-    SetTranslation(-2.8, 0.0, 0.0, TranslationMatrixMove5);
+    SetTranslation(-2.8, 0.7, -0.7, TranslationMatrixMove5);
+    
+    SetRotationX(90, RotationMatrix);
+    setScalingS(0.7, ScalingMatrix);
     
     /* Sliding animation */
     SetTranslation(0.0, sinf(angle/100), 0.0, TranslationMatrixSlide);
@@ -872,7 +877,11 @@ void OnIdle()
 	MultiplyMatrix(TranslationMatrixMove2, InitialTransform, Model2Matrix);
     MultiplyMatrix(TranslationMatrixMove3, InitialTransform, Model3Matrix);
     MultiplyMatrix(TranslationMatrixMove4, InitialTransform, Model4Matrix);
-    MultiplyMatrix(TranslationMatrixMove5, InitialTransform, Model5Matrix);
+    
+    MultiplyMatrix(RotationMatrix, InitialTransform, Model5Matrix);
+    MultiplyMatrix(ScalingMatrix, Model5Matrix, Model5Matrix);
+    MultiplyMatrix(TranslationMatrixMove5, Model5Matrix, Model5Matrix);
+    
     
     MultiplyMatrix(RotationMatrixAnim, Model2Matrix, Model2Matrix);
     MultiplyMatrix(RotationMatrixAnim, Model3Matrix, Model3Matrix);
@@ -885,11 +894,11 @@ void OnIdle()
     MultiplyMatrix(TranslationMatrixSlide, Model5Matrix, Model5Matrix);
     
     
+    
     MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslateDown, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);
-    
 
     /* Request redrawing forof window content */  
     glutPostRedisplay();
@@ -910,7 +919,11 @@ void SetupDataBuffers()
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 	
-	/* First Model */
+	/* First Model *//*
+	setupVertexBuffer(VBO, vertex_buffer_data);
+	setupIndexBuffer(IBO, index_buffer_data);
+	setupColorBuffer(CBO, color_buffer_data);
+	*/
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data), vertex_buffer_data, GL_STATIC_DRAW);

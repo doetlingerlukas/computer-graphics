@@ -19,6 +19,7 @@
 
 //void print_matrix(float* matrix);
 void SetIdentityMatrix(float* result);
+void setScalingS(float factor, float* result);
 void SetRotationX(float anglex, float* result);
 void SetRotationY(float angley, float* result);
 void SetRotationZ(float anglez, float* result);

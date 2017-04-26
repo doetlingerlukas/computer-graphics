@@ -861,10 +861,10 @@ void OnIdle()
     SetRotationY(angle, RotationMatrixAnim);
     
     /* Move the pigs */
-    SetTranslation(0.0, 0.0, 2.1, TranslationMatrixMove2);
-    SetTranslation(0.0, 0.0, -3.5, TranslationMatrixMove3);
-    SetTranslation(2.8, 0.0, -0.7, TranslationMatrixMove4);
-    SetTranslation(-2.8, 0.0, -0.7, TranslationMatrixMove5);
+    SetTranslation(-0.7, 0.6, 2.8, TranslationMatrixMove2);
+    SetTranslation(0.7, 0.6, -2.8, TranslationMatrixMove3);
+    SetTranslation(2.8, 0.6, 0.7, TranslationMatrixMove4);
+    SetTranslation(-2.8, 0.6, -0.7, TranslationMatrixMove5);
     
     /* Rotate and scale the pigs */
     SetRotationX(90, RotationMatrixX);
@@ -881,25 +881,26 @@ void OnIdle()
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
     
     /* Applay Transformation on the pigs */
+    /* Rotate pigs on X */
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model2Matrix);
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model3Matrix);
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model4Matrix);
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model5Matrix);
-        
+    /* Rotate pigs on Y */
     MultiplyMatrix(RotationMatrixY2, Model2Matrix, Model2Matrix);
     MultiplyMatrix(RotationMatrixY3, Model3Matrix, Model3Matrix);
     MultiplyMatrix(RotationMatrixY4, Model4Matrix, Model4Matrix);
-    
+    /* Scale pigs */
     MultiplyMatrix(ScalingMatrix, Model2Matrix, Model2Matrix);
     MultiplyMatrix(ScalingMatrix, Model3Matrix, Model3Matrix);
     MultiplyMatrix(ScalingMatrix, Model4Matrix, Model4Matrix);
     MultiplyMatrix(ScalingMatrix, Model5Matrix, Model5Matrix);
-    
+    /* Move pigs */
     MultiplyMatrix(TranslationMatrixMove2, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslationMatrixMove3, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslationMatrixMove4, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslationMatrixMove5, Model5Matrix, Model5Matrix);
-    
+    /* Apply rotation and sliding animation on pigs */
     MultiplyMatrix(RotationMatrixAnim, Model2Matrix, Model2Matrix);
     MultiplyMatrix(RotationMatrixAnim, Model3Matrix, Model3Matrix);
     MultiplyMatrix(RotationMatrixAnim, Model4Matrix, Model4Matrix);
@@ -909,12 +910,12 @@ void OnIdle()
     MultiplyMatrix(TranslationMatrixSlide, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslationMatrixSlide, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslationMatrixSlide, Model5Matrix, Model5Matrix);
-    /*
+    /* Translate to final position */
     MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslateDown, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);
-	*/
+	
     /* Request redrawing forof window content */  
     glutPostRedisplay();
 }

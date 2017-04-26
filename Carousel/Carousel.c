@@ -616,48 +616,8 @@ GLushort index_buffer_data[] = {
 
 	    
 };
-/*	Buffers for second model
-	Cubes on poles			*/
-GLfloat vertex_buffer_data2[] = {  
-    -0.3, -0.3,  0.3, 
-     0.3, -0.3,  0.3, 
-     0.3,  0.3,  0.3, 
-    -0.3,  0.3,  0.3, 
- 
-    -0.3, -0.3, -0.3, 
-     0.3, -0.3, -0.3, 
-     0.3,  0.3, -0.3, 
-    -0.3,  0.3, -0.3, 
-};    
- 
-GLfloat color_buffer_data2[] = {  
-    1.0, 0.0, 0.0, 
-    1.0, 1.0, 0.0, 
-    1.0, 1.0, 0.0, 
-    1.0, 1.0, 0.0, 
-    1.0, 0.0, 0.0, 
-    1.0, 0.0, 0.0, 
-    1.0, 1.0, 0.0, 
-};  
- 
-GLushort index_buffer_data2[] = { 
 
-  0,1,4,
-  1,5,4,  
-  1,2,5,
-  2,5,6,
-  2,3,6,
-  3,6,7,
-  0,3,7,
-  0,4,7,
-  0,1,3,
-  1,2,3,
-  4,5,7,
-  5,6,7,
-
-};
-
-/*----------------------------------------------------------------*/
+/* Buffer for the pigs */
 
 GLfloat* vertex_buffer_data3;
 GLushort* index_buffer_data3;
@@ -678,156 +638,31 @@ void Display()
 {
     /* Clear window; color specified in 'Initialize()' */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnableVertexAttribArray(vPosition);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
+	
+	/** Carousel **/
     glEnableVertexAttribArray(vColor);
     glBindBuffer(GL_ARRAY_BUFFER, CBO);
     glVertexAttribPointer(vColor, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    GLint size; 
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-	
 	
     /* Associate carousel Model with shader matrices */
-    GLint projectionUniform = glGetUniformLocation(ShaderProgram, "ProjectionMatrix");
-    if (projectionUniform == -1) 
-    {
-        fprintf(stderr, "Could not bind uniform ProjectionMatrix\n");
-	exit(-1);
-    }
-    glUniformMatrix4fv(projectionUniform, 1, GL_TRUE, ProjectionMatrix);
+    glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ProjectionMatrix"), 1, GL_TRUE, ProjectionMatrix);
+    glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ViewMatrix"), 1, GL_TRUE, ViewMatrix);     
     
-    GLint ViewUniform = glGetUniformLocation(ShaderProgram, "ViewMatrix");
-    if (ViewUniform == -1) 
-    {
-        fprintf(stderr, "Could not bind uniform ViewMatrix\n");
-        exit(-1);
-    }
-    glUniformMatrix4fv(ViewUniform, 1, GL_TRUE, ViewMatrix);
-   
-    GLint RotationUniform = glGetUniformLocation(ShaderProgram, "ModelMatrix");
-    if (RotationUniform == -1) 
-    {
-        fprintf(stderr, "Could not bind uniform ModelMatrix\n");
-        exit(-1);
-    }
-    glUniformMatrix4fv(RotationUniform, 1, GL_TRUE, ModelMatrix); 
-    
-    /* Issue draw command, using indexed triangle list */
-    glDrawElements(GL_TRIANGLES, size/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    setupAndDraw(VBO, IBO, ShaderProgram, ModelMatrix);
     
     /* Disable attributes */
     glDisableVertexAttribArray(vPosition);
-    glDisableVertexAttribArray(vColor); 
+    glDisableVertexAttribArray(vColor);
     
-    
-    
-    /** Second Model **/
-	glEnableVertexAttribArray(vPosition);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	/*
-    glEnableVertexAttribArray(vColor);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO2);
-    glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-	*/
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
-    GLint size2; 
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size2);
-    
-    /* Associate first Model with shader matrices */
-    GLint RotationUniform2 = glGetUniformLocation(ShaderProgram2, "ModelMatrix");
-    glUniformMatrix4fv(RotationUniform2, 1, GL_TRUE, Model2Matrix);
-
-    /* Issue draw command, using indexed triangle list */
-    glDrawElements(GL_TRIANGLES, size2 / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-
-    /* Disable attributes */
-    glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+    /** Pigs **/
+	setupAndDraw(VBO2, IBO2, ShaderProgram2, Model2Matrix);
+	setupAndDraw(VBO3, IBO3, ShaderProgram3, Model3Matrix);
+	setupAndDraw(VBO4, IBO4, ShaderProgram4, Model4Matrix);
+	setupAndDraw(VBO5, IBO5, ShaderProgram5, Model5Matrix);
 	
-	
-	/** Third Model **/
-	glEnableVertexAttribArray(vPosition);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO3);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	/*
-    glEnableVertexAttribArray(vColor);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO3);
-    glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-	*/
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO3);
-    GLint size3; 
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size3);
-    
-    /* Associate first Model with shader matrices */
-    GLint RotationUniform3 = glGetUniformLocation(ShaderProgram3, "ModelMatrix");
-    glUniformMatrix4fv(RotationUniform3, 1, GL_TRUE, Model3Matrix);
-
-    /* Issue draw command, using indexed triangle list */
-    glDrawElements(GL_TRIANGLES, size3 / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-
-    /* Disable attributes */
-    glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	
-	
-	/** Fourth Model **/
-	glEnableVertexAttribArray(vPosition);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO4);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	/*
-    glEnableVertexAttribArray(vColor);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO4);
-    glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-	*/
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
-    GLint size4; 
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size4);
-    
-    /* Associate first Model with shader matrices */
-    GLint RotationUniform4 = glGetUniformLocation(ShaderProgram4, "ModelMatrix");
-    glUniformMatrix4fv(RotationUniform4, 1, GL_TRUE, Model4Matrix);
-
-    /* Issue draw command, using indexed triangle list */
-    glDrawElements(GL_TRIANGLES, size4 / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-
-    /* Disable attributes */
-    glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-	
-	
-	/** Fifth Model **/
-	glEnableVertexAttribArray(vPosition);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO5);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	/*
-    glEnableVertexAttribArray(vColor);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO5);
-    glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-	*/
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO5);
-    GLint size5; 
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size5);
-    
-    /* Associate first Model with shader matrices */
-    GLint RotationUniform5 = glGetUniformLocation(ShaderProgram5, "ModelMatrix");
-    glUniformMatrix4fv(RotationUniform5, 1, GL_TRUE, Model5Matrix);
-
 	/* Only draw lines. At this point necessary for drawing the obj file */
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    /* Issue draw command, using indexed triangle list */
-    glDrawElements(GL_TRIANGLES, size5 / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-
-    /* Disable attributes */
-    glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);  
-
+	
     /* Swap between front and back buffer */ 
     glutSwapBuffers();
 }
@@ -910,7 +745,7 @@ void OnIdle()
     MultiplyMatrix(TranslationMatrixSlide, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslationMatrixSlide, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslationMatrixSlide, Model5Matrix, Model5Matrix);
-    /* Translate to final position */
+    /* Translate pigs to final position */
     MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslateDown, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);

@@ -26,6 +26,30 @@
 
 /******************************************************************
 *
+* Setup for display function
+*
+*******************************************************************/
+
+void setupAndDraw(GLuint vbo, GLuint ibo, GLuint sp, float* mm)
+{
+	glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    GLint size; 
+    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+    
+    /* Associate first Model with shader matrices */
+    glUniformMatrix4fv(glGetUniformLocation(sp, "ModelMatrix"), 1, GL_TRUE, mm);
+
+    /* Issue draw command, using indexed triangle list */
+    glDrawElements(GL_TRIANGLES, size / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+}
+
+
+/******************************************************************
+*
 * SetupBuffers
 *
 *******************************************************************/
@@ -50,8 +74,4 @@ void setupColorBuffer(GLuint cbo, GLfloat* cbo_data)
     glBindBuffer(GL_ARRAY_BUFFER, cbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cbo_data), cbo_data, GL_STATIC_DRAW);
 }
-
-
-
-
 

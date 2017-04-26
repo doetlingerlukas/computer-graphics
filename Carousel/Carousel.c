@@ -34,13 +34,13 @@
 /*----------------------------------------------------------------*/
 
 /* Define handle to a vertex buffer object */
-GLuint VBO, VBO2, VBO3, VBO4, VBO5;
+GLuint VBO, VBO2, VBO3, VBO4, VBO5, VBO6;
 
 /* Define handle to a color buffer object */
-GLuint CBO, CBO2, CBO3, CBO4, CBO5;
+GLuint CBO, CBO2, CBO3, CBO4, CBO5, CBO6;
 
 /* Define handle to an index buffer object */
-GLuint IBO, IBO2, IBO3, IBO4, IBO5;
+GLuint IBO, IBO2, IBO3, IBO4, IBO5, IBO6;
 
 GLuint VAO;
 
@@ -51,23 +51,22 @@ enum DataID {vPosition = 0, vColor = 1};
 static const char* VertexShaderString;
 static const char* FragmentShaderString;
 
-GLuint ShaderProgram;
-GLuint ShaderProgram2; /* Shader for second Model */
-GLuint ShaderProgram3; /* Shader for third Model */
-GLuint ShaderProgram4; /* Shader for fourth Model */
-GLuint ShaderProgram5; /* Shader for fifth Model */
+GLuint ShaderProgram;  /* Shader for carousel */
+GLuint ShaderProgram2; /* Shader for pig 1 */
+GLuint ShaderProgram3; /* Shader for pig 2 */
+GLuint ShaderProgram4; /* Shader for pig 3 */
+GLuint ShaderProgram5; /* Shader for pig 4 */
+GLuint ShaderProgram6; /* Shader for room */
 
 float ProjectionMatrix[16]; /* Perspective projection matrix */
 float ViewMatrix[16]; /* Camera view matrix */ 
-float ModelMatrix[16]; /* Model matrix */ 
 
-float Model2Matrix[16]; /* Model2 matrix */
-
-float Model3Matrix[16]; /* Model3 matrix */
-
-float Model4Matrix[16]; /* Model4 matrix */
-
-float Model5Matrix[16]; /* Model5 matrix */
+float ModelMatrix[16]; /* carousel matrix */ 
+float Model2Matrix[16]; /* pig 1 matrix */
+float Model3Matrix[16]; /* pig 2 matrix */
+float Model4Matrix[16]; /* pig 3 matrix */
+float Model5Matrix[16]; /* pig 4 matrix */
+float Model6Matrix[16]; /* Room matrix */
 
 /* Transformation matrices for initial position */
 float TranslateOrigin[16];
@@ -612,9 +611,51 @@ GLushort index_buffer_data[] = {
 	80,84,76,
 	88,73,77,
 	88,73,84,
-
-
 	    
+};
+/* Buffer for Room */
+
+GLfloat vertex_buffer_data2[] = {
+	// Floor 
+	5.0, -1.0, 5.0,
+	-5.0, -1.0, 5.0,
+	5.0, -1.0, -5.0,
+	-5.0, -1.0, -5.0,
+	// Roof 
+	5.0, 5.0, 5.0,
+	-5.0, 5.0, 5.0,
+	5.0, 5.0, -5.0,
+	-5.0, 5.0, -5.0,
+};
+
+GLfloat color_buffer_data2[] = {
+	// Floor 
+	0.0,0.0,0.0,
+	0.44,0.5,0.56,
+	// Back wall
+	0.87,0.72,0.53,
+	0.87,0.72,0.53,
+	// Right wall 
+	0.87,0.72,0.53,
+	0.87,0.72,0.53,
+	// Left wall 
+	0.87,0.72,0.53,
+	0.87,0.72,0.53,
+};
+
+GLushort index_buffer_data2[] = {
+	// Floor 
+	0, 1, 3,
+	0, 2, 3,
+	// Back wall 
+	3, 2, 6,
+	3, 7, 6,
+	// Right wall 
+	0, 2, 6,
+	0, 4, 6,
+	// Left wall 
+	1, 3, 7,
+	1, 5, 7,
 };
 
 /* Buffer for the pigs */
@@ -637,31 +678,33 @@ obj_scene_data data3;
 void Display()
 {
     /* Clear window; color specified in 'Initialize()' */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	/** Carousel **/
-    glEnableVertexAttribArray(vColor);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO);
-    glVertexAttribPointer(vColor, 3, GL_FLOAT,GL_FALSE, 0, 0);   
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
 	
     /* Associate carousel Model with shader matrices */
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ProjectionMatrix"), 1, GL_TRUE, ProjectionMatrix);
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ViewMatrix"), 1, GL_TRUE, ViewMatrix);     
     
-    setupAndDraw(VBO, IBO, ShaderProgram, ModelMatrix);
+    /** Carousel **/
+    setupAndDraw(VBO, CBO, IBO, ShaderProgram, ModelMatrix);
     
     /* Disable attributes */
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor);
     
+    /** Room **/
+    setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram6, Model6Matrix);
+    
+    glDisableVertexAttribArray(vPosition);
+    glDisableVertexAttribArray(vColor);
+    
     /** Pigs **/
-	setupAndDraw(VBO2, IBO2, ShaderProgram2, Model2Matrix);
-	setupAndDraw(VBO3, IBO3, ShaderProgram3, Model3Matrix);
-	setupAndDraw(VBO4, IBO4, ShaderProgram4, Model4Matrix);
-	setupAndDraw(VBO5, IBO5, ShaderProgram5, Model5Matrix);
+	setupAndDraw(VBO2, 0, IBO2, ShaderProgram2, Model2Matrix);
+	setupAndDraw(VBO3, 0, IBO3, ShaderProgram3, Model3Matrix);
+	setupAndDraw(VBO4, 0, IBO4, ShaderProgram4, Model4Matrix);
+	setupAndDraw(VBO5, 0, IBO5, ShaderProgram5, Model5Matrix);
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
     /* Swap between front and back buffer */ 
     glutSwapBuffers();
@@ -714,6 +757,10 @@ void OnIdle()
     /* Apply carousel rotation and move carousel down */
     MultiplyMatrix(RotationMatrixAnim, InitialTransform, ModelMatrix);
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
+    
+    /* room */
+    MultiplyMatrix(RotationMatrixX, InitialTransform, Model6Matrix);
+	MultiplyMatrix(TranslateDown, Model6Matrix, Model6Matrix);
     
     /* Applay Transformation on the pigs */
     /* Rotate pigs on X */
@@ -770,11 +817,7 @@ void SetupDataBuffers()
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 	
-	/* First Model *//*
-	setupVertexBuffer(VBO, vertex_buffer_data);
-	setupIndexBuffer(IBO, index_buffer_data);
-	setupColorBuffer(CBO, color_buffer_data);
-	*/
+	/* First Model */
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data), vertex_buffer_data, GL_STATIC_DRAW);
@@ -786,7 +829,20 @@ void SetupDataBuffers()
     glGenBuffers(1, &CBO);
     glBindBuffer(GL_ARRAY_BUFFER, CBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data), color_buffer_data, GL_STATIC_DRAW);
-    
+
+	/* Room */
+	glGenBuffers(1, &VBO6);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO6);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &IBO6);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO6);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data2), index_buffer_data2, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &CBO6);
+    glBindBuffer(GL_ARRAY_BUFFER, CBO6);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
+
 
 	/* All four pigs */
 	glGenBuffers(1, &VBO2);
@@ -883,6 +939,7 @@ void CreateShaderProgram()
     ShaderProgram3 = glCreateProgram();
     ShaderProgram4 = glCreateProgram();
     ShaderProgram5 = glCreateProgram();
+    ShaderProgram6 = glCreateProgram();
 
     if (ShaderProgram == 0) 
     {
@@ -905,6 +962,8 @@ void CreateShaderProgram()
     AddShader(ShaderProgram4, FragmentShaderString, GL_FRAGMENT_SHADER);
     AddShader(ShaderProgram5, VertexShaderString, GL_VERTEX_SHADER);
     AddShader(ShaderProgram5, FragmentShaderString, GL_FRAGMENT_SHADER);
+    AddShader(ShaderProgram6, VertexShaderString, GL_VERTEX_SHADER);
+    AddShader(ShaderProgram6, FragmentShaderString, GL_FRAGMENT_SHADER);
 
     GLint Success = 0;
     GLchar ErrorLog[1024];
@@ -915,6 +974,7 @@ void CreateShaderProgram()
     glLinkProgram(ShaderProgram3);
     glLinkProgram(ShaderProgram4);
     glLinkProgram(ShaderProgram5);
+    glLinkProgram(ShaderProgram6);
 
     /* Check results of linking step */
     glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
@@ -943,6 +1003,7 @@ void CreateShaderProgram()
     glUseProgram(ShaderProgram3);
     glUseProgram(ShaderProgram4);
     glUseProgram(ShaderProgram5);
+    glUseProgram(ShaderProgram6);
 }
 
 
@@ -978,22 +1039,19 @@ void Initialize(void)
     for(i=0; i<vert; i++)
     {
         vertex_buffer_data3[i*3] = (GLfloat)(*data3.vertex_list[i]).e[0];
-	vertex_buffer_data3[i*3+1] = (GLfloat)(*data3.vertex_list[i]).e[1];
-	vertex_buffer_data3[i*3+2] = (GLfloat)(*data3.vertex_list[i]).e[2];
+		vertex_buffer_data3[i*3+1] = (GLfloat)(*data3.vertex_list[i]).e[1];
+		vertex_buffer_data3[i*3+2] = (GLfloat)(*data3.vertex_list[i]).e[2];
     }
 
     /* Indices */
     for(i=0; i<indx; i++)
     {
-	index_buffer_data3[i*3] = (GLushort)(*data3.face_list[i]).vertex_index[0];
-	index_buffer_data3[i*3+1] = (GLushort)(*data3.face_list[i]).vertex_index[1];
-	index_buffer_data3[i*3+2] = (GLushort)(*data3.face_list[i]).vertex_index[2];
+		index_buffer_data3[i*3] = (GLushort)(*data3.face_list[i]).vertex_index[0];
+		index_buffer_data3[i*3+1] = (GLushort)(*data3.face_list[i]).vertex_index[1];
+		index_buffer_data3[i*3+2] = (GLushort)(*data3.face_list[i]).vertex_index[2];
     }
     
     
-    
-	
-	
 	
     /* Set background (clear) color to dark blue */ 
     glClearColor(0.0, 0.0, 0.8, 0.0);
@@ -1017,6 +1075,7 @@ void Initialize(void)
     SetIdentityMatrix(Model3Matrix);
     SetIdentityMatrix(Model4Matrix);
     SetIdentityMatrix(Model5Matrix);
+    SetIdentityMatrix(Model6Matrix);
 
     /* Set projection transform */
     float fovy = 45.0;

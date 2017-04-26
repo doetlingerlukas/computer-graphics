@@ -2,9 +2,8 @@
 *
 * Setup.c
 * 
-* 
 *
-* Description: Helper for Buffer and Shader setup.
+* Description: Helper for setup.
 * 	
 * Computer Graphics Proseminar SS 2017
 * 
@@ -30,11 +29,17 @@
 *
 *******************************************************************/
 
-void setupAndDraw(GLuint vbo, GLuint ibo, GLuint sp, float* mm)
+void setupAndDraw(GLuint vbo, GLuint cbo, GLuint ibo, GLuint sp, float* mm)
 {
 	glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    
+    if(cbo != 0){
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, cbo);
+		glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0); 
+	}
 	
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     GLint size; 

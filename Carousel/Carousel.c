@@ -730,11 +730,11 @@ void Display()
 	glEnableVertexAttribArray(vPosition);
     glBindBuffer(GL_ARRAY_BUFFER, VBO2);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
+	/*
     glEnableVertexAttribArray(vColor);
     glBindBuffer(GL_ARRAY_BUFFER, CBO2);
     glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-
+	*/
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
     GLint size2; 
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size2);
@@ -755,11 +755,11 @@ void Display()
 	glEnableVertexAttribArray(vPosition);
     glBindBuffer(GL_ARRAY_BUFFER, VBO3);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
+	/*
     glEnableVertexAttribArray(vColor);
     glBindBuffer(GL_ARRAY_BUFFER, CBO3);
     glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-
+	*/
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO3);
     GLint size3; 
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size3);
@@ -780,11 +780,11 @@ void Display()
 	glEnableVertexAttribArray(vPosition);
     glBindBuffer(GL_ARRAY_BUFFER, VBO4);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
+	/*
     glEnableVertexAttribArray(vColor);
     glBindBuffer(GL_ARRAY_BUFFER, CBO4);
     glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0);   
-
+	*/
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
     GLint size4; 
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size4);
@@ -851,37 +851,54 @@ void OnIdle()
     float TranslationMatrixMove4[16];
     float TranslationMatrixMove5[16];
     float TranslationMatrixSlide[16];
-    float RotationMatrix[16];
+    float RotationMatrixX[16];
+    float RotationMatrixY2[16];
+    float RotationMatrixY3[16];
+    float RotationMatrixY4[16];
     float ScalingMatrix[16];
 
     /* Time dependent rotation */
     SetRotationY(angle, RotationMatrixAnim);
     
-    /* Move the cubes */
-    SetTranslation(0.0, 0.0, 2.8, TranslationMatrixMove2);
-    SetTranslation(0.0, 0.0, -2.8, TranslationMatrixMove3);
-    SetTranslation(2.8, 0.0, 0.0, TranslationMatrixMove4);
-    SetTranslation(-2.8, 0.7, -0.7, TranslationMatrixMove5);
+    /* Move the pigs */
+    SetTranslation(0.0, 0.0, 2.1, TranslationMatrixMove2);
+    SetTranslation(0.0, 0.0, -3.5, TranslationMatrixMove3);
+    SetTranslation(2.8, 0.0, -0.7, TranslationMatrixMove4);
+    SetTranslation(-2.8, 0.0, -0.7, TranslationMatrixMove5);
     
-    SetRotationX(90, RotationMatrix);
+    /* Rotate and scale the pigs */
+    SetRotationX(90, RotationMatrixX);
+    SetRotationY(90, RotationMatrixY2);
+    SetRotationY(-90, RotationMatrixY3);
+    SetRotationY(180, RotationMatrixY4);
     setScalingS(0.7, ScalingMatrix);
     
     /* Sliding animation */
     SetTranslation(0.0, sinf(angle/100), 0.0, TranslationMatrixSlide);
 
-    /* Apply carousel rotation; finally move carousel down */
+    /* Apply carousel rotation and move carousel down */
     MultiplyMatrix(RotationMatrixAnim, InitialTransform, ModelMatrix);
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
     
-    /* Applay Transformation on the cubes */
-	MultiplyMatrix(TranslationMatrixMove2, InitialTransform, Model2Matrix);
-    MultiplyMatrix(TranslationMatrixMove3, InitialTransform, Model3Matrix);
-    MultiplyMatrix(TranslationMatrixMove4, InitialTransform, Model4Matrix);
+    /* Applay Transformation on the pigs */
+    MultiplyMatrix(RotationMatrixX, InitialTransform, Model2Matrix);
+    MultiplyMatrix(RotationMatrixX, InitialTransform, Model3Matrix);
+    MultiplyMatrix(RotationMatrixX, InitialTransform, Model4Matrix);
+    MultiplyMatrix(RotationMatrixX, InitialTransform, Model5Matrix);
+        
+    MultiplyMatrix(RotationMatrixY2, Model2Matrix, Model2Matrix);
+    MultiplyMatrix(RotationMatrixY3, Model3Matrix, Model3Matrix);
+    MultiplyMatrix(RotationMatrixY4, Model4Matrix, Model4Matrix);
     
-    MultiplyMatrix(RotationMatrix, InitialTransform, Model5Matrix);
+    MultiplyMatrix(ScalingMatrix, Model2Matrix, Model2Matrix);
+    MultiplyMatrix(ScalingMatrix, Model3Matrix, Model3Matrix);
+    MultiplyMatrix(ScalingMatrix, Model4Matrix, Model4Matrix);
     MultiplyMatrix(ScalingMatrix, Model5Matrix, Model5Matrix);
-    MultiplyMatrix(TranslationMatrixMove5, Model5Matrix, Model5Matrix);
     
+    MultiplyMatrix(TranslationMatrixMove2, Model2Matrix, Model2Matrix);
+    MultiplyMatrix(TranslationMatrixMove3, Model3Matrix, Model3Matrix);
+    MultiplyMatrix(TranslationMatrixMove4, Model4Matrix, Model4Matrix);
+    MultiplyMatrix(TranslationMatrixMove5, Model5Matrix, Model5Matrix);
     
     MultiplyMatrix(RotationMatrixAnim, Model2Matrix, Model2Matrix);
     MultiplyMatrix(RotationMatrixAnim, Model3Matrix, Model3Matrix);
@@ -892,14 +909,12 @@ void OnIdle()
     MultiplyMatrix(TranslationMatrixSlide, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslationMatrixSlide, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslationMatrixSlide, Model5Matrix, Model5Matrix);
-    
-    
-    
+    /*
     MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslateDown, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);
-
+	*/
     /* Request redrawing forof window content */  
     glutPostRedisplay();
 }
@@ -936,58 +951,32 @@ void SetupDataBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, CBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data), color_buffer_data, GL_STATIC_DRAW);
     
-	/* Second Model */
+
+	/* All four pigs */
 	glGenBuffers(1, &VBO2);
     glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
+    
     glGenBuffers(1, &IBO2);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data2), index_buffer_data2, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &CBO2);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 	
-	/* Third Model */
 	glGenBuffers(1, &VBO3);
     glBindBuffer(GL_ARRAY_BUFFER, VBO3);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
+    
     glGenBuffers(1, &IBO3);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO3);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data2), index_buffer_data2, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 
-    glGenBuffers(1, &CBO3);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO3);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
-
-	/* Fourth Model */
 	glGenBuffers(1, &VBO4);
     glBindBuffer(GL_ARRAY_BUFFER, VBO4);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
+    
     glGenBuffers(1, &IBO4);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO4);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data2), index_buffer_data2, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 
-    glGenBuffers(1, &CBO4);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO4);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
-
-	/* Fifth Model *//*
-	glGenBuffers(1, &VBO5);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO5);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &IBO5);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO5);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data2), index_buffer_data2, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &CBO5);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO5);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
-	*/
 	glGenBuffers(1, &VBO5);
     glBindBuffer(GL_ARRAY_BUFFER, VBO5);
     glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  

@@ -710,6 +710,81 @@ void Display()
     glutSwapBuffers();
 }
 
+/******************************************************************
+*
+* Mouse
+*
+* Function is called on mouse button press; has been seta
+* with glutMouseFunc(), x and y specify mouse coordinates
+*
+*******************************************************************/
+
+void Mouse(int button, int state, int x, int y) 
+{
+    if(state == GLUT_DOWN) 
+    {
+      /* Depending on button pressed, set rotation axis,
+       * turn on animation */
+        switch(button) 
+	{
+	    case GLUT_LEFT_BUTTON:    
+	        
+		break;
+
+	    case GLUT_MIDDLE_BUTTON:  
+  	        
+	        break;
+		
+	    case GLUT_RIGHT_BUTTON: 
+	        
+		break;
+	}
+	//anim = GL_TRUE;
+    }
+}
+
+/******************************************************************
+*
+* Keyboard
+*
+* Function to be called on key press in window; set by
+* glutKeyboardFunc(); x and y specify mouse position on keypress;
+* not used in this example 
+*
+*******************************************************************/
+
+void Keyboard(unsigned char key, int x, int y)   
+{
+    switch( key ) 
+    {
+	/* Activate model one or two */
+	case '1': 
+		
+		break;
+
+	case '2':
+		 	
+		break;
+
+	/* Toggle animation */
+	case '0':
+		//if (anim)
+			//anim = GL_FALSE;		
+		//else
+			//anim = GL_TRUE;
+		break;
+
+	case 'o':
+	    
+	    break;
+	    
+	case 'q': case 'Q':  
+	    exit(0);    
+		break;
+    }
+
+    glutPostRedisplay();
+}
 
 /******************************************************************
 *
@@ -758,7 +833,7 @@ void OnIdle()
     MultiplyMatrix(RotationMatrixAnim, InitialTransform, ModelMatrix);
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
     
-    /* room */
+    /* Room */
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model6Matrix);
 	MultiplyMatrix(TranslateDown, Model6Matrix, Model6Matrix);
     
@@ -1140,6 +1215,8 @@ int main(int argc, char** argv)
      * handing control over to GLUT */
     glutIdleFunc(OnIdle);
     glutDisplayFunc(Display);
+    glutKeyboardFunc(Keyboard); 
+    glutMouseFunc(Mouse);
     glutMainLoop();
 
     /* ISO C requires main to return int */

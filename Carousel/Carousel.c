@@ -75,544 +75,12 @@ float RotateX[16];
 float RotateZ[16];
 float InitialTransform[16];
 
-/* Buffers for first Model */
+/* Buffers for Carousel */
 
-GLfloat vertex_buffer_data[] = { 
-    
-	 /*Baseplate*/
-    -2.0, -2.0, -1.5,
-     2.0, -2.0, -1.5,
-     2.0,  2.0, -1.5,
-    -2.0,  2.0, -1.5,
+GLfloat* vertex_buffer_data;
+GLushort* index_buffer_data;
+obj_scene_data data;
 
-    -2.0, -2.0, -2.0,
-     2.0, -2.0, -2.0,
-     2.0,  2.0, -2.0,
-    -2.0,  2.0, -2.0,
-
-     0.0, -3.0, -1.5,
-     3.0,  0.0, -1.5,
-     0.0,  3.0, -1.5,
-    -3.0,  0.0, -1.5,
-    
-     0.0, -3.0, -2.0,
-     3.0,  0.0, -2.0,
-     0.0,  3.0, -2.0,
-    -3.0,  0.0, -2.0,
-  
-
-	 /*Topplate*/
-    -2.0, -2.0, 2.0,
-     2.0, -2.0, 2.0,
-     2.0,  2.0, 2.0,
-    -2.0,  2.0, 2.0,
-
-    -2.0, -2.0, 2.2,
-     2.0, -2.0, 2.2,
-     2.0,  2.0, 2.2,
-    -2.0,  2.0, 2.2,
-
-     0.0, -3.0, 2.0,
-     3.0,  0.0, 2.0,
-     0.0,  3.0, 2.0,
-    -3.0,  0.0, 2.0,
-    
-     0.0, -3.0, 2.2,
-     3.0,  0.0, 2.2,
-     0.0,  3.0, 2.2,
-    -3.0,  0.0, 2.2,
-
-     
-     0.0,  0.0, 4.0, //index 32
-
-
-	 /*Center pole*/
-     0.2,  0.2,-1.5,//index 33
-    -0.2,  0.2,-1.5,
-    -0.2, -0.2,-1.5,
-     0.2, -0.2,-1.5,
-    
-     0.2,  0.2, 2.0,//index 37
-    -0.2,  0.2, 2.0,
-    -0.2, -0.2, 2.0,
-     0.2, -0.2, 2.0,
- 
-
-	 /*1st pole*/
-    -1.9, -1.9, -1.5,//index 41
-    -1.9, -1.8, -1.5,
-    -1.8, -1.8, -1.5,
-    -1.8, -1.9, -1.5,
-
-    -1.9, -1.9, 2.0,//index 45
-    -1.9, -1.8, 2.0,
-    -1.8, -1.8, 2.0,
-    -1.8, -1.9, 2.0,
-    
-
-	/*2nd pole*/
-    1.9, 1.9, -1.5,//index 49
-    1.9, 1.8, -1.5,
-    1.8, 1.8, -1.5,
-    1.8, 1.9, -1.5,
-    
-    1.9, 1.9,  2.0,//index 53
-    1.9, 1.8,  2.0,
-    1.8, 1.8,  2.0,
-    1.8, 1.9,  2.0,
-	/*3rd pole*/
-    1.9, -1.9, -1.5,//index 57
-    1.9, -1.8, -1.5,
-    1.8, -1.8, -1.5,
-    1.8, -1.9, -1.5,
-    
-    1.9, -1.9, 2.0,//index 61
-    1.9, -1.8, 2.0,
-    1.8, -1.8, 2.0,
-    1.8, -1.9, 2.0,
-
-
-	/*4th pole*/
-    -1.9, 1.9, -1.5,//index 65
-    -1.9, 1.8, -1.5,
-    -1.8, 1.8, -1.5,
-    -1.8, 1.9, -1.5,
-    
-    -1.9, 1.9, 2.0,//index 69
-    -1.9, 1.8, 2.0,
-    -1.8, 1.8, 2.0,
-    -1.8, 1.9, 2.0,
-
-    
-	/*Groundplate*/
-    -2.2, -2.2, -1.85,//index 73
-     2.2, -2.2, -1.85,
-     2.2,  2.2, -1.85,
-    -2.2,  2.2, -1.85,
-
-    -2.2, -2.2, -2.0,
-     2.2, -2.2, -2.0,
-     2.2,  2.2, -2.0,
-    -2.2,  2.2, -2.0,
-
-     0.0, -3.2, -1.85,
-     3.2,  0.0, -1.85,
-     0.0,  3.2, -1.85,
-    -3.2,  0.0, -1.85,
-    
-     0.0, -3.2, -2.0,
-     3.2,  0.0, -2.0,
-     0.0,  3.2, -2.0,
-    -3.2,  0.0, -2.0,
-     
-     
-
-	 /*5th plole*/
-     0.0, -2.9, 2.2, //index 89
-     0.0, -2.8, 2.2,
-     0.1, -2.8, 2.2,
-     0.1, -2.9, 2.2,
-
-     0.0, -2.9, -1.5,
-     0.0, -2.8, -1.5,
-     0.1, -2.8, -1.5,
-     0.1, -2.9, -1.5,
-
-	 /*6th pole*/
-     0.0, 2.9, 2.2, //index 97
-     0.0, 2.8, 2.2,
-    -0.1, 2.8, 2.2,
-    -0.1, 2.9, 2.2,
-
-     0.0, 2.9, -1.5,
-     0.0, 2.8, -1.5,
-    -0.1, 2.8, -1.5,
-    -0.1, 2.9, -1.5,
-
-
-	 /*7th pole*/
-     2.9, 0.0, 2.2,//index 105
-     2.9, 0.1, 2.2,
-     2.8, 0.1, 2.2,
-     2.8, 0.0, 2.2,
-     
-     2.9, 0.0, -1.5,
-     2.9, 0.1, -1.5,
-     2.8, 0.1, -1.5,
-     2.8, 0.0, -1.2,
-    
-	 /*8th pole*/
-     -2.9,  0.0, 2.2,//index 113
-     -2.9, -0.1, 2.2,
-     -2.8, -0.1, 2.2,
-     -2.8,  0.0, 2.2,
-     
-     -2.9,  0.0, -1.5,
-     -2.9, -0.1, -1.5,
-     -2.8, -0.1, -1.5,
-     -2.8,  0.0, -1.5, //index 120  
-
-    
-       
-};   
-
-
-GLfloat color_buffer_data[] = { 
-    
-	/*Baseplate*/
-    0.0, 0.0, 1.0,
-    1.0, 0.0, 0.0,
-    1.0, 1.0, 0.0,
-    1.0, 0.0, 0.0,
-    1.0, 0.0, 0.0,   
-    1.0, 1.0, 0.0,
-    0.0, 1.0, 0.0,
-    1.0, 1.0, 0.0,
-    1.0, 0.0, 0.0, 
-    1.0, 0.0, 0.0,
-    1.0, 0.0, 0.0,
-    1.0, 0.3, 0.0, 
-    1.0, 0.3, 0.0,
-    1.0, 0.3, 0.0,
-    0.0, 0.0, 1.0,
-    1.0, 1.0, 0.0,
-    
- 
-	/*Topplate*/
-    0.0, 1.0, 1.0,
-    0.0, 1.0, 1.0,
-    1.0, 0.0, 0.0,
-    1.0, 1.0, 0.0,
-    0.0, 1.0, 0.0,
-    0.0, 1.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 1.0, 0.0,    
-    0.0, 1.0, 0.0,
-    0.0, 1.0, 0.0,
-
-
-	/*Peek*/
-    0.0, 1.0, 0.0,
-
-
-	/*mittelstange*/
-    1.0,1.0,0.0,
-    1.0,1.0,0.0,
-    1.0,1.0,0.0,
-    1.0,1.0,0.0,
-    1.0,1.0,0.0,
-    1.0,1.0,0.0,
-    1.0,1.0,0.0,
-    1.0,1.0,0.0,
-
-	/*1st pole*/
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0, 
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-	
-	/*2nd pole*/
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0, 
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-   
-	/*3rd pole*/
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0, 
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-   
-	/*4th pole*/
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    1.0,0.0,0.0, 
-    1.0,0.0,0.0,
-    1.0,0.0,0.0,
-    	
-   /*Groundplate*/
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-   0.0,1.0,0.0,
-
-	/*5th pole*/
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0, 
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-
-	/*6th pole*/
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0, 
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-
-	/*7th pole*/
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0, 
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-
-	/*8th pole*/
-   0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-    0.0,0.5,1.0, 
-    0.0,0.5,1.0,
-    0.0,0.5,1.0,
-
-
-  
-}; 
-
-GLushort index_buffer_data[] = { 
-    
-	/*Baseplate*/
-    0, 1, 3,
-    1, 2, 3,
-    0, 8, 1,
-    1, 9, 2,
-    2,10, 3,
-    3,11, 0,
-
-    7, 5, 4,
-    7, 5, 6,
-    4,12, 5,
-    5,13, 6,
-    6,14, 7,
-    7,15, 4,
- 
-    4, 8,12,
-    4, 8, 0,
-   12, 1, 5,
-   12, 1, 8,
-    5, 9,13,
-    5, 9, 1,
-   13, 2, 6,
-   13, 2, 9,
-    6,10,14,
-    6,10, 2,
-   14, 3, 7,
-   14, 3,10,
-    7,11,15,
-    7,11, 3,
-   15, 0, 4,
-   15, 0,11,
-  
-
-	/*Topplate*/
-    16,17,19,
-    17,18,19,
-    16,24,17,
-    17,25,18,
-    18,26,19,
-    19,27,16,
-
-    23,21,20,
-    23,21,22,
-    20,28,21,
-    21,29,22,
-    22,30,23,
-    23,31,21,
-
-    20,24,28,
-    20,24,16,
-    28,17,21,
-    28,17,24,
-    21,25,29,
-    21,25,17,
-    29,18,22,
-    29,18,25,
-    22,26,30,
-    22,26,18,
-    30,19,23,
-    30,19,26,
-    23,27,31,
-    23,27,19,
-    31,16,20,
-    31,16,27,
-    
-    /*Roof*/
-   19,26,32,
-   26,18,32,
-   18,25,32,
-   25,17,32,
-   17,24,32,
-   24,16,32,
-   16,27,32,
-   27,19,32,
-   
-
-   /*center pole*/
-   33,34,37,
-   38,37,34,
-   34,35,38,
-   38,35,39,
-   35,36,39,
-   39,40,36,
-   36,33,40,
-   37,40,33,
-
-   /*1st pole*/
-   41,44,45,
-   45,48,44,
-   41,42,45,
-   45,46,42,
-   42,43,46,
-   46,47,43,
-   43,44,48,
-   48,47,43,
-
-   /*2nd pole*/
-   49,52,53,
-   53,56,52,
-   49,50,53,
-   53,54,50,
-   50,51,54,
-   54,55,51,
-   51,52,56,
-   56,55,51,
-
-   
-   /*3rd pole*/
-   57,60,61,
-   61,64,60,
-   57,58,61,
-   61,62,58,
-   58,59,62,
-   62,63,59,
-   59,60,64,
-   64,63,59,
-
-   /*4th pole*/
-   65,68,69,
-   69,72,68,
-   65,66,69,
-   69,70,66,
-   66,67,70,
-   70,71,67,
-   67,68,72,
-   72,71,67,
-   
-   /*5th pole*/
-   89,92,93,
-   93,96,92,
-   89,90,93,
-   93,94,90,
-   90,91,94,
-   94,95,91,
-   91,92,96,
-   96,95,91,
-
-    /*6th pole*/
-	97,100,101,
-	101,104,100,
-	97,98,101,
-	101,102,98,
-	98,99,102,
-	102,103,99,
-	99,100,104,
-	104,103,99,
-
-	/*7th pole*/
-	105,108,109,
-	109,112,108,
-	105,106,109,
-	109,110,106,
-	106,107,110,
-	110,111,107,
-	107,108,112,
-	112,111,107,
-
-	/*8th pole*/
-	113,116,117,
-	117,120,116,
-	113,114,117,
-	117,118,114,
-	114,115,118,
-	118,119,115,
-	115,116,120,
-	120,119,115,
-	
-	/*Groundplate*/	   
-	73,74,76,
-	74,75,76,
-	73,81,74,
-	74,82,75,
-	75,83,76,
-	76,84,73,
-	80,78,77,
-	80,78,79,
-	77,85,78,
-	78,86,79,
-	79,87,80,
-	80,88,77,
-	77,81,85,
-	77,81,73,
-	85,74,78,
-	85,74,81,
-	78,82,86,
-	78,82,74,
-	86,75,79,
-	86,75,82,
-	79,83,87,
-	79,83,75,
-	87,76,80,
-	87,76,83,
-	80,84,88,
-	80,84,76,
-	88,73,77,
-	88,73,84,
-	    
-};
 /* Buffer for Room */
 
 GLfloat vertex_buffer_data2[] = {
@@ -685,7 +153,7 @@ void Display()
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ViewMatrix"), 1, GL_TRUE, ViewMatrix);     
     
     /** Carousel **/
-    setupAndDraw(VBO, CBO, IBO, ShaderProgram, ModelMatrix);
+    setupAndDraw(VBO, 0, IBO, ShaderProgram, ModelMatrix);
     
     /* Disable attributes */
     glDisableVertexAttribArray(vPosition);
@@ -704,7 +172,7 @@ void Display()
 	setupAndDraw(VBO5, 0, IBO5, ShaderProgram5, Model5Matrix);
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
     /* Swap between front and back buffer */ 
     glutSwapBuffers();
@@ -799,6 +267,7 @@ void OnIdle()
     float angle = (glutGet(GLUT_ELAPSED_TIME) / 1000.0) * (180.0/M_PI); 
     float RotationMatrixAnim[16];
     
+    float TranslationMatrixMove[16];
     float TranslationMatrixMove2[16];
     float TranslationMatrixMove3[16];
     float TranslationMatrixMove4[16];
@@ -808,34 +277,44 @@ void OnIdle()
     float RotationMatrixY2[16];
     float RotationMatrixY3[16];
     float RotationMatrixY4[16];
+    float ScalingMatrixCarousel[16];
     float ScalingMatrix[16];
-
+	
     /* Time dependent rotation */
     SetRotationY(angle, RotationMatrixAnim);
     
     /* Move the pigs */
-    SetTranslation(-0.7, 0.6, 2.8, TranslationMatrixMove2);
-    SetTranslation(0.7, 0.6, -2.8, TranslationMatrixMove3);
-    SetTranslation(2.8, 0.6, 0.7, TranslationMatrixMove4);
-    SetTranslation(-2.8, 0.6, -0.7, TranslationMatrixMove5);
+    SetTranslation(-0.7, 0.6, 3.3, TranslationMatrixMove2);
+    SetTranslation(0.7, 0.6, -3.3, TranslationMatrixMove3);
+    SetTranslation(3.3, 0.6, 0.7, TranslationMatrixMove4);
+    SetTranslation(-3.3, 0.6, -0.7, TranslationMatrixMove5);
     
-    /* Rotate and scale the pigs */
+    /* Rotate and scale for the pigs */
     SetRotationX(90, RotationMatrixX);
     SetRotationY(90, RotationMatrixY2);
     SetRotationY(-90, RotationMatrixY3);
     SetRotationY(180, RotationMatrixY4);
     setScalingS(0.7, ScalingMatrix);
     
+    /* Translate and scale for carousel*/
+    setScalingS(2, ScalingMatrixCarousel);
+    SetTranslation(0.0, -3.0, 0.0, TranslationMatrixMove);
+    
     /* Sliding animation */
     SetTranslation(0.0, sinf(angle/100), 0.0, TranslationMatrixSlide);
 
+
     /* Apply carousel rotation and move carousel down */
-    MultiplyMatrix(RotationMatrixAnim, InitialTransform, ModelMatrix);
+    MultiplyMatrix(RotationMatrixAnim ,InitialTransform, ModelMatrix);
+    MultiplyMatrix(ScalingMatrixCarousel, ModelMatrix, ModelMatrix);
+    MultiplyMatrix(TranslationMatrixMove, ModelMatrix, ModelMatrix);
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
+    
     
     /* Room */
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model6Matrix);
 	MultiplyMatrix(TranslateDown, Model6Matrix, Model6Matrix);
+    
     
     /* Applay Transformation on the pigs */
     /* Rotate pigs on X */
@@ -892,18 +371,15 @@ void SetupDataBuffers()
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 	
-	/* First Model */
+	/* Carousel */
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data), vertex_buffer_data, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW);  
+    
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data), index_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.face_count*3*sizeof(GLushort), index_buffer_data, GL_STATIC_DRAW);
 
-    glGenBuffers(1, &CBO);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data), color_buffer_data, GL_STATIC_DRAW);
 
 	/* Room */
 	glGenBuffers(1, &VBO6);
@@ -1096,20 +572,47 @@ void Initialize(void)
 	int i;
     int success;
 
-	/* Load first OBJ model */
-    char* filename1 = "models/pig.obj"; 
-    success = parse_obj_scene(&data3, filename1);
+	/* Load pig OBJ model */
+    char* filename1 = "models/carousel.obj"; 
+    success = parse_obj_scene(&data, filename1);
 
     if(!success)
-        printf("Could not load file. Exiting.\n");
+        printf("Could not load file pig. Exiting.\n");
         
     /*  Copy mesh data from structs into appropriate arrays */ 
-    int vert = data3.vertex_count;
-    int indx = data3.face_count;
+    int vert = data.vertex_count;
+    int indx = data.face_count;
+    vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
+    /* Vertices */
+    for(i=0; i<vert; i++)
+    {
+        vertex_buffer_data[i*3] = (GLfloat)(*data.vertex_list[i]).e[0];
+		vertex_buffer_data[i*3+1] = (GLfloat)(*data.vertex_list[i]).e[1];
+		vertex_buffer_data[i*3+2] = (GLfloat)(*data.vertex_list[i]).e[2];
+    }
+    /* Indices */
+    for(i=0; i<indx; i++)
+    {
+		index_buffer_data[i*3] = (GLushort)(*data.face_list[i]).vertex_index[0];
+		index_buffer_data[i*3+1] = (GLushort)(*data.face_list[i]).vertex_index[1];
+		index_buffer_data[i*3+2] = (GLushort)(*data.face_list[i]).vertex_index[2];
+    }
+	
 
+
+	/* Load pig OBJ model */
+    char* filename2 = "models/pig.obj"; 
+    success = parse_obj_scene(&data3, filename2);
+
+    if(!success)
+        printf("Could not load file pig. Exiting.\n");
+        
+    /*  Copy mesh data from structs into appropriate arrays */ 
+    vert = data3.vertex_count;
+    indx = data3.face_count;
     vertex_buffer_data3 = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
     index_buffer_data3 = (GLushort*) calloc (indx*3, sizeof(GLushort));
-  
     /* Vertices */
     for(i=0; i<vert; i++)
     {
@@ -1117,7 +620,6 @@ void Initialize(void)
 		vertex_buffer_data3[i*3+1] = (GLfloat)(*data3.vertex_list[i]).e[1];
 		vertex_buffer_data3[i*3+2] = (GLfloat)(*data3.vertex_list[i]).e[2];
     }
-
     /* Indices */
     for(i=0; i<indx; i++)
     {

@@ -35,6 +35,9 @@
 /* Flag for starting/stopping animation */
 GLboolean anim = GL_TRUE;
 
+/* Reference time for animation */
+int oldTime = 0;
+
 /* Define handle to a vertex buffer object */
 GLuint VBO, VBO2, VBO3, VBO4, VBO5, VBO6;
 
@@ -255,6 +258,13 @@ void Keyboard(unsigned char key, int x, int y)
 			anim = GL_TRUE;
 		break;
 
+	case 'r':
+		if (rotationMode == clockwise)
+			rotationMode = counterclockwise;
+		else 
+			rotationMode = clockwise;
+		break;
+		
 	case 'o':
 	    
 	    break;
@@ -277,8 +287,16 @@ void Keyboard(unsigned char key, int x, int y)
 
 void OnIdle()
 {	
-    float angle = (anim) ? (glutGet(GLUT_ELAPSED_TIME) / 1000.0) * (180.0/M_PI):0;
-    float slide_angle = (anim) ? sinf(angle/100):0;
+	/* Determine delta time between two frames to ensure constant animation */
+	int newTime = glutGet(GLUT_ELAPSED_TIME);
+	int delta = 0;
+	if (!anim){
+		delta += newTime - oldTime;
+	}
+    oldTime = newTime - delta;
+	
+    float angle = (oldTime / 1000.0) * (180.0/M_PI);
+    float slide_angle = sinf(angle/100);
     float RotationMatrixAnim[16];
     
     float TranslationMatrixMove[16];
@@ -325,6 +343,10 @@ void OnIdle()
 	float RotationMatrixAnimView[16];
 	float TranslationMatrixView[16];
 	float RotationMatrixViewX[16];
+	
+	if (rotationMode == clockwise){
+		viewRotationAngle = -viewRotationAngle;
+	}
 	SetRotationY(viewRotationAngle/2, RotationMatrixAnimView);
 	SetTranslation(0.0, -10.0, -12.0, TranslationMatrixView);
 	SetRotationX(45, RotationMatrixViewX);

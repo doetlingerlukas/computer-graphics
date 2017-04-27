@@ -94,6 +94,15 @@ GLfloat* color_buffer_data;
 GLushort* index_buffer_data;
 obj_scene_data data;
 
+//For Cameron Diaz Motion ====================================================
+float mouseMatrix[16];
+float rotate_x = 0;
+float rotate_y = 0;
+int mouse_x;
+int mouse_y;
+
+//===========================================================================
+
 /* Buffer for Room */
 GLfloat vertex_buffer_data2[] = {
 	// Floor 
@@ -156,11 +165,13 @@ obj_scene_data data3;
 
 void Display(){
     /* Clear window; color specified in 'Initialize()' */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   
+   
 	
     /* Associate carousel Model with shader matrices */
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ProjectionMatrix"), 1, GL_TRUE, ProjectionMatrix);
-    glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ViewMatrix"), 1, GL_TRUE, ViewMatrix);     
+    glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ViewMatrix"), 1, GL_TRUE, ViewMatrix);    
+       
     
     /** Carousel **/
     setupAndDraw(VBO, CBO, IBO, ShaderProgram, ModelMatrix);
@@ -181,6 +192,8 @@ void Display(){
 	setupAndDraw(VBO4, 0, IBO4, ShaderProgram4, Model4Matrix);
 	setupAndDraw(VBO5, 0, IBO5, ShaderProgram5, Model5Matrix);
 	
+	
+	
 	/* Only draw lines. At this point necessary for drawing the obj file */
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
@@ -196,6 +209,21 @@ void Display(){
 * with glutMouseFunc(), x and y specify mouse coordinates
 *
 *******************************************************************/
+
+void mouse_passive(int x, int y){
+  mouse_x = x;
+  mouse_y = y;
+}
+
+void mouse_motion(int x, int y){
+  static const float SPEED = 0.1 / (2 * M_PI);
+
+  rotate_x += (mouse_y - y) * SPEED; // rotate around x axis when mouse moves up/down
+  rotate_y += (mouse_x - x) * SPEED; // rotate around y axis when mouse moves left/right
+
+  mouse_passive(x, y);
+  glutPostRedisplay();
+}
 
 void Mouse(int button, int state, int x, int y) {
    
@@ -767,7 +795,8 @@ int main(int argc, char** argv){
     glutIdleFunc(OnIdle);
     glutDisplayFunc(Display);
     glutKeyboardFunc(Keyboard); 
-    glutMouseFunc(Mouse);
+    glutMotionFunc(mouse_motion);
+	glutPassiveMotionFunc(mouse_passive);
     glutMainLoop();
 
     /* ISO C requires main to return int */

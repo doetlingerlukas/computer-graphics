@@ -198,10 +198,13 @@ void Display(){
 *******************************************************************/
 
 void Mouse(int button, int state, int x, int y) {
+   
+
     if(state == GLUT_DOWN) {
       /* Depending on button pressed, set rotation axis,
        * turn on animation */
-        switch(button){
+        
+	switch(button){
 	    case GLUT_LEFT_BUTTON:    
 	        rotationMode = clockwise;
 			break;

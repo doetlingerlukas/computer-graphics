@@ -84,7 +84,7 @@ float InitialTransform[16];
 enum {clockwise=1, counterclockwise=2};
 int rotationMode = counterclockwise; 
 /* Indices for different camera modes */
-enum {Default=0, Mode1=1, Mode2=2};
+enum {Default=0, Mode1=1, Mode2=2, Pause=3};
 int cameraMode = Default; 
 /* Indices for different rotation speeds */
 enum {slow=4, standard=2, fast=1};
@@ -286,7 +286,14 @@ void Keyboard(unsigned char key, int x, int y)   {
 		break;
 
 	/* Toggle animation */
-	case 's':
+	case 'p':
+		if (cameraMode == Pause)
+			cameraMode = Mode1;
+		else 
+			cameraMode = Pause;
+		break;
+	
+	case 'b':
 		if (anim)
 			anim = GL_FALSE;		
 		else

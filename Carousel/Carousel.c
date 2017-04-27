@@ -154,8 +154,7 @@ obj_scene_data data3;
 *
 *******************************************************************/
 
-void Display()
-{
+void Display(){
     /* Clear window; color specified in 'Initialize()' */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
 	
@@ -198,14 +197,11 @@ void Display()
 *
 *******************************************************************/
 
-void Mouse(int button, int state, int x, int y) 
-{
-    if(state == GLUT_DOWN) 
-    {
+void Mouse(int button, int state, int x, int y) {
+    if(state == GLUT_DOWN) {
       /* Depending on button pressed, set rotation axis,
        * turn on animation */
-        switch(button) 
-	{
+        switch(button){
 	    case GLUT_LEFT_BUTTON:    
 	        rotationMode = clockwise;
 			break;
@@ -232,10 +228,8 @@ void Mouse(int button, int state, int x, int y)
 *
 *******************************************************************/
 
-void Keyboard(unsigned char key, int x, int y)   
-{
-    switch( key ) 
-    {
+void Keyboard(unsigned char key, int x, int y)   {
+    switch( key ) {
 	/* Activate model one or two */
 	case '1': 
 		cameraMode = Mode1;
@@ -285,8 +279,7 @@ void Keyboard(unsigned char key, int x, int y)
 *
 *******************************************************************/
 
-void OnIdle()
-{	
+void OnIdle(){	
 	/* Determine delta time between two frames to ensure constant animation */
 	int newTime = glutGet(GLUT_ELAPSED_TIME);
 	int delta = 0;
@@ -420,9 +413,7 @@ void OnIdle()
 *
 *******************************************************************/
 
-void SetupDataBuffers()
-{
-
+void SetupDataBuffers(){
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 	
@@ -498,8 +489,7 @@ void SetupDataBuffers()
 *
 *******************************************************************/
 
-void AddShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
-{
+void AddShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType){
     /* Create shader object */
     GLuint ShaderObj = glCreateShader(ShaderType);
 
@@ -541,8 +531,7 @@ void AddShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType)
 *
 *******************************************************************/
 
-void CreateShaderProgram()
-{
+void CreateShaderProgram(){
     /* Allocate shader object */
     ShaderProgram = glCreateProgram();
     ShaderProgram2 = glCreateProgram();
@@ -551,8 +540,7 @@ void CreateShaderProgram()
     ShaderProgram5 = glCreateProgram();
     ShaderProgram6 = glCreateProgram();
 
-    if (ShaderProgram == 0) 
-    {
+    if (ShaderProgram == 0) {
         fprintf(stderr, "Error creating shader program\n");
         exit(1);
     }
@@ -589,8 +577,7 @@ void CreateShaderProgram()
     /* Check results of linking step */
     glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
 
-    if (Success == 0) 
-    {
+    if (Success == 0) {
         glGetProgramInfoLog(ShaderProgram, sizeof(ErrorLog), NULL, ErrorLog);
         fprintf(stderr, "Error linking shader program: '%s'\n", ErrorLog);
         exit(1);
@@ -600,8 +587,7 @@ void CreateShaderProgram()
     glValidateProgram(ShaderProgram);
     glGetProgramiv(ShaderProgram, GL_VALIDATE_STATUS, &Success);
 
-    if (!Success) 
-    {
+    if (!Success) {
         glGetProgramInfoLog(ShaderProgram, sizeof(ErrorLog), NULL, ErrorLog);
         fprintf(stderr, "Invalid shader program: '%s'\n", ErrorLog);
         exit(1);
@@ -626,8 +612,7 @@ void CreateShaderProgram()
 *
 *******************************************************************/
 
-void Initialize(void)
-{   
+void Initialize(void){   
 	int i;
     int success;
 
@@ -645,22 +630,19 @@ void Initialize(void)
     color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
-    for(i=0; i<vert; i++)
-    {
+    for(i=0; i<vert; i++){
         vertex_buffer_data[i*3] = (GLfloat)(*data.vertex_list[i]).e[0];
 		vertex_buffer_data[i*3+1] = (GLfloat)(*data.vertex_list[i]).e[1];
 		vertex_buffer_data[i*3+2] = (GLfloat)(*data.vertex_list[i]).e[2];
     }
     /* Colors */
-    for(i=0; i<indx; i++)
-    {
+    for(i=0; i<indx; i++){
 		color_buffer_data[i*3] = (rand() % 100) / 100.0;
 		color_buffer_data[i*3+1] = (rand() % 100) / 100.0;
 		color_buffer_data[i*3+2] = (rand() % 100) / 100.0;
     }
     /* Indices */
-    for(i=0; i<indx; i++)
-    {
+    for(i=0; i<indx; i++){
 		index_buffer_data[i*3] = (GLushort)(*data.face_list[i]).vertex_index[0];
 		index_buffer_data[i*3+1] = (GLushort)(*data.face_list[i]).vertex_index[1];
 		index_buffer_data[i*3+2] = (GLushort)(*data.face_list[i]).vertex_index[2];
@@ -681,15 +663,13 @@ void Initialize(void)
     vertex_buffer_data3 = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
     index_buffer_data3 = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
-    for(i=0; i<vert; i++)
-    {
+    for(i=0; i<vert; i++){
         vertex_buffer_data3[i*3] = (GLfloat)(*data3.vertex_list[i]).e[0];
 		vertex_buffer_data3[i*3+1] = (GLfloat)(*data3.vertex_list[i]).e[1];
 		vertex_buffer_data3[i*3+2] = (GLfloat)(*data3.vertex_list[i]).e[2];
     }
     /* Indices */
-    for(i=0; i<indx; i++)
-    {
+    for(i=0; i<indx; i++){
 		index_buffer_data3[i*3] = (GLushort)(*data3.face_list[i]).vertex_index[0];
 		index_buffer_data3[i*3+1] = (GLushort)(*data3.face_list[i]).vertex_index[1];
 		index_buffer_data3[i*3+2] = (GLushort)(*data3.face_list[i]).vertex_index[2];
@@ -755,8 +735,7 @@ void Initialize(void)
 *
 *******************************************************************/
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv){
     /* Initialize GLUT; set double buffered window and RGBA color model */
     glutInit(&argc, argv);
 
@@ -771,8 +750,7 @@ int main(int argc, char** argv)
     /* Initialize GL extension wrangler */
     glewExperimental = GL_TRUE;
     GLenum res = glewInit();
-    if (res != GLEW_OK) 
-    {
+    if (res != GLEW_OK){
         fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
         return 1;
     }

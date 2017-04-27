@@ -78,6 +78,7 @@ float InitialTransform[16];
 /* Buffers for Carousel */
 
 GLfloat* vertex_buffer_data;
+GLfloat* color_buffer_data;
 GLushort* index_buffer_data;
 obj_scene_data data;
 
@@ -153,7 +154,7 @@ void Display()
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ViewMatrix"), 1, GL_TRUE, ViewMatrix);     
     
     /** Carousel **/
-    setupAndDraw(VBO, 0, IBO, ShaderProgram, ModelMatrix);
+    setupAndDraw(VBO, CBO, IBO, ShaderProgram, ModelMatrix);
     
     /* Disable attributes */
     glDisableVertexAttribArray(vPosition);
@@ -172,7 +173,7 @@ void Display()
 	setupAndDraw(VBO5, 0, IBO5, ShaderProgram5, Model5Matrix);
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
     /* Swap between front and back buffer */ 
     glutSwapBuffers();
@@ -380,6 +381,10 @@ void SetupDataBuffers()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.face_count*3*sizeof(GLushort), index_buffer_data, GL_STATIC_DRAW);
 
+	glGenBuffers(1, &CBO);
+    glBindBuffer(GL_ARRAY_BUFFER, CBO);
+    glBufferData(GL_ARRAY_BUFFER, data.face_count*3*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);
+
 
 	/* Room */
 	glGenBuffers(1, &VBO6);
@@ -572,7 +577,7 @@ void Initialize(void)
 	int i;
     int success;
 
-	/* Load pig OBJ model */
+	/* Load carousel OBJ model */
     char* filename1 = "models/carousel.obj"; 
     success = parse_obj_scene(&data, filename1);
 
@@ -583,6 +588,7 @@ void Initialize(void)
     int vert = data.vertex_count;
     int indx = data.face_count;
     vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
     for(i=0; i<vert; i++)
@@ -590,6 +596,13 @@ void Initialize(void)
         vertex_buffer_data[i*3] = (GLfloat)(*data.vertex_list[i]).e[0];
 		vertex_buffer_data[i*3+1] = (GLfloat)(*data.vertex_list[i]).e[1];
 		vertex_buffer_data[i*3+2] = (GLfloat)(*data.vertex_list[i]).e[2];
+    }
+    /* Colors */
+    for(i=0; i<indx; i++)
+    {
+		color_buffer_data[i*3] = (rand() % 100) / 100.0;
+		color_buffer_data[i*3+1] = (rand() % 100) / 100.0;
+		color_buffer_data[i*3+2] = (rand() % 100) / 100.0;
     }
     /* Indices */
     for(i=0; i<indx; i++)

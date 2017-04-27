@@ -83,10 +83,12 @@ float InitialTransform[16];
 /* Indices for different rotation modes */
 enum {clockwise=1, counterclockwise=2};
 int rotationMode = counterclockwise; 
-
 /* Indices for different camera modes */
 enum {Default=0, Mode1=1, Mode2=2};
 int cameraMode = Default; 
+/* Indices for different rotation speeds */
+enum {slow=4, standard=2, fast=1};
+int rotationSpeed = standard;
 
 /* Buffers for Carousel */
 GLfloat* vertex_buffer_data;
@@ -177,8 +179,6 @@ obj_scene_data data3;
 void Display(){
     /* Clear window; color specified in 'Initialize()' */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   
-   
-
 	
     /* Associate carousel Model with shader matrices */
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ProjectionMatrix"), 1, GL_TRUE, ProjectionMatrix);
@@ -198,22 +198,11 @@ void Display(){
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor);
     
-   /**Mickey mouse actions**/
-   
-       /*
-    	SetIdentityMatrix(mouseMatrix);
-  	matrix_rotate_y(-rotate_y, mouseMatrix);
-	matrix_rotate_x(-rotate_x, mouseMatrix);*/
-    
     /** Pigs **/
 	setupAndDraw(VBO2, 0, IBO2, ShaderProgram2, Model2Matrix);
 	setupAndDraw(VBO3, 0, IBO3, ShaderProgram3, Model3Matrix);
 	setupAndDraw(VBO4, 0, IBO4, ShaderProgram4, Model4Matrix);
 	setupAndDraw(VBO5, 0, IBO5, ShaderProgram5, Model5Matrix);
-	
-
-
-	
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -311,8 +300,13 @@ void Keyboard(unsigned char key, int x, int y)   {
 			rotationMode = clockwise;
 		break;
 		
-	case 'o':
-	    
+	case '+':
+	    if (rotationSpeed == 4)
+			rotationSpeed = 2;
+		else if (rotationSpeed == 2)
+			rotationSpeed = 1;
+		else 
+			rotationSpeed = 4;
 	    break;
 	    
 	case 'q': case 'Q':  
@@ -392,7 +386,7 @@ void OnIdle(){
 	if (rotationMode == clockwise){
 		viewRotationAngle = -viewRotationAngle;
 	}
-	SetRotationY(viewRotationAngle/2, RotationMatrixAnimView);
+	SetRotationY(viewRotationAngle/rotationSpeed, RotationMatrixAnimView);
 	SetTranslation(0.0, -10.0, -12.0, TranslationMatrixView);
 	SetRotationX(45, RotationMatrixViewX);
 	

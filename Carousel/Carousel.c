@@ -96,6 +96,17 @@ obj_scene_data data;
 
 //For Cameron Diaz Motion ====================================================
 float mouseMatrix[16];
+float projectionMatrix[16];
+float viewMatrix[16];
+float cameraMatrix[16];
+
+float camera_translation_x = 0.0;
+float camera_translation_y = 0.0;
+float camera_rotation_y = 0.0;
+float camera_translation_z = 0.0;
+const float camera_speed = 0.1;
+
+
 float rotate_x = 0;
 float rotate_y = 0;
 int mouse_x;
@@ -167,6 +178,7 @@ void Display(){
     /* Clear window; color specified in 'Initialize()' */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   
    
+
 	
     /* Associate carousel Model with shader matrices */
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ProjectionMatrix"), 1, GL_TRUE, ProjectionMatrix);
@@ -186,12 +198,21 @@ void Display(){
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor);
     
+   /**Mickey mouse actions**/
+   
+       /*
+    	SetIdentityMatrix(mouseMatrix);
+  	matrix_rotate_y(-rotate_y, mouseMatrix);
+	matrix_rotate_x(-rotate_x, mouseMatrix);*/
+    
     /** Pigs **/
 	setupAndDraw(VBO2, 0, IBO2, ShaderProgram2, Model2Matrix);
 	setupAndDraw(VBO3, 0, IBO3, ShaderProgram3, Model3Matrix);
 	setupAndDraw(VBO4, 0, IBO4, ShaderProgram4, Model4Matrix);
 	setupAndDraw(VBO5, 0, IBO5, ShaderProgram5, Model5Matrix);
 	
+
+
 	
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */

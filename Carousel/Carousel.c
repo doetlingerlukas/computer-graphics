@@ -32,6 +32,8 @@
 #include "OBJParser.h"
 
 /*----------------------------------------------------------------*/
+/* Flag for starting/stopping animation */
+GLboolean anim = GL_TRUE;
 
 /* Define handle to a vertex buffer object */
 GLuint VBO, VBO2, VBO3, VBO4, VBO5, VBO6;
@@ -75,26 +77,32 @@ float RotateX[16];
 float RotateZ[16];
 float InitialTransform[16];
 
-/* Buffers for Carousel */
+/* Indices for different rotation modes */
+enum {clockwise=1, counterclockwise=2};
+int rotationMode = counterclockwise; 
 
+/* Indices for different camera modes */
+enum {Default=0, Mode1=1, Mode2=2};
+int cameraMode = Default; 
+
+/* Buffers for Carousel */
 GLfloat* vertex_buffer_data;
 GLfloat* color_buffer_data;
 GLushort* index_buffer_data;
 obj_scene_data data;
 
 /* Buffer for Room */
-
 GLfloat vertex_buffer_data2[] = {
 	// Floor 
-	5.0, -1.0, 5.0,
-	-5.0, -1.0, 5.0,
-	5.0, -1.0, -5.0,
-	-5.0, -1.0, -5.0,
+	7.0, -1.0, 7.0,
+	-7.0, -1.0, 7.0,
+	7.0, -1.0, -7.0,
+	-7.0, -1.0, -7.0,
 	// Roof 
-	5.0, 5.0, 5.0,
-	-5.0, 5.0, 5.0,
-	5.0, 5.0, -5.0,
-	-5.0, 5.0, -5.0,
+	7.0, 4.0, 7.0,
+	-7.0, 4.0, 7.0,
+	7.0, 4.0, -7.0,
+	-7.0, 4.0, -7.0,
 };
 
 GLfloat color_buffer_data2[] = {
@@ -128,7 +136,6 @@ GLushort index_buffer_data2[] = {
 };
 
 /* Buffer for the pigs */
-
 GLfloat* vertex_buffer_data3;
 GLushort* index_buffer_data3;
 obj_scene_data data3;
@@ -197,16 +204,16 @@ void Mouse(int button, int state, int x, int y)
         switch(button) 
 	{
 	    case GLUT_LEFT_BUTTON:    
-	        
-		break;
+	        rotationMode = clockwise;
+			break;
 
 	    case GLUT_MIDDLE_BUTTON:  
   	        
 	        break;
 		
 	    case GLUT_RIGHT_BUTTON: 
-	        
-		break;
+	        rotationMode = counterclockwise;
+			break;
 	}
 	//anim = GL_TRUE;
     }
@@ -228,19 +235,24 @@ void Keyboard(unsigned char key, int x, int y)
     {
 	/* Activate model one or two */
 	case '1': 
-		
+		cameraMode = Mode1;
 		break;
 
 	case '2':
-		 	
+		cameraMode = Mode2;	
+		break;
+		
+	case '0':
+		cameraMode = Default;
+		SetTranslation(0.0, 0.0, -10.0, ViewMatrix);
 		break;
 
 	/* Toggle animation */
-	case '0':
-		//if (anim)
-			//anim = GL_FALSE;		
-		//else
-			//anim = GL_TRUE;
+	case 's':
+		if (anim)
+			anim = GL_FALSE;		
+		else
+			anim = GL_TRUE;
 		break;
 
 	case 'o':
@@ -265,7 +277,8 @@ void Keyboard(unsigned char key, int x, int y)
 
 void OnIdle()
 {	
-    float angle = (glutGet(GLUT_ELAPSED_TIME) / 1000.0) * (180.0/M_PI); 
+    float angle = (anim) ? (glutGet(GLUT_ELAPSED_TIME) / 1000.0) * (180.0/M_PI):0;
+    float slide_angle = (anim) ? sinf(angle/100):0;
     float RotationMatrixAnim[16];
     
     float TranslationMatrixMove[16];
@@ -281,8 +294,14 @@ void OnIdle()
     float ScalingMatrixCarousel[16];
     float ScalingMatrix[16];
 	
+	if(rotationMode == clockwise){
+		angle = -angle;
+		slide_angle = -slide_angle;
+	}
     /* Time dependent rotation */
     SetRotationY(angle, RotationMatrixAnim);
+    /* Sliding animation for pigs */
+    SetTranslation(0.0, slide_angle, 0.0, TranslationMatrixSlide);
     
     /* Move the pigs */
     SetTranslation(-0.7, 0.6, 3.3, TranslationMatrixMove2);
@@ -300,10 +319,23 @@ void OnIdle()
     /* Translate and scale for carousel*/
     setScalingS(2, ScalingMatrixCarousel);
     SetTranslation(0.0, -3.0, 0.0, TranslationMatrixMove);
-    
-    /* Sliding animation */
-    SetTranslation(0.0, sinf(angle/100), 0.0, TranslationMatrixSlide);
 
+	/* View changes */
+	float viewRotationAngle = (glutGet(GLUT_ELAPSED_TIME) / 1000.0) * (180.0/M_PI);
+	float RotationMatrixAnimView[16];
+	float TranslationMatrixView[16];
+	float RotationMatrixViewX[16];
+	SetRotationY(viewRotationAngle/2, RotationMatrixAnimView);
+	SetTranslation(0.0, -10.0, -12.0, TranslationMatrixView);
+	SetRotationX(45, RotationMatrixViewX);
+	
+	if (cameraMode == Mode1){
+		SetTranslation(0.0, 0.0, 0.0, ViewMatrix);
+		MultiplyMatrix(RotationMatrixAnimView, ViewMatrix, ViewMatrix);
+		MultiplyMatrix(TranslationMatrixView, ViewMatrix, ViewMatrix);
+		MultiplyMatrix(RotationMatrixViewX, ViewMatrix, ViewMatrix);
+	}
+    
 
     /* Apply carousel rotation and move carousel down */
     MultiplyMatrix(RotationMatrixAnim ,InitialTransform, ModelMatrix);
@@ -567,8 +599,8 @@ void CreateShaderProgram()
 *
 * Initialize
 *
-* This function is called to initialize rendering elements, setup
-* vertex buffer objects, and to setup the vertex and fragment shader
+* This function is called to initialize rendering elements, load obj objects,
+* setup vertex buffer objects, and to setup the vertex and fragment shader
 *
 *******************************************************************/
 
@@ -670,13 +702,14 @@ void Initialize(void)
     /* Set projection transform */
     float fovy = 45.0;
     float aspect = 1.0; 
-    float nearPlane = 1.0; 
+    float nearPlane = 0.25; 
     float farPlane = 50.0;
     SetPerspectiveMatrix(fovy, aspect, nearPlane, farPlane, ProjectionMatrix);
 	
     /* Set viewing transform */
     float camera_disp = -10.0;
     SetTranslation(0.0, 0.0, camera_disp, ViewMatrix);
+    
 
     /* Translate and rotate carousel into right position */
     SetTranslation(0, 0, 1, TranslateOrigin);

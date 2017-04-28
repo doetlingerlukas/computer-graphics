@@ -96,7 +96,7 @@ GLfloat* color_buffer_data;
 GLushort* index_buffer_data;
 obj_scene_data data;
 
-/* Mouse motion */
+/* Mouse and keyboard motion */
 float camera_z = 0;
 float camera_y = 0;
 float camera_x = 0;
@@ -234,23 +234,18 @@ void mouseMotion(int x, int y){
 void Mouse(int button, int state, int x, int y) {
    
     if(state == GLUT_DOWN) {
-      /* Depending on button pressed, set rotation axis,
-       * turn on animation */
         
-	switch(button){
-	    case GLUT_LEFT_BUTTON:    
+		switch(button){
 			
+		case GLUT_LEFT_BUTTON:    
 			break;
-
-	    case GLUT_MIDDLE_BUTTON:  
-  	        
-	        break;
+			
+		case GLUT_MIDDLE_BUTTON:  
+			break;
 		
-	    case GLUT_RIGHT_BUTTON: 
-	        
+		case GLUT_RIGHT_BUTTON: 
 			break;
 		}
-	//anim = GL_TRUE;
     }
 }
 
@@ -265,6 +260,7 @@ void Mouse(int button, int state, int x, int y) {
 *******************************************************************/
 
 void Keyboard(unsigned char key, int x, int y)   {
+    
     switch( key ) {
 	/* Switch camera modes */
 	case '1': 
@@ -701,7 +697,7 @@ void Initialize(void){
     success = parse_obj_scene(&data, filename1);
 
     if(!success)
-        printf("Could not load file pig. Exiting.\n");
+        printf("Could not load file carousel. Exiting.\n");
         
     /*  Copy mesh data from structs into appropriate arrays */ 
     int vert = data.vertex_count;

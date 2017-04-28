@@ -96,25 +96,15 @@ GLfloat* color_buffer_data;
 GLushort* index_buffer_data;
 obj_scene_data data;
 
-//For Cameron Diaz Motion ====================================================
-float mouseMatrix[16];
-float projectionMatrix[16];
-float viewMatrix[16];
-float cameraMatrix[16];
-
-float camera_translation_x = 0.0;
-float camera_translation_y = 0.0;
-float camera_rotation_y = 0.0;
-float camera_translation_z = 0.0;
-const float camera_speed = 0.1;
-
-
+/* Mouse motion */
+float camera_z = 0;
+float camera_y = 0;
+float camera_x = 0;
 float rotate_x = 0;
 float rotate_y = 0;
-int mouse_x;
-int mouse_y;
+int mouse_oldx;
+int mouse_oldy;
 
-//===========================================================================
 
 /* Buffer for Room */
 GLfloat vertex_buffer_data2[] = {
@@ -217,34 +207,39 @@ void Display(){
 *
 * Function is called on mouse button press; has been seta
 * with glutMouseFunc(), x and y specify mouse coordinates
+* 
+* mouseMotion
+* 
+* Function to control the view in cameraMode 2; has been 
+* set with glutMotionFunc(), x and y specify mouse coordinates
 *
 *******************************************************************/
 
-void mouse_passive(int x, int y){
-  mouse_x = x;
-  mouse_y = y;
-}
-
-void mouse_motion(int x, int y){
-  static const float SPEED = 0.1 / (2 * M_PI);
-
-  rotate_x += (mouse_y - y) * SPEED; // rotate around x axis when mouse moves up/down
-  rotate_y += (mouse_x - x) * SPEED; // rotate around y axis when mouse moves left/right
-
-  mouse_passive(x, y);
-  glutPostRedisplay();
+void mouseMotion(int x, int y){
+	float SPEED = 0.1 / (2 * M_PI);
+	
+	if(cameraMode == Mode2){
+		rotate_x += -(mouse_oldy - y) * SPEED; 
+		rotate_y += -(mouse_oldx - x) * SPEED; 
+		printf("rx:%f, ry:%f \n", rotate_x, rotate_y);
+		
+		mouse_oldx = x;
+		mouse_oldy = y;
+		printf("x:%d, y:%d\n", mouse_oldx, mouse_oldy);
+	}
+	
+	glutPostRedisplay();
 }
 
 void Mouse(int button, int state, int x, int y) {
    
-
     if(state == GLUT_DOWN) {
       /* Depending on button pressed, set rotation axis,
        * turn on animation */
         
 	switch(button){
 	    case GLUT_LEFT_BUTTON:    
-	        rotationMode = clockwise;
+			
 			break;
 
 	    case GLUT_MIDDLE_BUTTON:  
@@ -252,9 +247,9 @@ void Mouse(int button, int state, int x, int y) {
 	        break;
 		
 	    case GLUT_RIGHT_BUTTON: 
-	        rotationMode = counterclockwise;
+	        
 			break;
-	}
+		}
 	//anim = GL_TRUE;
     }
 }
@@ -271,15 +266,15 @@ void Mouse(int button, int state, int x, int y) {
 
 void Keyboard(unsigned char key, int x, int y)   {
     switch( key ) {
-	/* Activate model one or two */
+	/* Switch camera modes */
 	case '1': 
 		cameraMode = Mode1;
 		break;
-
 	case '2':
 		cameraMode = Mode2;	
+		SetIdentityMatrix(ViewMatrix);
+		SetTranslation(0.0, 0.0, -15.0, ViewMatrix);
 		break;
-		
 	case '0':
 		cameraMode = Default;
 		SetTranslation(0.0, 0.0, -10.0, ViewMatrix);
@@ -292,21 +287,18 @@ void Keyboard(unsigned char key, int x, int y)   {
 		else 
 			cameraMode = Pause;
 		break;
-	
 	case 'b':
 		if (anim)
 			anim = GL_FALSE;		
 		else
 			anim = GL_TRUE;
 		break;
-
 	case 'r':
 		if (rotationMode == clockwise)
 			rotationMode = counterclockwise;
 		else 
 			rotationMode = clockwise;
 		break;
-		
 	case '+':
 	    if (rotationSpeed == 4)
 			rotationSpeed = 2;
@@ -316,6 +308,27 @@ void Keyboard(unsigned char key, int x, int y)   {
 			rotationSpeed = 4;
 	    break;
 	    
+	/* Move camera in camera mode 2 */
+	case 'w':
+		camera_z += 0.1;
+		break;
+	case 's':
+		camera_z -= 0.1;
+		break;
+	case 'a':
+		camera_x += 0.1;
+		break;
+	case 'd':
+		camera_x -= 0.1;
+		break; 
+	case 't':
+		camera_y -= 0.1;
+		break;
+	case 'g':
+		camera_y += 0.1;
+		break;
+	  
+	/* Close the scene */
 	case 'q': case 'Q':  
 	    exit(0);    
 		break;
@@ -393,17 +406,26 @@ void OnIdle(){
 	if (rotationMode == clockwise){
 		viewRotationAngle = -viewRotationAngle;
 	}
-	SetRotationY(viewRotationAngle/rotationSpeed, RotationMatrixAnimView);
-	SetTranslation(0.0, -10.0, -12.0, TranslationMatrixView);
-	SetRotationX(45, RotationMatrixViewX);
-	
 	if (cameraMode == Mode1){
+		SetRotationY(viewRotationAngle/rotationSpeed, RotationMatrixAnimView);
+		SetTranslation(0.0, -10.0, -12.0, TranslationMatrixView);
+		SetRotationX(45, RotationMatrixViewX);
 		SetTranslation(0.0, 0.0, 0.0, ViewMatrix);
 		MultiplyMatrix(RotationMatrixAnimView, ViewMatrix, ViewMatrix);
 		MultiplyMatrix(TranslationMatrixView, ViewMatrix, ViewMatrix);
 		MultiplyMatrix(RotationMatrixViewX, ViewMatrix, ViewMatrix);
 	}
     
+    /* Full view control  */
+    if (cameraMode == Mode2){
+		SetRotationY(rotate_y * (180.0/M_PI), RotationMatrixAnimView);
+		SetRotationX(rotate_x * (180.0/M_PI), RotationMatrixViewX);
+		SetTranslation(camera_x, camera_y, -15.0 + camera_z, TranslationMatrixView);
+		SetTranslation(0.0, 0.0, 0.0, ViewMatrix);
+		MultiplyMatrix(TranslationMatrixView, ViewMatrix, ViewMatrix);
+		MultiplyMatrix(RotationMatrixAnimView, ViewMatrix, ViewMatrix);
+		MultiplyMatrix(RotationMatrixViewX, ViewMatrix, ViewMatrix);
+	}
 
     /* Apply carousel rotation and move carousel down */
     MultiplyMatrix(RotationMatrixAnim ,InitialTransform, ModelMatrix);
@@ -817,8 +839,8 @@ int main(int argc, char** argv){
     glutIdleFunc(OnIdle);
     glutDisplayFunc(Display);
     glutKeyboardFunc(Keyboard); 
-    glutMotionFunc(mouse_motion);
-	glutPassiveMotionFunc(mouse_passive);
+    glutMouseFunc(Mouse);
+    glutMotionFunc(mouseMotion);
     glutMainLoop();
 
     /* ISO C requires main to return int */

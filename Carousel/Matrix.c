@@ -221,17 +221,6 @@ void SetPerspectiveMatrix(float fov, float aspect, float nearPlane,
     memcpy(result, temp, 16*sizeof(float));
 }
 
-void matrix_rotate_x(float angle, float* result) {
-  float* rotation;
-  SetRotationX(angle, rotation);
-  MultiplyMatrix(rotation, result, result);
-}
-
-void matrix_rotate_y(float angle, float* result) {
-  float* rotation;
-  SetRotationY(angle, rotation);
-  MultiplyMatrix(rotation, result, result);
-}
 
 
 

@@ -216,16 +216,16 @@ void Display(){
 *******************************************************************/
 
 void mouseMotion(int x, int y){
-	float SPEED = 0.1 / (2 * M_PI);
+	float SPEED = 0.01 / (2 * M_PI);
 	
 	if(cameraMode == Mode2){
 		rotate_x += -(mouse_oldy - y) * SPEED; 
 		rotate_y += -(mouse_oldx - x) * SPEED; 
-		printf("rx:%f, ry:%f \n", rotate_x, rotate_y);
+		//printf("rx:%f, ry:%f \n", rotate_x, rotate_y);
 		
 		mouse_oldx = x;
 		mouse_oldy = y;
-		printf("x:%d, y:%d\n", mouse_oldx, mouse_oldy);
+		//printf("x:%d, y:%d\n", mouse_oldx, mouse_oldy);
 	}
 	
 	glutPostRedisplay();
@@ -274,6 +274,11 @@ void Keyboard(unsigned char key, int x, int y)   {
 		cameraMode = Mode2;	
 		SetIdentityMatrix(ViewMatrix);
 		SetTranslation(0.0, 0.0, -15.0, ViewMatrix);
+		camera_x = 0;
+		camera_y = 0;
+		camera_z = 0;
+		rotate_x = 0;
+		rotate_y = 0;
 		break;
 	case '0':
 		cameraMode = Default;

@@ -39,13 +39,13 @@ GLboolean anim = GL_TRUE;
 int oldTime = 0;
 
 /* Define handle to a vertex buffer object */
-GLuint VBO, VBO2, VBO3, VBO4, VBO5, VBO6;
+GLuint VBO, VBO2, VBO3, VBO4, VBO5, VBO6, VBO7;
 
 /* Define handle to a color buffer object */
-GLuint CBO, CBO2, CBO3, CBO4, CBO5, CBO6;
+GLuint CBO, CBO2, CBO3, CBO4, CBO5, CBO6, CBO7;
 
 /* Define handle to an index buffer object */
-GLuint IBO, IBO2, IBO3, IBO4, IBO5, IBO6;
+GLuint IBO, IBO2, IBO3, IBO4, IBO5, IBO6, IBO7;
 
 GLuint VAO;
 
@@ -67,6 +67,7 @@ float Model3Matrix[16]; /* pig 2 matrix */
 float Model4Matrix[16]; /* pig 3 matrix */
 float Model5Matrix[16]; /* pig 4 matrix */
 float Model6Matrix[16]; /* Room matrix */
+float Model7Matrix[16]; //For lamp
 
 /* Transformation matrices for initial position */
 float TranslateOrigin[16];
@@ -164,6 +165,12 @@ GLfloat* color_buffer_data3;
 GLushort* index_buffer_data3;
 obj_scene_data data3;
 
+/*Buffer for the lamp */												//======================================================
+GLfloat* vertex_buffer_data4;
+GLfloat* color_buffer_data4;
+GLushort* index_buffer_data4;
+obj_scene_data data4;
+
 /******************************************************************
 *
 * Display
@@ -194,15 +201,22 @@ void Display(){
     /** Room **/
     setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram, Model6Matrix);
     
+        
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor);
     
-    /** Pigs **/
+    
+    /** Pigs **/      
 	setupAndDraw(VBO2, CBO2, IBO2, ShaderProgram, Model2Matrix);
 	setupAndDraw(VBO3, CBO3, IBO3, ShaderProgram, Model3Matrix);
 	setupAndDraw(VBO4, CBO4, IBO4, ShaderProgram, Model4Matrix);
 	setupAndDraw(VBO5, CBO5, IBO5, ShaderProgram, Model5Matrix);
 	
+	glDisableVertexAttribArray(vPosition);
+	glDisableVertexAttribArray(vColor);
+	
+	 /**LAMP **/
+    setupAndDraw(VBO7, CBO7, IBO7, ShaderProgram, Model7Matrix);
 	
 	/** Light sources **/
 	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
@@ -218,12 +232,10 @@ void Display(){
 	glUniform1f(DiffuseFactorUniform, diffuseFactor * diffuseToggle);
 	
 	GLint SpecularFactorUniform = glGetUniformLocation(ShaderProgram, "SpecularFactor");
-	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);
-	
-	
+	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);	
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
     /* Swap between front and back buffer */ 
     glutSwapBuffers();
@@ -463,11 +475,11 @@ void OnIdle(){
     MultiplyMatrix(TranslateDown, ModelMatrix, ModelMatrix);
     
     
-    /* Room */
+    /* Room */   
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model6Matrix);
 	MultiplyMatrix(TranslateDown, Model6Matrix, Model6Matrix);
     
-    
+       
     /* Applay Transformation on the pigs */
     /* Rotate pigs on X */
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model2Matrix);
@@ -502,7 +514,16 @@ void OnIdle(){
     MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslateDown, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
-    MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);
+    MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);    
+    
+     setScalingS(0.005, ScalingMatrix);
+    
+    
+    //Lamp
+    MultiplyMatrix(ScalingMatrix, InitialTransform, Model7Matrix);      
+    MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
+   
+    
 	
     /* Request redrawing forof window content */  
     glutPostRedisplay();
@@ -547,7 +568,21 @@ void SetupDataBuffers(){
     glGenBuffers(1, &CBO6);
     glBindBuffer(GL_ARRAY_BUFFER, CBO6);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
+    
+    /* Lamp */	//==============================================================================================================
+    glGenBuffers(1, &VBO7);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO7);
+    glBufferData(GL_ARRAY_BUFFER, data4.vertex_count*3*sizeof(GLfloat), vertex_buffer_data4, GL_STATIC_DRAW);    
 
+    glGenBuffers(1, &IBO7);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO7);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data4.face_count*3*sizeof(GLushort), index_buffer_data4, GL_STATIC_DRAW);   
+
+    glGenBuffers(1, &CBO7);
+    glBindBuffer(GL_ARRAY_BUFFER, CBO7);    
+    glBufferData(GL_ARRAY_BUFFER, data4.face_count*3*sizeof(GLfloat), color_buffer_data4, GL_STATIC_DRAW);
+
+	//============================================================================================================================
 
 	/* All four pigs */
 	glGenBuffers(1, &VBO2);
@@ -686,6 +721,7 @@ void CreateShaderProgram(){
 }
 
 
+
 /******************************************************************
 *
 * Initialize
@@ -714,7 +750,7 @@ void Initialize(void){
     index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
     for(i=0; i<vert; i++){
-        vertex_buffer_data[i*3] = (GLfloat)(*data.vertex_list[i]).e[0];
+        vertex_buffer_data[i*3] = (GLfloat)(*data.vertex_list[i]).e[0];        
 		vertex_buffer_data[i*3+1] = (GLfloat)(*data.vertex_list[i]).e[1];
 		vertex_buffer_data[i*3+2] = (GLfloat)(*data.vertex_list[i]).e[2];
     }
@@ -731,8 +767,45 @@ void Initialize(void){
 		index_buffer_data[i*3+2] = (GLushort)(*data.face_list[i]).vertex_index[2];
     }
 	
-
-
+	/*Load lamp OBJ model */
+	 char* filename3 = "models/deer.obj"; 												/*============================================================*/
+	success = parse_obj_scene(&data4, filename3);
+	
+	if(!success)
+        printf("Could not load file pig. Exiting.\n");
+        
+    /*  Copy mesh data from structs into appropriate arrays */ 
+    vert = data4.vertex_count;
+    indx = data4.face_count;
+    vertex_buffer_data4 = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    color_buffer_data4 = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
+    index_buffer_data4 = (GLushort*) calloc (indx*3, sizeof(GLushort));
+    /* Vertices */
+    for(i=0; i<vert; i++){
+        vertex_buffer_data4[i*3] = (GLfloat)(*data4.vertex_list[i]).e[0];
+        printf("Vertex %lf\t", vertex_buffer_data4[i*3]);
+		vertex_buffer_data4[i*3+1] = (GLfloat)(*data4.vertex_list[i]).e[1];
+		printf("Vertex %lf\t", vertex_buffer_data4[i*3+1]);
+		vertex_buffer_data4[i*3+2] = (GLfloat)(*data4.vertex_list[i]).e[2];
+		printf("Vertex %lf\n", vertex_buffer_data4[i*3+2]);
+    }
+    /* Colors */
+    for(i=0; i<indx; i++){
+		color_buffer_data4[i*3] = 0.0 /*(rand() % 100) / 100.0*/;
+		color_buffer_data4[i*3+1] = 1.0 /*(rand() % 100) / 100.0*/;
+		color_buffer_data4[i*3+2] = 0.0 /*(rand() % 100) / 100.0*/;
+    }    
+    
+    /* Indices */
+    for(i=0; i<indx; i++){
+		index_buffer_data4[i*3] = (GLushort)(*data4.face_list[i]).vertex_index[0];
+		index_buffer_data4[i*3+1] = (GLushort)(*data4.face_list[i]).vertex_index[1];
+		index_buffer_data4[i*3+2] = (GLushort)(*data4.face_list[i]).vertex_index[2];
+    }
+    
+    //===================================================================================================
+	 
+	
 	/* Load pig OBJ model */
     char* filename2 = "models/pig.obj"; 
     success = parse_obj_scene(&data3, filename2);
@@ -790,6 +863,9 @@ void Initialize(void){
     SetIdentityMatrix(Model4Matrix);
     SetIdentityMatrix(Model5Matrix);
     SetIdentityMatrix(Model6Matrix);
+    //=============================================================================================
+    SetIdentityMatrix(Model7Matrix);
+    //===============================================================================================
 
     /* Set projection transform */
     float fovy = 45.0;

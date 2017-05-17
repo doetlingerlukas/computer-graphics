@@ -45,6 +45,19 @@ void setupAndDraw(GLuint vbo, GLuint cbo, GLuint ibo, GLuint sp, float* mm)
     GLint size; 
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
     
+    if(0 != 0){
+		glEnableVertexAttribArray(2);
+		//glBindBuffer(GL_ARRAY_BUFFER, vn);
+		glVertexAttribPointer(
+			2,                                // attribute
+			3,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			0                          // array buffer offset
+		);
+	}
+    
     /* Associate first Model with shader matrices */
     glUniformMatrix4fv(glGetUniformLocation(sp, "ModelMatrix"), 1, GL_TRUE, mm);
 

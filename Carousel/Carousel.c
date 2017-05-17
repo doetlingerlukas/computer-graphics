@@ -32,6 +32,8 @@
 #include "OBJParser.h"
 
 /*----------------------------------------------------------------*/
+GLuint VAO;
+
 /* Flag for starting/stopping animation */
 GLboolean anim = GL_TRUE;
 
@@ -39,24 +41,32 @@ GLboolean anim = GL_TRUE;
 int oldTime = 0;
 
 /* Define handle to a vertex buffer object */
-GLuint VBO, VBO2, VBO3, VBO4, VBO5, VBO6, VBO7;
+GLuint VBO2, VBO3, VBO4, VBO5, VBO6;
 
 /* Define handle to a color buffer object */
-GLuint CBO, CBO2, CBO3, CBO4, CBO5, CBO6, CBO7;
+GLuint CBO2, CBO3, CBO4, CBO5, CBO6;
 
 /* Define handle to an index buffer object */
-GLuint IBO, IBO2, IBO3, IBO4, IBO5, IBO6, IBO7;
+GLuint IBO2, IBO3, IBO4, IBO5, IBO6;
 
-GLuint VAO;
+struct buffer_object{
+	GLuint VBO;
+	GLuint CBO;
+	GLuint IBO;
+	GLuint VN;
+};
+
+struct buffer_object* carousel;
 
 /* Indices to vertex attributes; in this case positon and color */ 
-enum DataID {vPosition = 0, vColor = 1}; 
+enum DataID {vPosition = 0, vColor = 1, vNormal = 2}; 
 
 /* Strings for loading and storing shader code */
 static const char* VertexShaderString;
 static const char* FragmentShaderString;
 
 GLuint ShaderProgram;  /* Shader for carousel */
+GLuint ShaderProgram2;
 
 float ProjectionMatrix[16]; /* Perspective projection matrix */
 float ViewMatrix[16]; /* Camera view matrix */ 
@@ -88,6 +98,7 @@ int rotationSpeed = standard;
 
 /* Buffers for Carousel */
 GLfloat* vertex_buffer_data;
+GLfloat* vertex_normals;
 GLfloat* color_buffer_data;
 GLushort* index_buffer_data;
 obj_scene_data data;
@@ -192,25 +203,48 @@ void Display(){
        
     
     /** Carousel **/
-    setupAndDraw(VBO, CBO, IBO, ShaderProgram, ModelMatrix);
+    //setupAndDraw(VBO, CBO, IBO, ShaderProgram, ModelMatrix);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, carousel->VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, carousel->CBO);
+	glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0); 
+	
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, carousel->IBO);
+    GLint size; 
+    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+    glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, carousel->VN);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
+	
+	/* Associate first Model with shader matrices */
+    glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ModelMatrix"), 1, GL_TRUE, ModelMatrix);
+
+    /* Issue draw command, using indexed triangle list */
+    glDrawElements(GL_TRIANGLES, size / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    
+    
     
     /* Disable attributes */
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor);
+    glDisableVertexAttribArray(vNormal);
     
     /** Room **/
-    setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram, Model6Matrix);
+    setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram2, Model6Matrix);
     
         
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor);
     
-    
-    /** Pigs **/      
-	setupAndDraw(VBO2, CBO2, IBO2, ShaderProgram, Model2Matrix);
-	setupAndDraw(VBO3, CBO3, IBO3, ShaderProgram, Model3Matrix);
-	setupAndDraw(VBO4, CBO4, IBO4, ShaderProgram, Model4Matrix);
-	setupAndDraw(VBO5, CBO5, IBO5, ShaderProgram, Model5Matrix);
+    /** Pigs **/
+	setupAndDraw(VBO2, CBO2, IBO2, ShaderProgram2, Model2Matrix);
+	setupAndDraw(VBO3, CBO3, IBO3, ShaderProgram2, Model3Matrix);
+	setupAndDraw(VBO4, CBO4, IBO4, ShaderProgram2, Model4Matrix);
+	setupAndDraw(VBO5, CBO5, IBO5, ShaderProgram2, Model5Matrix);
 	
 	glDisableVertexAttribArray(vPosition);
 	glDisableVertexAttribArray(vColor);
@@ -543,23 +577,29 @@ void OnIdle(){
 *
 *******************************************************************/
 
+
+
 void SetupDataBuffers(){
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 	
 	/* Carousel */
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glGenBuffers(1, &carousel->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, carousel->VBO);
     glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW);  
     
-    glGenBuffers(1, &IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glGenBuffers(1, &carousel->IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, carousel->IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.face_count*3*sizeof(GLushort), index_buffer_data, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &CBO);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO);
+	glGenBuffers(1, &carousel->CBO);
+    glBindBuffer(GL_ARRAY_BUFFER, carousel->CBO);
     glBufferData(GL_ARRAY_BUFFER, data.face_count*3*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);
 
+	glGenBuffers(1, &carousel->VN);
+	glBindBuffer(GL_ARRAY_BUFFER, carousel->VN);
+	glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
+	
 
 	/* Room */
 	glGenBuffers(1, &VBO6);
@@ -682,6 +722,7 @@ void AddShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType){
 void CreateShaderProgram(){
     /* Allocate shader object */
     ShaderProgram = glCreateProgram();
+    ShaderProgram2 = glCreateProgram();
     
     if (ShaderProgram == 0) {
         fprintf(stderr, "Error creating shader program\n");
@@ -695,12 +736,15 @@ void CreateShaderProgram(){
     /* Separately add vertex and fragment shader to program */
     AddShader(ShaderProgram, VertexShaderString, GL_VERTEX_SHADER);
     AddShader(ShaderProgram, FragmentShaderString, GL_FRAGMENT_SHADER);
+    AddShader(ShaderProgram2, VertexShaderString, GL_VERTEX_SHADER);
+    AddShader(ShaderProgram2, FragmentShaderString, GL_FRAGMENT_SHADER);
 
     GLint Success = 0;
     GLchar ErrorLog[1024];
 
     /* Link shader code into executable shader program */
     glLinkProgram(ShaderProgram);
+    glLinkProgram(ShaderProgram2);
 
     /* Check results of linking step */
     glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
@@ -723,6 +767,7 @@ void CreateShaderProgram(){
 
     /* Put linked shader program into drawing pipeline */
     glUseProgram(ShaderProgram);
+    glUseProgram(ShaderProgram2);
 }
 
 
@@ -737,6 +782,8 @@ void CreateShaderProgram(){
 *******************************************************************/
 
 void Initialize(void){   
+	carousel = calloc(1, sizeof(struct buffer_object));
+	
 	int i;
     int success;
 
@@ -771,6 +818,9 @@ void Initialize(void){
 		index_buffer_data[i*3+1] = (GLushort)(*data.face_list[i]).vertex_index[1];
 		index_buffer_data[i*3+2] = (GLushort)(*data.face_list[i]).vertex_index[2];
     }
+    
+    vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    vertex_normals = vertex_buffer_data;
 	
 	/*Load lamp OBJ model */
 	 char* filename3 = "models/3d-model.obj"; 												/*============================================================*/

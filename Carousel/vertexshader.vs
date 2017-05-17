@@ -3,10 +3,6 @@
 uniform mat4 ProjectionMatrix;
 uniform mat4 ViewMatrix;
 uniform mat4 ModelMatrix;
-uniform mat4 ModelMatrix2;
-uniform mat4 ModelMatrix3;
-uniform mat4 ModelMatrix4;
-uniform mat4 ModelMatrix5;
 uniform vec3 LightPosition1;
 uniform vec3 LightColor1;
 uniform float DiffuseFactor;

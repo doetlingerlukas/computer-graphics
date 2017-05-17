@@ -212,6 +212,8 @@ void Display(){
 	setupAndDraw(VBO4, CBO4, IBO4, ShaderProgram, Model4Matrix);
 	setupAndDraw(VBO5, CBO5, IBO5, ShaderProgram, Model5Matrix);
 	
+	glDisableVertexAttribArray(vPosition);
+	glDisableVertexAttribArray(vColor);
 	
 	 /**LAMP **/
     setupAndDraw(VBO7, CBO7, IBO7, ShaderProgram, Model7Matrix);
@@ -512,13 +514,15 @@ void OnIdle(){
     MultiplyMatrix(TranslateDown, Model2Matrix, Model2Matrix);
     MultiplyMatrix(TranslateDown, Model3Matrix, Model3Matrix);
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
-    MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);
+    MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);    
+    
+     setScalingS(0.001, ScalingMatrix);
+    
     
     //Lamp
-     MultiplyMatrix(ScalingMatrix, Model7Matrix, Model7Matrix);
-     MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
-     MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
-     MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
+    MultiplyMatrix(ScalingMatrix, InitialTransform, Model7Matrix);      
+    MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
+   
     
 	
     /* Request redrawing forof window content */  
@@ -568,15 +572,15 @@ void SetupDataBuffers(){
     /* Lamp */	//==============================================================================================================
     glGenBuffers(1, &VBO7);
     glBindBuffer(GL_ARRAY_BUFFER, VBO7);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data4), vertex_buffer_data4, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data4.vertex_count*3*sizeof(GLfloat), vertex_buffer_data4, GL_STATIC_DRAW);    
 
     glGenBuffers(1, &IBO7);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO7);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data4), index_buffer_data4, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data4.face_count*3*sizeof(GLushort), index_buffer_data4, GL_STATIC_DRAW);   
 
     glGenBuffers(1, &CBO7);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO7);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data4), color_buffer_data4, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, CBO7);    
+    glBufferData(GL_ARRAY_BUFFER, data4.face_count*3*sizeof(GLfloat), color_buffer_data4, GL_STATIC_DRAW);
 
 	//============================================================================================================================
 

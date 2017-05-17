@@ -41,22 +41,19 @@ GLboolean anim = GL_TRUE;
 int oldTime = 0;
 
 /* Define handle to a vertex buffer object */
-GLuint VBO2, VBO3, VBO4, VBO5, VBO6;
+GLuint VBO6;
 
 /* Define handle to a color buffer object */
-GLuint CBO2, CBO3, CBO4, CBO5, CBO6;
+GLuint CBO6;
 
 /* Define handle to an index buffer object */
-GLuint IBO2, IBO3, IBO4, IBO5, IBO6;
+GLuint IBO6;
 
-struct buffer_object{
-	GLuint VBO;
-	GLuint CBO;
-	GLuint IBO;
-	GLuint VN;
-};
-
-struct buffer_object* carousel;
+buffer_object* carousel;
+buffer_object* pig1;
+buffer_object* pig2;
+buffer_object* pig3;
+buffer_object* pig4;
 
 /* Indices to vertex attributes; in this case positon and color */ 
 enum DataID {vPosition = 0, vColor = 1, vNormal = 2}; 
@@ -203,35 +200,8 @@ void Display(){
        
     
     /** Carousel **/
-    //setupAndDraw(VBO, CBO, IBO, ShaderProgram, ModelMatrix);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, carousel->VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    etupAndDraw(carousel, ShaderProgram, ModelMatrix);
     
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, carousel->CBO);
-	glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0); 
-	
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, carousel->IBO);
-    GLint size; 
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-    glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, carousel->VN);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	
-	
-	/* Associate first Model with shader matrices */
-    glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ModelMatrix"), 1, GL_TRUE, ModelMatrix);
-
-    /* Issue draw command, using indexed triangle list */
-    glDrawElements(GL_TRIANGLES, size / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-    
-    
-    
-    /* Disable attributes */
-    glDisableVertexAttribArray(vPosition);
-    glDisableVertexAttribArray(vColor);
-    glDisableVertexAttribArray(vNormal);
     
     /** Room **/
     setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram2, Model6Matrix);
@@ -241,10 +211,10 @@ void Display(){
     glDisableVertexAttribArray(vColor);
     
     /** Pigs **/
-	setupAndDraw(VBO2, CBO2, IBO2, ShaderProgram2, Model2Matrix);
-	setupAndDraw(VBO3, CBO3, IBO3, ShaderProgram2, Model3Matrix);
-	setupAndDraw(VBO4, CBO4, IBO4, ShaderProgram2, Model4Matrix);
-	setupAndDraw(VBO5, CBO5, IBO5, ShaderProgram2, Model5Matrix);
+	etupAndDraw(pig1, ShaderProgram, Model2Matrix);
+	etupAndDraw(pig2, ShaderProgram, Model3Matrix);
+	etupAndDraw(pig3, ShaderProgram, Model4Matrix);
+	etupAndDraw(pig4, ShaderProgram, Model5Matrix);
 	
 	glDisableVertexAttribArray(vPosition);
 	glDisableVertexAttribArray(vColor);
@@ -576,30 +546,31 @@ void OnIdle(){
 * Create buffer objects and load data into buffers
 *
 *******************************************************************/
+void setupDaterBufferObject(buffer_object* bo){
+	glGenBuffers(1, &bo->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, bo->VBO);
+    glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW);  
+    
+    glGenBuffers(1, &bo->IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bo->IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.face_count*3*sizeof(GLushort), index_buffer_data, GL_STATIC_DRAW);
 
+	glGenBuffers(1, &bo->CBO);
+    glBindBuffer(GL_ARRAY_BUFFER, bo->CBO);
+    glBufferData(GL_ARRAY_BUFFER, data.face_count*3*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);
 
+	glGenBuffers(1, &bo->VN);
+	glBindBuffer(GL_ARRAY_BUFFER, bo->VN);
+	glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
+
+}
 
 void SetupDataBuffers(){
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 	
 	/* Carousel */
-    glGenBuffers(1, &carousel->VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, carousel->VBO);
-    glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW);  
-    
-    glGenBuffers(1, &carousel->IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, carousel->IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.face_count*3*sizeof(GLushort), index_buffer_data, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &carousel->CBO);
-    glBindBuffer(GL_ARRAY_BUFFER, carousel->CBO);
-    glBufferData(GL_ARRAY_BUFFER, data.face_count*3*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &carousel->VN);
-	glBindBuffer(GL_ARRAY_BUFFER, carousel->VN);
-	glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
-	
+    setupDaterBufferObject(carousel);
 
 	/* Room */
 	glGenBuffers(1, &VBO6);
@@ -630,40 +601,45 @@ void SetupDataBuffers(){
 	//============================================================================================================================
 
 	/* All four pigs */
-	glGenBuffers(1, &VBO2);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+	glGenBuffers(1, &pig1->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, pig1->VBO);
     glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
     
-    glGenBuffers(1, &IBO2);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
+    glGenBuffers(1, &pig1->IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pig1->IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 	
-	glGenBuffers(1, &CBO2);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO2);
+	glGenBuffers(1, &pig1->CBO);
+    glBindBuffer(GL_ARRAY_BUFFER, pig1->CBO);
     glBufferData(GL_ARRAY_BUFFER, data3.face_count*3*sizeof(GLfloat), color_buffer_data3, GL_STATIC_DRAW);
 	
-	glGenBuffers(1, &VBO3);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO3);
+	glGenBuffers(1, &pig1->VN);
+	glBindBuffer(GL_ARRAY_BUFFER, pig1->VN);
+	glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
+	
+	
+	glGenBuffers(1, &pig2->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, pig2->VBO);
     glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
     
-    glGenBuffers(1, &IBO3);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO3);
+    glGenBuffers(1, &pig2->IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pig2->IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &VBO4);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO4);
+	glGenBuffers(1, &pig3->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, pig3->VBO);
     glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
     
-    glGenBuffers(1, &IBO4);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO4);
+    glGenBuffers(1, &pig3->IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pig3->IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &VBO5);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO5);
+	glGenBuffers(1, &pig4->VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, pig4->VBO);
     glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
     
-    glGenBuffers(1, &IBO5);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO5);
+    glGenBuffers(1, &pig4->IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pig4->IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
 
 }
@@ -783,6 +759,10 @@ void CreateShaderProgram(){
 
 void Initialize(void){   
 	carousel = calloc(1, sizeof(struct buffer_object));
+	pig1 = calloc(1, sizeof(struct buffer_object));
+	pig2 = calloc(1, sizeof(struct buffer_object));
+	pig3 = calloc(1, sizeof(struct buffer_object));
+	pig4 = calloc(1, sizeof(struct buffer_object));
 	
 	int i;
     int success;

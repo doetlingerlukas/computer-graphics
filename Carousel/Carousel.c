@@ -516,7 +516,7 @@ void OnIdle(){
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);    
     
-     setScalingS(0.001, ScalingMatrix);
+     setScalingS(0.005, ScalingMatrix);
     
     
     //Lamp
@@ -768,7 +768,7 @@ void Initialize(void){
     }
 	
 	/*Load lamp OBJ model */
-	 char* filename3 = "models/AEL_245_Contempo_obj.obj"; 												/*============================================================*/
+	 char* filename3 = "models/deer.obj"; 												/*============================================================*/
 	success = parse_obj_scene(&data4, filename3);
 	
 	if(!success)

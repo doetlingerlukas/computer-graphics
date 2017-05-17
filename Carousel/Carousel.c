@@ -104,9 +104,9 @@ int mouse_oldy;
 float LightPosition1[] = { 5.0, 4.0, 5.0 };
 float LightColor1[] = { 1.0, 1.0, 1.0 };
 
-float ambientFactor = 0.1;
-float diffuseFactor = 0.6;
-float specularFactor = 0.2;
+float ambientFactor = 1;
+float diffuseFactor = 1;
+float specularFactor = 1;
 
 int ambientToggle = 1;
 int diffuseToggle = 1;
@@ -131,7 +131,7 @@ GLfloat vertex_buffer_data2[] = {
 GLfloat color_buffer_data2[] = {
 	// Floor 
 	0.0,0.0,0.0,
-	0.44,0.5,0.56,
+	0.87,0.72,0.53,
 	// Back wall
 	0.87,0.72,0.53,
 	0.87,0.72,0.53,
@@ -200,8 +200,8 @@ void Display(){
     /** Pigs **/
 	setupAndDraw(VBO2, CBO2, IBO2, ShaderProgram, Model2Matrix);
 	setupAndDraw(VBO3, CBO3, IBO3, ShaderProgram, Model3Matrix);
-	setupAndDraw(VBO4, 0, IBO4, ShaderProgram, Model4Matrix);
-	setupAndDraw(VBO5, 0, IBO5, ShaderProgram, Model5Matrix);
+	setupAndDraw(VBO4, CBO4, IBO4, ShaderProgram, Model4Matrix);
+	setupAndDraw(VBO5, CBO5, IBO5, ShaderProgram, Model5Matrix);
 	
 	
 	/** Light sources **/
@@ -557,11 +557,11 @@ void SetupDataBuffers(){
     glGenBuffers(1, &IBO2);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
-	/*
+	
 	glGenBuffers(1, &CBO2);
     glBindBuffer(GL_ARRAY_BUFFER, CBO2);
     glBufferData(GL_ARRAY_BUFFER, data3.face_count*3*sizeof(GLfloat), color_buffer_data3, GL_STATIC_DRAW);
-	*/
+	
 	glGenBuffers(1, &VBO3);
     glBindBuffer(GL_ARRAY_BUFFER, VBO3);
     glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
@@ -720,9 +720,9 @@ void Initialize(void){
     }
     /* Colors */
     for(i=0; i<indx; i++){
-		color_buffer_data[i*3] = (rand() % 100) / 100.0;
-		color_buffer_data[i*3+1] = (rand() % 100) / 100.0;
-		color_buffer_data[i*3+2] = (rand() % 100) / 100.0;
+		color_buffer_data[i*3] = 1.0 /*(rand() % 100) / 100.0*/;
+		color_buffer_data[i*3+1] = 0.0 /*(rand() % 100) / 100.0*/;
+		color_buffer_data[i*3+2] = 0.0 /*(rand() % 100) / 100.0*/;
     }
     /* Indices */
     for(i=0; i<indx; i++){
@@ -754,9 +754,9 @@ void Initialize(void){
     }
     /* Colors */
     for(i=0; i<indx; i++){
-		color_buffer_data3[i*3] = (rand() % 100) / 100.0;
-		color_buffer_data3[i*3+1] = (rand() % 100) / 100.0;
-		color_buffer_data3[i*3+2] = (rand() % 100) / 100.0;
+		color_buffer_data3[i*3] = 0.0 /*(rand() % 100) / 100.0*/;
+		color_buffer_data3[i*3+1] = 1.0 /*(rand() % 100) / 100.0*/;
+		color_buffer_data3[i*3+2] = 0.0 /*(rand() % 100) / 100.0*/;
     }
     /* Indices */
     for(i=0; i<indx; i++){
@@ -814,6 +814,12 @@ void Initialize(void){
     /* Initial transformation matrix */
     MultiplyMatrix(RotateX, TranslateOrigin, InitialTransform);
     MultiplyMatrix(RotateZ, InitialTransform, InitialTransform);
+    
+    /*
+    glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	*/
 }
 
 

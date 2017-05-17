@@ -57,11 +57,6 @@ static const char* VertexShaderString;
 static const char* FragmentShaderString;
 
 GLuint ShaderProgram;  /* Shader for carousel */
-GLuint ShaderProgram2; /* Shader for pig 1 */
-GLuint ShaderProgram3; /* Shader for pig 2 */
-GLuint ShaderProgram4; /* Shader for pig 3 */
-GLuint ShaderProgram5; /* Shader for pig 4 */
-GLuint ShaderProgram6; /* Shader for room */
 
 float ProjectionMatrix[16]; /* Perspective projection matrix */
 float ViewMatrix[16]; /* Camera view matrix */ 
@@ -104,6 +99,19 @@ float rotate_x = 0;
 float rotate_y = 0;
 int mouse_oldx;
 int mouse_oldy;
+
+/* light sources */
+float LightPosition1[] = { 5.0, 4.0, 5.0 };
+float LightColor1[] = { 1.0, 1.0, 1.0 };
+
+float ambientFactor = 0.1;
+float diffuseFactor = 0.6;
+float specularFactor = 0.2;
+
+int ambientToggle = 1;
+int diffuseToggle = 1;
+int specularToggle = 1;
+int light1Toggle = 1;
 
 
 /* Buffer for Room */
@@ -152,6 +160,7 @@ GLushort index_buffer_data2[] = {
 
 /* Buffer for the pigs */
 GLfloat* vertex_buffer_data3;
+GLfloat* color_buffer_data3;
 GLushort* index_buffer_data3;
 obj_scene_data data3;
 
@@ -183,16 +192,35 @@ void Display(){
     glDisableVertexAttribArray(vColor);
     
     /** Room **/
-    setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram6, Model6Matrix);
+    setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram, Model6Matrix);
     
     glDisableVertexAttribArray(vPosition);
     glDisableVertexAttribArray(vColor);
     
     /** Pigs **/
-	setupAndDraw(VBO2, 0, IBO2, ShaderProgram2, Model2Matrix);
-	setupAndDraw(VBO3, 0, IBO3, ShaderProgram3, Model3Matrix);
-	setupAndDraw(VBO4, 0, IBO4, ShaderProgram4, Model4Matrix);
-	setupAndDraw(VBO5, 0, IBO5, ShaderProgram5, Model5Matrix);
+	setupAndDraw(VBO2, CBO2, IBO2, ShaderProgram, Model2Matrix);
+	setupAndDraw(VBO3, CBO3, IBO3, ShaderProgram, Model3Matrix);
+	setupAndDraw(VBO4, 0, IBO4, ShaderProgram, Model4Matrix);
+	setupAndDraw(VBO5, 0, IBO5, ShaderProgram, Model5Matrix);
+	
+	
+	/** Light sources **/
+	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
+	glUniform3f(LightPos1Uniform, LightPosition1[0], LightPosition1[1], LightPosition1[2]);
+	
+	GLint LightCol1Uniform = glGetUniformLocation(ShaderProgram, "LightColor1");
+	glUniform3f(LightCol1Uniform, LightColor1[0]*light1Toggle, LightColor1[1]*light1Toggle, LightColor1[2]*light1Toggle);
+	
+	GLint AmbientFactorUniform = glGetUniformLocation(ShaderProgram, "AmbientFactor");
+	glUniform1f(AmbientFactorUniform, ambientFactor * ambientToggle);
+	
+	GLint DiffuseFactorUniform = glGetUniformLocation(ShaderProgram, "DiffuseFactor");
+	glUniform1f(DiffuseFactorUniform, diffuseFactor * diffuseToggle);
+	
+	GLint SpecularFactorUniform = glGetUniformLocation(ShaderProgram, "SpecularFactor");
+	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);
+	
+	
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -529,7 +557,11 @@ void SetupDataBuffers(){
     glGenBuffers(1, &IBO2);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO2);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, data3.face_count*3*sizeof(GLushort), index_buffer_data3, GL_STATIC_DRAW);
-	
+	/*
+	glGenBuffers(1, &CBO2);
+    glBindBuffer(GL_ARRAY_BUFFER, CBO2);
+    glBufferData(GL_ARRAY_BUFFER, data3.face_count*3*sizeof(GLfloat), color_buffer_data3, GL_STATIC_DRAW);
+	*/
 	glGenBuffers(1, &VBO3);
     glBindBuffer(GL_ARRAY_BUFFER, VBO3);
     glBufferData(GL_ARRAY_BUFFER, data3.vertex_count*3*sizeof(GLfloat), vertex_buffer_data3, GL_STATIC_DRAW);  
@@ -610,12 +642,7 @@ void AddShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType){
 void CreateShaderProgram(){
     /* Allocate shader object */
     ShaderProgram = glCreateProgram();
-    ShaderProgram2 = glCreateProgram();
-    ShaderProgram3 = glCreateProgram();
-    ShaderProgram4 = glCreateProgram();
-    ShaderProgram5 = glCreateProgram();
-    ShaderProgram6 = glCreateProgram();
-
+    
     if (ShaderProgram == 0) {
         fprintf(stderr, "Error creating shader program\n");
         exit(1);
@@ -628,27 +655,12 @@ void CreateShaderProgram(){
     /* Separately add vertex and fragment shader to program */
     AddShader(ShaderProgram, VertexShaderString, GL_VERTEX_SHADER);
     AddShader(ShaderProgram, FragmentShaderString, GL_FRAGMENT_SHADER);
-    AddShader(ShaderProgram2, VertexShaderString, GL_VERTEX_SHADER);
-    AddShader(ShaderProgram2, FragmentShaderString, GL_FRAGMENT_SHADER);
-    AddShader(ShaderProgram3, VertexShaderString, GL_VERTEX_SHADER);
-    AddShader(ShaderProgram3, FragmentShaderString, GL_FRAGMENT_SHADER);
-    AddShader(ShaderProgram4, VertexShaderString, GL_VERTEX_SHADER);
-    AddShader(ShaderProgram4, FragmentShaderString, GL_FRAGMENT_SHADER);
-    AddShader(ShaderProgram5, VertexShaderString, GL_VERTEX_SHADER);
-    AddShader(ShaderProgram5, FragmentShaderString, GL_FRAGMENT_SHADER);
-    AddShader(ShaderProgram6, VertexShaderString, GL_VERTEX_SHADER);
-    AddShader(ShaderProgram6, FragmentShaderString, GL_FRAGMENT_SHADER);
 
     GLint Success = 0;
     GLchar ErrorLog[1024];
 
     /* Link shader code into executable shader program */
     glLinkProgram(ShaderProgram);
-    glLinkProgram(ShaderProgram2);
-    glLinkProgram(ShaderProgram3);
-    glLinkProgram(ShaderProgram4);
-    glLinkProgram(ShaderProgram5);
-    glLinkProgram(ShaderProgram6);
 
     /* Check results of linking step */
     glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
@@ -671,11 +683,6 @@ void CreateShaderProgram(){
 
     /* Put linked shader program into drawing pipeline */
     glUseProgram(ShaderProgram);
-    glUseProgram(ShaderProgram2);
-    glUseProgram(ShaderProgram3);
-    glUseProgram(ShaderProgram4);
-    glUseProgram(ShaderProgram5);
-    glUseProgram(ShaderProgram6);
 }
 
 
@@ -737,12 +744,19 @@ void Initialize(void){
     vert = data3.vertex_count;
     indx = data3.face_count;
     vertex_buffer_data3 = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    color_buffer_data3 = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     index_buffer_data3 = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
     for(i=0; i<vert; i++){
         vertex_buffer_data3[i*3] = (GLfloat)(*data3.vertex_list[i]).e[0];
 		vertex_buffer_data3[i*3+1] = (GLfloat)(*data3.vertex_list[i]).e[1];
 		vertex_buffer_data3[i*3+2] = (GLfloat)(*data3.vertex_list[i]).e[2];
+    }
+    /* Colors */
+    for(i=0; i<indx; i++){
+		color_buffer_data3[i*3] = (rand() % 100) / 100.0;
+		color_buffer_data3[i*3+1] = (rand() % 100) / 100.0;
+		color_buffer_data3[i*3+2] = (rand() % 100) / 100.0;
     }
     /* Indices */
     for(i=0; i<indx; i++){

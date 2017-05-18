@@ -147,7 +147,7 @@ GLfloat vertex_buffer_data2[] = {
 
 GLfloat color_buffer_data2[] = {
 	// Floor 
-	0.0,0.0,0.0,
+	0.87,0.72,0.53,
 	0.87,0.72,0.53,
 	// Back wall
 	0.87,0.72,0.53,
@@ -162,17 +162,17 @@ GLfloat color_buffer_data2[] = {
 
 GLushort index_buffer_data2[] = {
 	// Floor 
-	0, 1, 3,
+	0, 3, 1,
 	0, 2, 3,
 	// Back wall 
 	3, 2, 6,
-	3, 7, 6,
+	3, 6, 7,
 	// Right wall 
-	0, 2, 6,
+	0, 6, 2,
 	0, 4, 6,
 	// Left wall 
 	1, 3, 7,
-	1, 5, 7,
+	1, 7, 5,
 };
 
 /******************************************************************
@@ -830,11 +830,11 @@ void Initialize(void){
     MultiplyMatrix(RotateX, TranslateOrigin, InitialTransform);
     MultiplyMatrix(RotateZ, InitialTransform, InitialTransform);
     
-    /*
+    
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-	*/
+	
 	
 }
 

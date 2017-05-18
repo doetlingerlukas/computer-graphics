@@ -711,7 +711,7 @@ void CreateShaderProgram(){
 *
 *******************************************************************/
 
-obj_scene_data setupObj(char* file, buffer_data* bd){
+obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
 	obj_scene_data d;
 	int success = parse_obj_scene(&d, file);
     if(!success)
@@ -720,9 +720,10 @@ obj_scene_data setupObj(char* file, buffer_data* bd){
     
     /*  Copy mesh data from structs into appropriate arrays */ 
     int vert = d.vertex_count;
+    int norm = d.vertex_normal_count;
     int indx = d.face_count;
     bd->vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
-    bd->vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    bd->vertex_normals = (GLfloat*) calloc (norm*3, sizeof(GLfloat));
     bd->color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     bd->index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
@@ -733,9 +734,9 @@ obj_scene_data setupObj(char* file, buffer_data* bd){
     }
     /* Colors */
     for(i=0; i<indx; i++){
-		bd->color_buffer_data[i*3] = 1.0 /*(rand() % 100) / 100.0*/;
-		bd->color_buffer_data[i*3+1] = 0.0 /*(rand() % 100) / 100.0*/;
-		bd->color_buffer_data[i*3+2] = 0.0 /*(rand() % 100) / 100.0*/;
+		bd->color_buffer_data[i*3] = color.r != -1.0 ? color.r : (rand() % 100) / 100.0;
+		bd->color_buffer_data[i*3+1] = color.g != -1.0 ? color.g : (rand() % 100) / 100.0;
+		bd->color_buffer_data[i*3+2] = color.b != -1.0 ? color.b : (rand() % 100) / 100.0;
     }
     /* Indices */
     for(i=0; i<indx; i++){
@@ -743,8 +744,14 @@ obj_scene_data setupObj(char* file, buffer_data* bd){
 		bd->index_buffer_data[i*3+1] = (GLushort)(*d.face_list[i]).vertex_index[1];
 		bd->index_buffer_data[i*3+2] = (GLushort)(*d.face_list[i]).vertex_index[2];
     }
+    /* Normals */
+    for(i=0; i<norm; i++){
+        bd->vertex_normals[i*3] = (GLfloat)(*d.vertex_normal_list[i]).e[0];
+		bd->vertex_normals[i*3+1] = (GLfloat)(*d.vertex_normal_list[i]).e[1];
+		bd->vertex_normals[i*3+2] = (GLfloat)(*d.vertex_normal_list[i]).e[2];
+    }
     
-    bd->vertex_normals = bd->vertex_buffer_data;
+    //bd->vertex_normals = bd->vertex_buffer_data;
     
     return d;
 }
@@ -769,12 +776,13 @@ void Initialize(void){
 
 	/* Load carousel OBJ model */
     char* filename1 = "models/carousel.obj"; 
-    data_c = setupObj(filename1, carousel_data);
-
+    rgb colors1 = {1.0, 0.0, 0.0};
+    data_c = setupObj(filename1, carousel_data, colors1);
 
 	/* Load pig OBJ model */
     char* filename2 = "models/pig.obj"; 
-    data_p = setupObj(filename2, pig_data);
+    rgb colors2 = {0.0, 1.0, 0.0};
+    data_p = setupObj(filename2, pig_data, colors2);
 
     
 	

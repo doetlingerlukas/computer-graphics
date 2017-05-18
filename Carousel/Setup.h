@@ -28,6 +28,12 @@ typedef struct buffer_data{
 	GLushort* index_buffer_data;
 } buffer_data;
 
+typedef struct rgb{
+	float r;
+	float g;
+	float b;
+} rgb;
+
 void setupAndDraw(GLuint vbo, GLuint cbo, GLuint ibo, GLuint sp, float* mm);
 void etupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 void setupVertexBuffer(GLuint vbo, GLfloat* vbo_data);

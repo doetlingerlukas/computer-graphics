@@ -99,7 +99,6 @@ void etupAndDraw(buffer_object* bo, GLuint sp, float* mm){
     glDisableVertexAttribArray(2);
 }
 
-
 /******************************************************************
 *
 * SetupBuffers
@@ -126,4 +125,23 @@ void setupColorBuffer(GLuint cbo, GLfloat* cbo_data)
     glBindBuffer(GL_ARRAY_BUFFER, cbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cbo_data), cbo_data, GL_STATIC_DRAW);
 }
+
+/******************************************************************
+*
+* Vertex normals
+*
+*******************************************************************/
+/*
+void calcTriangleNormals(obj_scene_data d, buffer_data* bd){
+	int vert = d.vertex_count;
+    int indx = d.face_count;
+    
+    
+}*/
+
+
+
+
+
+
 

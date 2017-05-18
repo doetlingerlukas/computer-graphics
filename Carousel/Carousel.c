@@ -235,7 +235,7 @@ void Display(){
 	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);	
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
     /* Swap between front and back buffer */ 
     glutSwapBuffers();
@@ -405,10 +405,13 @@ void OnIdle(){
     float TranslationMatrixMove4[16];
     float TranslationMatrixMove5[16];
     float TranslationMatrixSlide[16];
+    float TranslationMatrixMove7[16];
     float RotationMatrixX[16];
+    float RotationMatrixX2[16];
     float RotationMatrixY2[16];
     float RotationMatrixY3[16];
     float RotationMatrixY4[16];
+    float RotationMatrixZ[16];
     float ScalingMatrixCarousel[16];
     float ScalingMatrix[16];
 	
@@ -516,13 +519,15 @@ void OnIdle(){
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);    
     
-     setScalingS(0.005, ScalingMatrix);
-    
-    
-    //Lamp
-    MultiplyMatrix(ScalingMatrix, InitialTransform, Model7Matrix);      
+    setScalingS(0.08, ScalingMatrix);    
+    SetRotationX(90, RotationMatrixX2);
+    SetTranslation(5.0,0.0,-2.5, TranslationMatrixMove7);
+      
+    MultiplyMatrix(RotationMatrixX2, InitialTransform, Model7Matrix); 
+    MultiplyMatrix(ScalingMatrix, Model7Matrix, Model7Matrix); 
     MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
-   
+    MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
+    MultiplyMatrix(TranslationMatrixMove7, Model7Matrix, Model7Matrix); 
     
 	
     /* Request redrawing forof window content */  
@@ -768,32 +773,31 @@ void Initialize(void){
     }
 	
 	/*Load lamp OBJ model */
-	 char* filename3 = "models/deer.obj"; 												/*============================================================*/
+	 char* filename3 = "models/3d-model.obj"; 												/*============================================================*/
 	success = parse_obj_scene(&data4, filename3);
 	
 	if(!success)
-        printf("Could not load file pig. Exiting.\n");
+        printf("Could not load file lamp. Exiting.\n");
         
     /*  Copy mesh data from structs into appropriate arrays */ 
-    vert = data4.vertex_count;
+
     indx = data4.face_count;
+    vert = data4.vertex_count;
     vertex_buffer_data4 = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
     color_buffer_data4 = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     index_buffer_data4 = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
     for(i=0; i<vert; i++){
         vertex_buffer_data4[i*3] = (GLfloat)(*data4.vertex_list[i]).e[0];
-        printf("Vertex %lf\t", vertex_buffer_data4[i*3]);
 		vertex_buffer_data4[i*3+1] = (GLfloat)(*data4.vertex_list[i]).e[1];
-		printf("Vertex %lf\t", vertex_buffer_data4[i*3+1]);
 		vertex_buffer_data4[i*3+2] = (GLfloat)(*data4.vertex_list[i]).e[2];
-		printf("Vertex %lf\n", vertex_buffer_data4[i*3+2]);
+		
     }
     /* Colors */
     for(i=0; i<indx; i++){
-		color_buffer_data4[i*3] = 0.0 /*(rand() % 100) / 100.0*/;
-		color_buffer_data4[i*3+1] = 1.0 /*(rand() % 100) / 100.0*/;
-		color_buffer_data4[i*3+2] = 0.0 /*(rand() % 100) / 100.0*/;
+		color_buffer_data4[i*3] = 0.36;//(rand() % 100) / 100.0;
+		color_buffer_data4[i*3+1] = 0.7;//(rand() % 100) / 100.0;
+		color_buffer_data4[i*3+2] = 0.3;//(rand() % 100) / 100.0;
     }    
     
     /* Indices */
@@ -896,6 +900,7 @@ void Initialize(void){
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	*/
+	
 }
 
 

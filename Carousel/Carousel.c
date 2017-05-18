@@ -117,9 +117,18 @@ float rotate_y = 0;
 int mouse_oldx;
 int mouse_oldy;
 
+/*colour values*/
+int hsv_h=0;
+float hsv_v=0.02;
+float hsv_s=1.0;
+
+float rgb_r=1.0;
+float rgb_g=0.1;
+float rgb_b=0.1;
+
 /* light sources */
 float LightPosition1[] = { 5.0, 4.0, 5.0 };
-float LightColor1[] = { 1.0, 0.0, 0.0 };
+float LightColor1[] = { 1.0, 0.1, 0.1 };
 
 float ambientFactor = 1;
 float diffuseFactor = 1;
@@ -291,6 +300,65 @@ void Mouse(int button, int state, int x, int y) {
 
 /******************************************************************
 *
+* hsv2RGB
+* Function called to change hsv values into rgb values
+*
+*******************************************************************/
+
+
+void hsv2rgb(){ 
+	float c= hsv_v * hsv_s;
+	float x= c * (1-fabs((hsv_h /60) % 2 - 1));
+	float m= hsv_v - c;
+
+	float rtemp=0.0;
+	float gtemp=0.0;
+	float btemp=0.0;
+
+	if((0<= hsv_h) && (hsv_h< 60)){
+		rtemp=c;
+		gtemp=x;
+		btemp=0.0;
+	} 
+	else if((60<= hsv_h) && (hsv_h< 120)){
+		rtemp=x;
+		gtemp=c;
+		btemp=0.0;
+	}
+	else if((120<= hsv_h) && (hsv_h< 180)){
+		rtemp=0.0;
+		gtemp=c;
+		btemp=x;
+	}
+	else if((180<= hsv_h) && (hsv_h< 240)){
+		rtemp=0.0;
+		gtemp=x;
+		btemp=c;
+	}
+	else if((240<= hsv_h) && (hsv_h< 300)){
+		rtemp=x;
+		gtemp=0.0;
+		btemp=c;
+	}
+	else if((300<= hsv_h) && (hsv_h< 360)){
+		rtemp=c;
+		gtemp=0.0;
+		btemp=x;
+	}
+
+	rgb_r= (rtemp+m) *255;
+	rgb_g= (gtemp+m) *255;
+	rgb_b= (btemp+m) *255;
+	LightColor1[0]= rgb_r;
+	LightColor1[1]= rgb_g;
+	LightColor1[2]= rgb_b;
+
+}
+
+
+
+/******************************************************************
+*
 * Keyboard
 *
 * Function to be called on key press in window; set by
@@ -368,11 +436,47 @@ void Keyboard(unsigned char key, int x, int y)   {
 	case 'g':
 		camera_y += 0.1;
 		break;
+
+	/*change hue and value of the light*/
+ 	case '6':
+		
+		if ((hsv_h -= 5) < 0){
+			hsv_h=360;
+		}
+		printf("%d \n" , hsv_h);
+		hsv2rgb();
+		break;
+	case '7':
+		if ((hsv_h += 5)>360){
+			hsv_h=0;
+		}
+		printf("%d\n" , hsv_h);
+		hsv2rgb();
+		break;
+	case '8':
+		hsv_v -= 0.001;
+		if (hsv_v < 0.0){
+			hsv_v=0.03;
+		}
+		printf("%f\n" , hsv_v);
+		hsv2rgb();
+		break;
+	case '9':
+		hsv_v += 0.001;
+		if (hsv_v > 0.03){
+			hsv_v=0.001;
+		}
+		printf("%f\n" , hsv_v);
+		hsv2rgb();
+		break;
 	  
 	/* Close the scene */
 	case 'q': case 'Q':  
 	    exit(0);    
 		break;
+
+	
+	
     }
 
     glutPostRedisplay();

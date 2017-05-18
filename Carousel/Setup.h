@@ -21,6 +21,13 @@ typedef struct buffer_object{
 	GLuint VN;
 } buffer_object;
 
+typedef struct buffer_data{
+	GLfloat* vertex_buffer_data;
+	GLfloat* vertex_normals;
+	GLfloat* color_buffer_data;
+	GLushort* index_buffer_data;
+} buffer_data;
+
 void setupAndDraw(GLuint vbo, GLuint cbo, GLuint ibo, GLuint sp, float* mm);
 void etupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 void setupVertexBuffer(GLuint vbo, GLfloat* vbo_data);

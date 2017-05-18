@@ -94,11 +94,10 @@ enum {slow=4, standard=2, fast=1};
 int rotationSpeed = standard;
 
 /* Buffers for Carousel */
-GLfloat* vertex_buffer_data;
-GLfloat* vertex_normals;
-GLfloat* color_buffer_data;
-GLushort* index_buffer_data;
+buffer_data* carousel_data;
 obj_scene_data data;
+
+GLfloat* vertex_normals;
 
 /* Mouse and keyboard motion */
 float camera_z = 0;
@@ -236,7 +235,7 @@ void Display(){
 	glUniform1f(DiffuseFactorUniform, diffuseFactor * diffuseToggle);
 	
 	GLint SpecularFactorUniform = glGetUniformLocation(ShaderProgram, "SpecularFactor");
-	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);	
+	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -546,22 +545,22 @@ void OnIdle(){
 * Create buffer objects and load data into buffers
 *
 *******************************************************************/
-void setupDaterBufferObject(buffer_object* bo){
+void setupDaterBufferObject(buffer_object* bo, buffer_data* bd){
 	glGenBuffers(1, &bo->VBO);
     glBindBuffer(GL_ARRAY_BUFFER, bo->VBO);
-    glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), bd->vertex_buffer_data, GL_STATIC_DRAW);  
     
     glGenBuffers(1, &bo->IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bo->IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.face_count*3*sizeof(GLushort), index_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.face_count*3*sizeof(GLushort), bd->index_buffer_data, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &bo->CBO);
     glBindBuffer(GL_ARRAY_BUFFER, bo->CBO);
-    glBufferData(GL_ARRAY_BUFFER, data.face_count*3*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data.face_count*3*sizeof(GLfloat), bd->color_buffer_data, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &bo->VN);
 	glBindBuffer(GL_ARRAY_BUFFER, bo->VN);
-	glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), vertex_normals, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, data.vertex_count*3*sizeof(GLfloat), bd->vertex_normals, GL_STATIC_DRAW);
 
 }
 
@@ -570,7 +569,7 @@ void SetupDataBuffers(){
     glBindVertexArray(VAO);
 	
 	/* Carousel */
-    setupDaterBufferObject(carousel);
+    setupDaterBufferObject(carousel, carousel_data);
 
 	/* Room */
 	glGenBuffers(1, &VBO6);
@@ -764,6 +763,8 @@ void Initialize(void){
 	pig3 = calloc(1, sizeof(struct buffer_object));
 	pig4 = calloc(1, sizeof(struct buffer_object));
 	
+	carousel_data = calloc(1, sizeof(struct buffer_data));
+	
 	int i;
     int success;
 
@@ -777,30 +778,32 @@ void Initialize(void){
     /*  Copy mesh data from structs into appropriate arrays */ 
     int vert = data.vertex_count;
     int indx = data.face_count;
-    vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
-    color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
-    index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
+    carousel_data->vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    carousel_data->color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
+    carousel_data->index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
     for(i=0; i<vert; i++){
-        vertex_buffer_data[i*3] = (GLfloat)(*data.vertex_list[i]).e[0];        
-		vertex_buffer_data[i*3+1] = (GLfloat)(*data.vertex_list[i]).e[1];
-		vertex_buffer_data[i*3+2] = (GLfloat)(*data.vertex_list[i]).e[2];
+        carousel_data->vertex_buffer_data[i*3] = (GLfloat)(*data.vertex_list[i]).e[0];
+		carousel_data->vertex_buffer_data[i*3+1] = (GLfloat)(*data.vertex_list[i]).e[1];
+		carousel_data->vertex_buffer_data[i*3+2] = (GLfloat)(*data.vertex_list[i]).e[2];
     }
     /* Colors */
     for(i=0; i<indx; i++){
-		color_buffer_data[i*3] = 1.0 /*(rand() % 100) / 100.0*/;
-		color_buffer_data[i*3+1] = 0.0 /*(rand() % 100) / 100.0*/;
-		color_buffer_data[i*3+2] = 0.0 /*(rand() % 100) / 100.0*/;
+		carousel_data->color_buffer_data[i*3] = 1.0 /*(rand() % 100) / 100.0*/;
+		carousel_data->color_buffer_data[i*3+1] = 0.0 /*(rand() % 100) / 100.0*/;
+		carousel_data->color_buffer_data[i*3+2] = 0.0 /*(rand() % 100) / 100.0*/;
     }
     /* Indices */
     for(i=0; i<indx; i++){
-		index_buffer_data[i*3] = (GLushort)(*data.face_list[i]).vertex_index[0];
-		index_buffer_data[i*3+1] = (GLushort)(*data.face_list[i]).vertex_index[1];
-		index_buffer_data[i*3+2] = (GLushort)(*data.face_list[i]).vertex_index[2];
+		carousel_data->index_buffer_data[i*3] = (GLushort)(*data.face_list[i]).vertex_index[0];
+		carousel_data->index_buffer_data[i*3+1] = (GLushort)(*data.face_list[i]).vertex_index[1];
+		carousel_data->index_buffer_data[i*3+2] = (GLushort)(*data.face_list[i]).vertex_index[2];
     }
     
     vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
-    vertex_normals = vertex_buffer_data;
+    carousel_data->vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    vertex_normals = carousel_data->vertex_buffer_data;
+    carousel_data->vertex_normals = carousel_data->vertex_buffer_data;
 	
 	/*Load lamp OBJ model */
 	 char* filename3 = "models/3d-model.obj"; 												/*============================================================*/

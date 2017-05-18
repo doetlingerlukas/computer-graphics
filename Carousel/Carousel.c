@@ -714,10 +714,10 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
     
     /*  Copy mesh data from structs into appropriate arrays */ 
     int vert = d.vertex_count;
-    int norm = d.vertex_normal_count;
+    /*int norm = d.vertex_normal_count;*/
     int indx = d.face_count;
     bd->vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
-    bd->vertex_normals = (GLfloat*) calloc (norm*3, sizeof(GLfloat));
+    bd->vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
     bd->color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     bd->index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
     /* Vertices */
@@ -738,12 +738,14 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
 		bd->index_buffer_data[i*3+1] = (GLushort)(*d.face_list[i]).vertex_index[1];
 		bd->index_buffer_data[i*3+2] = (GLushort)(*d.face_list[i]).vertex_index[2];
     }
-    /* Normals */
+    /* Normals *//*
     for(i=0; i<norm; i++){
         bd->vertex_normals[i*3] = (GLfloat)(*d.vertex_normal_list[i]).e[0];
 		bd->vertex_normals[i*3+1] = (GLfloat)(*d.vertex_normal_list[i]).e[1];
 		bd->vertex_normals[i*3+2] = (GLfloat)(*d.vertex_normal_list[i]).e[2];
-    }
+    }*/
+    
+    bd->vertex_normals = calcVertexNormals(d, bd);
     
     return d;
 }

@@ -56,6 +56,7 @@ buffer_object* pig3;
 buffer_object* pig4;
 
 buffer_object* lamp1;
+buffer_object* lamp2;
 
 /* Indices to vertex attributes; in this case positon and color */ 
 enum DataID {vPosition = 0, vColor = 1, vNormal = 2}; 
@@ -77,6 +78,7 @@ float Model4Matrix[16]; /* pig 3 matrix */
 float Model5Matrix[16]; /* pig 4 matrix */
 float Model6Matrix[16]; /* Room matrix */
 float Model7Matrix[16]; //For lamp
+float Model8Matrix[16]; /*for 2nd lamp*/
 
 /* Transformation matrices for initial position */
 float TranslateOrigin[16];
@@ -103,6 +105,7 @@ obj_scene_data data_c;
 buffer_data* pig_data;
 obj_scene_data data_p;
 
+/*buffer for the lamps*/
 buffer_data* lamp_data;
 obj_scene_data data_l;
 
@@ -127,8 +130,10 @@ float rgb_g=0.1;
 float rgb_b=0.1;
 
 /* light sources */
-float LightPosition1[] = { 5.0, 4.0, 5.0 };
+float LightPosition1[] = { -5.0, 3.0, -2.5 };
 float LightColor1[] = { 1.0, 0.1, 0.1 };
+float LightPosition2[] = { 5.0, 3.0, -2.5};
+float LightColor2[] ={ 1.0, 0.1, 0.1};
 
 float ambientFactor = 1;
 float diffuseFactor = 1;
@@ -138,6 +143,7 @@ int ambientToggle = 1;
 int diffuseToggle = 1;
 int specularToggle = 1;
 int light1Toggle = 1;
+int light2Toggle= 1;
 
 
 /* Buffer for Room */
@@ -223,6 +229,7 @@ void Display(){
 	
 	 /**LAMP **/
     etupAndDraw(lamp1, ShaderProgram, Model7Matrix);
+    etupAndDraw(lamp2, ShaderProgram, Model8Matrix);
 	
 	/** Light sources **/
 	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
@@ -230,6 +237,12 @@ void Display(){
 	
 	GLint LightCol1Uniform = glGetUniformLocation(ShaderProgram, "LightColor1");
 	glUniform3f(LightCol1Uniform, LightColor1[0]*light1Toggle, LightColor1[1]*light1Toggle, LightColor1[2]*light1Toggle);
+	
+	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition2");
+	glUniform3f(LightPos1Uniform, LightPosition2[0], LightPosition2[1], LightPosition2[2]);
+	
+	GLint LightCol1Uniform = glGetUniformLocation(ShaderProgram, "LightColor2");
+	glUniform3f(LightCol1Uniform, LightColor2[0]*light2Toggle, LightColor2[1]*light2Toggle, LightColor2[2]*light2Toggle);
 	
 	GLint AmbientFactorUniform = glGetUniformLocation(ShaderProgram, "AmbientFactor");
 	glUniform1f(AmbientFactorUniform, ambientFactor * ambientToggle);
@@ -510,6 +523,7 @@ void OnIdle(){
     float TranslationMatrixMove5[16];
     float TranslationMatrixSlide[16];
     float TranslationMatrixMove7[16];
+    float TranslationMatrixMove8[16];
     float RotationMatrixX[16];
     float RotationMatrixX2[16];
     float RotationMatrixY2[16];
@@ -623,16 +637,25 @@ void OnIdle(){
     MultiplyMatrix(TranslateDown, Model4Matrix, Model4Matrix);
     MultiplyMatrix(TranslateDown, Model5Matrix, Model5Matrix);    
     
+
+    /* lamp */
     setScalingS(0.08, ScalingMatrix);    
     SetRotationX(90, RotationMatrixX2);
     SetTranslation(5.0,0.0,-2.5, TranslationMatrixMove7);
-      
-    /* lamp */
+    SetTranslation(-5.0,0.0,-2.5, TranslationMatrixMove8);  
+    /* rotate lamps*/
     MultiplyMatrix(RotationMatrixX2, InitialTransform, Model7Matrix); 
+    MultiplyMatrix(RotationMatrixX2, InitialTransform, Model8Matrix); 
+    /*scale lamps*/
     MultiplyMatrix(ScalingMatrix, Model7Matrix, Model7Matrix); 
+    MultiplyMatrix(ScalingMatrix, Model8Matrix, Model8Matrix); 
+    /*translate lamps*/
     MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
     MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
+    MultiplyMatrix(TranslateDown, Model8Matrix, Model8Matrix);
+    MultiplyMatrix(TranslateDown, Model8Matrix, Model8Matrix);
     MultiplyMatrix(TranslationMatrixMove7, Model7Matrix, Model7Matrix); 
+    MultiplyMatrix(TranslationMatrixMove8, Model8Matrix, Model8Matrix); 
     
 	
     /* Request redrawing forof window content */  
@@ -688,6 +711,7 @@ void SetupDataBuffers(){
     
     /* Lamp */	
     setupDaterBufferObject(lamp1, lamp_data, data_l);
+    setupDaterBufferObject(lamp2, lamp_data, data_l);
     
 	/* All four pigs */
 	setupDaterBufferObject(pig1, pig_data, data_p);
@@ -859,6 +883,7 @@ void Initialize(void){
 	pig3 = calloc(1, sizeof(struct buffer_object));
 	pig4 = calloc(1, sizeof(struct buffer_object));
 	lamp1 = calloc(1, sizeof(struct buffer_object));
+	lamp2 = calloc(1, sizeof(struct buffer_object));
 	
 	carousel_data = calloc(1, sizeof(struct buffer_data));
 	pig_data = calloc(1, sizeof(struct buffer_data));
@@ -909,6 +934,7 @@ void Initialize(void){
     SetIdentityMatrix(Model5Matrix);
     SetIdentityMatrix(Model6Matrix);
     SetIdentityMatrix(Model7Matrix);
+    SetIdentityMatrix(Model8Matrix);
     
     /* Set projection transform */
     float fovy = 45.0;

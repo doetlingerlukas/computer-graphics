@@ -14,6 +14,8 @@
 #ifndef __SETUP_H__
 #define __SETUP_H__
 
+#include "OBJParser.h"
+
 typedef struct buffer_object{
 	GLuint VBO;
 	GLuint CBO;
@@ -34,10 +36,21 @@ typedef struct rgb{
 	float b;
 } rgb;
 
+typedef struct vertex{
+	GLfloat x, y, z;
+} vertex;
+
 void setupAndDraw(GLuint vbo, GLuint cbo, GLuint ibo, GLuint sp, float* mm);
 void etupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 void setupVertexBuffer(GLuint vbo, GLfloat* vbo_data);
 void setupIndexBuffer(GLuint ibo, GLushort* ibo_data);
 void setupColorBuffer(GLuint cbo, GLfloat* cbo_data);
+
+vertex substractVertex(vertex v1, vertex v2);
+vertex addVertex(vertex v1, vertex v2);
+vertex crossProduct(vertex u, vertex v);
+vertex normalize(vertex vert);
+GLfloat* calcFaceNormals(obj_scene_data d, buffer_data* bd);
+GLfloat* calcVertexNormals(obj_scene_data d, buffer_data* bd);
 
 #endif // __SETUP_H__

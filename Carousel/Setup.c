@@ -3,7 +3,8 @@
 * Setup.c
 * 
 *
-* Description: Helper for setup.
+* Description: Helper for setup. Helper functions to compute the
+* vertex normals of an object.
 * 	
 * Computer Graphics Proseminar SS 2017
 * 
@@ -131,13 +132,120 @@ void setupColorBuffer(GLuint cbo, GLfloat* cbo_data)
 * Vertex normals
 *
 *******************************************************************/
-/*
-void calcTriangleNormals(obj_scene_data d, buffer_data* bd){
+vertex substractVertex(vertex v1, vertex v2){
+	vertex r = {
+		v1.x - v2.x,
+		v1.y - v2.y,
+		v1.z - v2.z
+	};
+	return r;
+}
+
+vertex addVertex(vertex v1, vertex v2){
+	vertex r = {
+		v1.x + v2.x,
+		v1.y + v2.y,
+		v1.z + v2.z
+	};
+	return r;
+}
+
+vertex crossProduct(vertex u, vertex v){
+	vertex r = {
+		(u.y * v.z) - (u.z * v.y),
+		(u.z * v.x) - (u.x * v.z),
+		(u.x * v.y) - (u.y * v.x)
+	};
+	return r;
+}
+
+vertex normalize(vertex vert){
+	float d = sqrtf(vert.x * vert.x + vert.y * vert.y + vert.z * vert.z);
+	
+	vertex r = {
+		vert.x / d,
+		vert.y / d,
+		vert.z / d
+	};
+	return r;
+}
+
+GLfloat* calcFaceNormals(obj_scene_data d, buffer_data* bd){
 	int vert = d.vertex_count;
     int indx = d.face_count;
     
+    GLfloat* face_normals = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     
-}*/
+    int i;
+    for(i=0; i<indx; i++){
+		GLushort v1 = bd->index_buffer_data[i*3];
+		GLushort v2 = bd->index_buffer_data[i*3+1];
+		GLushort v3 = bd->index_buffer_data[i*3+2];
+		
+		vertex vert1 = {
+			bd->vertex_buffer_data[v1*3],
+			bd->vertex_buffer_data[v1*3+1],
+			bd->vertex_buffer_data[v1*3+2]
+		};
+		vertex vert2 = {
+			bd->vertex_buffer_data[v2*3],
+			bd->vertex_buffer_data[v2*3+1],
+			bd->vertex_buffer_data[v2*3+2]
+		};
+		vertex vert3 = {
+			bd->vertex_buffer_data[v3*3],
+			bd->vertex_buffer_data[v3*3+1],
+			bd->vertex_buffer_data[v3*3+2]
+		};
+		
+		vertex u = substractVertex(vert2, vert1);
+		vertex v = substractVertex(vert3, vert1);
+		
+		vertex nf = crossProduct(u, v);
+		
+		face_normals[i*3] = nf.x;
+		face_normals[i*3+1] = nf.y;
+		face_normals[i*3+2] = nf.z;
+    }
+    
+    return face_normals;
+}
+
+GLfloat* calcVertexNormals(obj_scene_data d, buffer_data* bd){
+	int vert = d.vertex_count;
+    int indx = d.face_count;
+	
+	GLfloat* face_normals = calcFaceNormals(d, bd);
+	GLfloat* vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+	
+	int i, j;
+	for(i=0; i<vert; i++){
+		
+		vertex normal = {0.0, 0.0, 0.0};
+		
+		for(j=0; j<indx; j++){
+			if(i == bd->index_buffer_data[j*3] ||
+				i == bd->index_buffer_data[j*3+1] ||
+				i == bd->index_buffer_data[j*3+2]){
+				
+				vertex fn = {
+					face_normals[j*3],
+					face_normals[j*3+1],
+					face_normals[j*3+2]
+				};
+				normal = addVertex(normal, fn);
+			}
+		}
+		
+		normal = normalize(normal);
+		
+		vertex_normals[i*3] = normal.x;
+		vertex_normals[i*3+1] = normal.y;
+		vertex_normals[i*3+2] = normal.z;
+	}
+	
+	return vertex_normals;
+}
 
 
 

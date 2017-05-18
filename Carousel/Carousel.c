@@ -238,11 +238,11 @@ void Display(){
 	GLint LightCol1Uniform = glGetUniformLocation(ShaderProgram, "LightColor1");
 	glUniform3f(LightCol1Uniform, LightColor1[0]*light1Toggle, LightColor1[1]*light1Toggle, LightColor1[2]*light1Toggle);
 	
-	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition2");
-	glUniform3f(LightPos1Uniform, LightPosition2[0], LightPosition2[1], LightPosition2[2]);
+	GLint LightPos2Uniform = glGetUniformLocation(ShaderProgram, "LightPosition2");
+	glUniform3f(LightPos2Uniform, LightPosition2[0], LightPosition2[1], LightPosition2[2]);
 	
-	GLint LightCol1Uniform = glGetUniformLocation(ShaderProgram, "LightColor2");
-	glUniform3f(LightCol1Uniform, LightColor2[0]*light2Toggle, LightColor2[1]*light2Toggle, LightColor2[2]*light2Toggle);
+	GLint LightCol2Uniform = glGetUniformLocation(ShaderProgram, "LightColor2");
+	glUniform3f(LightCol2Uniform, LightColor2[0]*light2Toggle, LightColor2[1]*light2Toggle, LightColor2[2]*light2Toggle);
 	
 	GLint AmbientFactorUniform = glGetUniformLocation(ShaderProgram, "AmbientFactor");
 	glUniform1f(AmbientFactorUniform, ambientFactor * ambientToggle);

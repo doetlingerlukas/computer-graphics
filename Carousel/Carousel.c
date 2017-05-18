@@ -778,7 +778,7 @@ void Initialize(void){
     /*  Copy mesh data from structs into appropriate arrays */ 
 
 	/* Load carousel OBJ model */
-    char* filename1 = "models/carousel.obj"; 
+    char* filename1 = "models/merrygoround.obj"; 
     rgb colors1 = {1.0, 1.0, 1.0};
     data_c = setupObj(filename1, carousel_data, colors1);
 

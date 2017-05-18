@@ -55,6 +55,8 @@ buffer_object* pig2;
 buffer_object* pig3;
 buffer_object* pig4;
 
+buffer_object* lamp1;
+
 /* Indices to vertex attributes; in this case positon and color */ 
 enum DataID {vPosition = 0, vColor = 1, vNormal = 2}; 
 
@@ -100,6 +102,9 @@ obj_scene_data data_c;
 /* Buffer for the pigs */
 buffer_data* pig_data;
 obj_scene_data data_p;
+
+buffer_data* lamp_data;
+obj_scene_data data_l;
 
 GLfloat* vertex_normals;
 
@@ -207,11 +212,8 @@ void Display(){
 	etupAndDraw(pig3, ShaderProgram, Model4Matrix);
 	etupAndDraw(pig4, ShaderProgram, Model5Matrix);
 	
-	glDisableVertexAttribArray(vPosition);
-	glDisableVertexAttribArray(vColor);
-	
 	 /**LAMP **/
-    setupAndDraw(VBO7, CBO7, IBO7, ShaderProgram, Model7Matrix);
+    etupAndDraw(lamp1, ShaderProgram, Model7Matrix);
 	
 	/** Light sources **/
 	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
@@ -232,7 +234,7 @@ void Display(){
 	GLint viewPosLoc = glGetUniformLocation(ShaderProgram, "viewPos");
 	glUniform3f(viewPosLoc, camera_x, camera_y, camera_z);
 	
-	/* Only draw lines. At this point necessary for drawing the obj file */
+	/* Only draw lines */
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
     /* Swap between front and back buffer */ 
@@ -521,6 +523,7 @@ void OnIdle(){
     SetRotationX(90, RotationMatrixX2);
     SetTranslation(5.0,0.0,-2.5, TranslationMatrixMove7);
       
+    /* lamp */
     MultiplyMatrix(RotationMatrixX2, InitialTransform, Model7Matrix); 
     MultiplyMatrix(ScalingMatrix, Model7Matrix, Model7Matrix); 
     MultiplyMatrix(TranslateDown, Model7Matrix, Model7Matrix);
@@ -579,21 +582,9 @@ void SetupDataBuffers(){
     glBindBuffer(GL_ARRAY_BUFFER, CBO6);
     glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
     
-    /* Lamp */	//==============================================================================================================
-    glGenBuffers(1, &VBO7);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO7);
-    glBufferData(GL_ARRAY_BUFFER, data4.vertex_count*3*sizeof(GLfloat), vertex_buffer_data4, GL_STATIC_DRAW);    
-
-    glGenBuffers(1, &IBO7);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO7);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data4.face_count*3*sizeof(GLushort), index_buffer_data4, GL_STATIC_DRAW);   
-
-    glGenBuffers(1, &CBO7);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO7);    
-    glBufferData(GL_ARRAY_BUFFER, data4.face_count*3*sizeof(GLfloat), color_buffer_data4, GL_STATIC_DRAW);
-
-	//============================================================================================================================
-
+    /* Lamp */	
+    setupDaterBufferObject(lamp1, lamp_data, data_l);
+    
 	/* All four pigs */
 	setupDaterBufferObject(pig1, pig_data, data_p);
 	setupDaterBufferObject(pig2, pig_data, data_p);
@@ -754,8 +745,6 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
 		bd->vertex_normals[i*3+2] = (GLfloat)(*d.vertex_normal_list[i]).e[2];
     }
     
-    //bd->vertex_normals = bd->vertex_buffer_data;
-    
     return d;
 }
 
@@ -765,16 +754,13 @@ void Initialize(void){
 	pig2 = calloc(1, sizeof(struct buffer_object));
 	pig3 = calloc(1, sizeof(struct buffer_object));
 	pig4 = calloc(1, sizeof(struct buffer_object));
+	lamp1 = calloc(1, sizeof(struct buffer_object));
 	
 	carousel_data = calloc(1, sizeof(struct buffer_data));
 	pig_data = calloc(1, sizeof(struct buffer_data));
-	/*Load lamp OBJ model */
-	 char* filename3 = "models/3d-model.obj"; 												/*============================================================*/
-	success = parse_obj_scene(&data4, filename3);
+	lamp_data = calloc(1, sizeof(struct buffer_data));
 	
-	if(!success)
-        printf("Could not load file lamp. Exiting.\n");
-        
+	    
     /*  Copy mesh data from structs into appropriate arrays */ 
 
 	/* Load carousel OBJ model */
@@ -786,6 +772,12 @@ void Initialize(void){
     char* filename2 = "models/pig.obj"; 
     rgb colors2 = {1.0, 1.0, 1.0};
     data_p = setupObj(filename2, pig_data, colors2);
+    
+    /*Load lamp OBJ model */
+	char* filename3 = "models/3d-model.obj"; 
+	rgb colors3 = {1.0, 1.0, 1.0};
+	data_l = setupObj(filename3, lamp_data, colors3);
+	
 
     
 	
@@ -812,10 +804,8 @@ void Initialize(void){
     SetIdentityMatrix(Model4Matrix);
     SetIdentityMatrix(Model5Matrix);
     SetIdentityMatrix(Model6Matrix);
-    //=============================================================================================
     SetIdentityMatrix(Model7Matrix);
-    //===============================================================================================
-
+    
     /* Set projection transform */
     float fovy = 45.0;
     float aspect = 1.0; 

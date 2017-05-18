@@ -114,7 +114,7 @@ int mouse_oldy;
 
 /* light sources */
 float LightPosition1[] = { 5.0, 4.0, 5.0 };
-float LightColor1[] = { 1.0, 1.0, 1.0 };
+float LightColor1[] = { 1.0, 0.0, 0.0 };
 
 float ambientFactor = 1;
 float diffuseFactor = 1;
@@ -228,6 +228,9 @@ void Display(){
 	
 	GLint SpecularFactorUniform = glGetUniformLocation(ShaderProgram, "SpecularFactor");
 	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);
+	
+	GLint viewPosLoc = glGetUniformLocation(ShaderProgram, "viewPos");
+	glUniform3f(viewPosLoc, camera_x, camera_y, camera_z);
 	
 	/* Only draw lines. At this point necessary for drawing the obj file */
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -776,12 +779,12 @@ void Initialize(void){
 
 	/* Load carousel OBJ model */
     char* filename1 = "models/carousel.obj"; 
-    rgb colors1 = {1.0, 0.0, 0.0};
+    rgb colors1 = {1.0, 1.0, 1.0};
     data_c = setupObj(filename1, carousel_data, colors1);
 
 	/* Load pig OBJ model */
     char* filename2 = "models/pig.obj"; 
-    rgb colors2 = {0.0, 1.0, 0.0};
+    rgb colors2 = {1.0, 1.0, 1.0};
     data_p = setupObj(filename2, pig_data, colors2);
 
     

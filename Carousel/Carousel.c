@@ -4,8 +4,8 @@
 *
 * by Davide De Sclavis, Manuel Buchauer und Lukas Dötlinger
 *
-* The Carousel.c displays a Carousel with some basic objects
-* that are moving up ad down.
+* The Carousel.c displays a Carousel with some objects
+* that are moving up ad down. 
 *
 * Computer Graphics Proseminar SS 2017
 *
@@ -40,21 +40,13 @@ GLboolean anim = GL_TRUE;
 /* Reference time for animation */
 int oldTime = 0;
 
-/* Define handle to a vertex buffer object */
-GLuint VBO6;
-
-/* Define handle to a color buffer object */
-GLuint CBO6;
-
-/* Define handle to an index buffer object */
-GLuint IBO6;
-
+/* Buffer object structs for all models */
 buffer_object* carousel;
+buffer_object* room;
 buffer_object* pig1;
 buffer_object* pig2;
 buffer_object* pig3;
 buffer_object* pig4;
-
 buffer_object* lamp1;
 buffer_object* lamp2;
 
@@ -65,8 +57,8 @@ enum DataID {vPosition = 0, vColor = 1, vNormal = 2};
 static const char* VertexShaderString;
 static const char* FragmentShaderString;
 
-GLuint ShaderProgram;  /* Shader for carousel */
-GLuint ShaderProgram2;
+/* Shader1: Phong shader */
+GLuint ShaderProgram; 
 
 float ProjectionMatrix[16]; /* Perspective projection matrix */
 float ViewMatrix[16]; /* Camera view matrix */ 
@@ -109,7 +101,10 @@ obj_scene_data data_p;
 buffer_data* lamp_data;
 obj_scene_data data_l;
 
-GLfloat* vertex_normals;
+/*buffer for the room*/
+buffer_data* room_data;
+obj_scene_data data_r;
+
 
 /* Mouse and keyboard motion */
 float camera_z = 0;
@@ -145,51 +140,6 @@ int specularToggle = 1;
 int light1Toggle = 1;
 int light2Toggle= 1;
 
-
-/* Buffer for Room */
-GLfloat vertex_buffer_data2[] = {
-	// Floor 
-	7.0, -1.0, 7.0,
-	-7.0, -1.0, 7.0,
-	7.0, -1.0, -7.0,
-	-7.0, -1.0, -7.0,
-	// Roof 
-	7.0, 4.0, 7.0,
-	-7.0, 4.0, 7.0,
-	7.0, 4.0, -7.0,
-	-7.0, 4.0, -7.0,
-};
-
-GLfloat color_buffer_data2[] = {
-	// Floor 
-	0.87,0.72,0.53,
-	0.87,0.72,0.53,
-	// Back wall
-	0.87,0.72,0.53,
-	0.87,0.72,0.53,
-	// Right wall 
-	0.87,0.72,0.53,
-	0.87,0.72,0.53,
-	// Left wall 
-	0.87,0.72,0.53,
-	0.87,0.72,0.53,
-};
-
-GLushort index_buffer_data2[] = {
-	// Floor 
-	0, 3, 1,
-	0, 2, 3,
-	// Back wall 
-	3, 2, 6,
-	3, 6, 7,
-	// Right wall 
-	0, 6, 2,
-	0, 4, 6,
-	// Left wall 
-	1, 3, 7,
-	1, 7, 5,
-};
-
 /******************************************************************
 *
 * Display
@@ -213,13 +163,8 @@ void Display(){
     /** Carousel **/
     etupAndDraw(carousel, ShaderProgram, ModelMatrix);
     
-    
     /** Room **/
-    setupAndDraw(VBO6, CBO6, IBO6, ShaderProgram2, Model6Matrix);
-    
-        
-    glDisableVertexAttribArray(vPosition);
-    glDisableVertexAttribArray(vColor);
+    etupAndDraw(room, ShaderProgram, Model6Matrix);
     
     /** Pigs **/
 	etupAndDraw(pig1, ShaderProgram, Model2Matrix);
@@ -318,7 +263,6 @@ void Mouse(int button, int state, int x, int y) {
 *
 *******************************************************************/
 
-
 void hsv2rgb(){ 
 	float c= hsv_v * hsv_s;
 	float x= c * (1-fabs((hsv_h /60) % 2 - 1));
@@ -367,8 +311,6 @@ void hsv2rgb(){
 	LightColor1[2]= rgb_b;
 
 }
-
-
 
 /******************************************************************
 *
@@ -487,9 +429,6 @@ void Keyboard(unsigned char key, int x, int y)   {
 	case 'q': case 'Q':  
 	    exit(0);    
 		break;
-
-	
-	
     }
 
     glutPostRedisplay();
@@ -498,9 +437,10 @@ void Keyboard(unsigned char key, int x, int y)   {
 /******************************************************************
 *
 * OnIdle
-*
 * 
-*
+* Yes, we know that this function is very messy and ugly, but
+* it will be improved, structured and shortened very shortly!
+* 
 *******************************************************************/
 
 void OnIdle(){	
@@ -670,7 +610,7 @@ void OnIdle(){
 * Create buffer objects and load data into buffers
 *
 *******************************************************************/
-void setupDaterBufferObject(buffer_object* bo, buffer_data* bd, obj_scene_data d){
+void setupDataBufferObject(buffer_object* bo, buffer_data* bd, obj_scene_data d){
 	glGenBuffers(1, &bo->VBO);
     glBindBuffer(GL_ARRAY_BUFFER, bo->VBO);
     glBufferData(GL_ARRAY_BUFFER, d.vertex_count*3*sizeof(GLfloat), bd->vertex_buffer_data, GL_STATIC_DRAW);  
@@ -694,30 +634,20 @@ void SetupDataBuffers(){
     glBindVertexArray(VAO);
 	
 	/* Carousel */
-    setupDaterBufferObject(carousel, carousel_data, data_c);
+    setupDataBufferObject(carousel, carousel_data, data_c);
 
 	/* Room */
-	glGenBuffers(1, &VBO6);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO6);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data2), vertex_buffer_data2, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &IBO6);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO6);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_buffer_data2), index_buffer_data2, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &CBO6);
-    glBindBuffer(GL_ARRAY_BUFFER, CBO6);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(color_buffer_data2), color_buffer_data2, GL_STATIC_DRAW);
+	setupDataBufferObject(room, room_data, data_r);
     
     /* Lamp */	
-    setupDaterBufferObject(lamp1, lamp_data, data_l);
-    setupDaterBufferObject(lamp2, lamp_data, data_l);
+    setupDataBufferObject(lamp1, lamp_data, data_l);
+    setupDataBufferObject(lamp2, lamp_data, data_l);
     
 	/* All four pigs */
-	setupDaterBufferObject(pig1, pig_data, data_p);
-	setupDaterBufferObject(pig2, pig_data, data_p);
-	setupDaterBufferObject(pig3, pig_data, data_p);
-	setupDaterBufferObject(pig4, pig_data, data_p);
+	setupDataBufferObject(pig1, pig_data, data_p);
+	setupDataBufferObject(pig2, pig_data, data_p);
+	setupDataBufferObject(pig3, pig_data, data_p);
+	setupDataBufferObject(pig4, pig_data, data_p);
 }
 
 
@@ -774,7 +704,6 @@ void AddShader(GLuint ShaderProgram, const char* ShaderCode, GLenum ShaderType){
 void CreateShaderProgram(){
     /* Allocate shader object */
     ShaderProgram = glCreateProgram();
-    ShaderProgram2 = glCreateProgram();
     
     if (ShaderProgram == 0) {
         fprintf(stderr, "Error creating shader program\n");
@@ -788,15 +717,12 @@ void CreateShaderProgram(){
     /* Separately add vertex and fragment shader to program */
     AddShader(ShaderProgram, VertexShaderString, GL_VERTEX_SHADER);
     AddShader(ShaderProgram, FragmentShaderString, GL_FRAGMENT_SHADER);
-    AddShader(ShaderProgram2, VertexShaderString, GL_VERTEX_SHADER);
-    AddShader(ShaderProgram2, FragmentShaderString, GL_FRAGMENT_SHADER);
 
     GLint Success = 0;
     GLchar ErrorLog[1024];
 
     /* Link shader code into executable shader program */
     glLinkProgram(ShaderProgram);
-    glLinkProgram(ShaderProgram2);
 
     /* Check results of linking step */
     glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
@@ -819,7 +745,6 @@ void CreateShaderProgram(){
 
     /* Put linked shader program into drawing pipeline */
     glUseProgram(ShaderProgram);
-    glUseProgram(ShaderProgram2);
 }
 
 
@@ -837,12 +762,11 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
 	obj_scene_data d;
 	int success = parse_obj_scene(&d, file);
     if(!success)
-        printf("Could not load file carousel. Exiting.\n");
+        printf("Could not load file. Exiting.\n");
     int i;
     
     /*  Copy mesh data from structs into appropriate arrays */ 
     int vert = d.vertex_count;
-    /*int norm = d.vertex_normal_count;*/
     int indx = d.face_count;
     bd->vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
     bd->vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
@@ -866,13 +790,7 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
 		bd->index_buffer_data[i*3+1] = (GLushort)(*d.face_list[i]).vertex_index[1];
 		bd->index_buffer_data[i*3+2] = (GLushort)(*d.face_list[i]).vertex_index[2];
     }
-    /* Normals *//*
-    for(i=0; i<norm; i++){
-        bd->vertex_normals[i*3] = (GLfloat)(*d.vertex_normal_list[i]).e[0];
-		bd->vertex_normals[i*3+1] = (GLfloat)(*d.vertex_normal_list[i]).e[1];
-		bd->vertex_normals[i*3+2] = (GLfloat)(*d.vertex_normal_list[i]).e[2];
-    }*/
-    
+    /* Normals */
     bd->vertex_normals = calcVertexNormals(d, bd);
     
     return d;
@@ -880,6 +798,7 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
 
 void Initialize(void){   
 	carousel = calloc(1, sizeof(struct buffer_object));
+	room = calloc(1, sizeof(struct buffer_object));
 	pig1 = calloc(1, sizeof(struct buffer_object));
 	pig2 = calloc(1, sizeof(struct buffer_object));
 	pig3 = calloc(1, sizeof(struct buffer_object));
@@ -890,6 +809,7 @@ void Initialize(void){
 	carousel_data = calloc(1, sizeof(struct buffer_data));
 	pig_data = calloc(1, sizeof(struct buffer_data));
 	lamp_data = calloc(1, sizeof(struct buffer_data));
+	room_data = calloc(1, sizeof(struct buffer_data));
 	
 	    
     /*  Copy mesh data from structs into appropriate arrays */ 
@@ -909,8 +829,11 @@ void Initialize(void){
 	rgb colors3 = {1.0, 1.0, 1.0};
 	data_l = setupObj(filename3, lamp_data, colors3);
 	
+	/*Load lamp OBJ model */
+	char* filename4 = "models/room.obj"; 
+	rgb colors4 = {1.0, 1.0, 1.0};
+	data_r = setupObj(filename4, room_data, colors4);
 
-    
 	
     /* Set background (clear) color to dark blue */ 
     glClearColor(0.0, 0.0, 0.8, 0.0);

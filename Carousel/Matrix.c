@@ -222,5 +222,26 @@ void SetPerspectiveMatrix(float fov, float aspect, float nearPlane,
 }
 
 
+/******************************************************************
+*
+* multiply Matrix with Vector
+*
+*******************************************************************/
+
+void multiplyMatrixWithVector(float* m, float* v){
+	
+	float temp[3];
+	
+	temp[0] = m[0]*v[0] + m[1]*v[0] + m[2]*v[0] + m[3]*v[0];
+	temp[1] = m[4]*v[1] + m[5]*v[1] + m[6]*v[1] + m[7]*v[1];
+	temp[2] = m[8]*v[2] + m[9]*v[2] + m[10]*v[2] + m[11]*v[2];
+	
+	memcpy(v, temp, 3*sizeof(float));
+}
+
+
+
+
+
 
 

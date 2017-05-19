@@ -90,7 +90,7 @@ enum {slow=4, standard=2, fast=1};
 int rotationSpeed = standard;
 /* Indices for different lightning modes */
 enum {lmode1=1, lmode2=2};
-int ligthMode = lmode1;
+int lightMode = lmode1;
 
 /* Buffers for Carousel */
 buffer_data* carousel_data;
@@ -347,6 +347,20 @@ void Keyboard(unsigned char key, int x, int y)   {
 		SetTranslation(0.0, 0.0, -10.0, ViewMatrix);
 		break;
 
+	/* Switch light mode */
+	case 'l':
+		if(lightMode == 1){
+			lightMode = 2;
+			light2Toggle = 0;
+		}else{
+			lightMode = 1;
+			LightPosition1[0] = -6.0;
+			LightPosition1[0] = 3.0;
+			LightPosition1[0] = 3.0;
+			light2Toggle = 1;
+		}
+		break;
+	
 	/* Toggle animation */
 	case 'p':
 		if (cameraMode == Pause)
@@ -634,7 +648,11 @@ void OnIdle(){
     
     /* rotating light source */
 	if(lightMode == 2){
-		
+		float lp[] = { 1.0, 1.0, 1.0 };
+		multiplyMatrixWithVector(ModelMatrix, lp);
+		LightPosition1[0] = lp[0];
+		LightPosition1[1] = lp[1];
+		LightPosition1[2] = lp[2];
 	}
 	
     /* Request redrawing forof window content */  

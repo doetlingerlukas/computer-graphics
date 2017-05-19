@@ -39,8 +39,8 @@ void main()
     vec3 reflectDir = reflect(-lightDir, norm);
     vec3 reflectDir2 = reflect(-lightDir2, norm);
     
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), 32);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
+    float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), 64);
     vec3 specular = specularStrength * spec * LightColor1;
     vec3 specular2 = specularStrength * spec2 * LightColor2;
     

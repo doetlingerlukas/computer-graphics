@@ -43,6 +43,8 @@ Following keyboard controls are available for lightning control:
 	- `u` : turn on/off ambient lightning
 	- `i` : turn on/off diffuse lightning
 	- `o` : turn on/off specular lightning
+	- `x` : turn on/off left lamp
+	- `y` : turn on/off right lamp
 
 ## Execution
 

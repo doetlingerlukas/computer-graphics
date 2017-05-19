@@ -88,6 +88,9 @@ int cameraMode = Default;
 /* Indices for different rotation speeds */
 enum {slow=4, standard=2, fast=1};
 int rotationSpeed = standard;
+/* Indices for different lightning modes */
+enum {lmode1=1, lmode2=2};
+int ligthMode = lmode1;
 
 /* Buffers for Carousel */
 buffer_data* carousel_data;
@@ -425,7 +428,7 @@ void Keyboard(unsigned char key, int x, int y)   {
 		hsv2rgb();
 		break;
 		
-	/* Toggle lightning factors */
+	/* Toggle lightning */
 	case 'u':
 		if(ambientToggle ==1)
 			ambientToggle = 0;
@@ -443,6 +446,18 @@ void Keyboard(unsigned char key, int x, int y)   {
 			specularToggle = 0;
 		else 
 			specularToggle = 1;
+		break;
+	case 'x':
+		if(light1Toggle ==1)
+			light1Toggle = 0;
+		else 
+			light1Toggle = 1;
+		break;
+	case 'y':
+		if(light2Toggle ==1)
+			light2Toggle = 0;
+		else 
+			light2Toggle = 1;
 		break;
 	
 	/* Close the scene */
@@ -617,6 +632,10 @@ void OnIdle(){
     MultiplyMatrix(TranslationMatrixMove7, Model7Matrix, Model7Matrix); 
     MultiplyMatrix(TranslationMatrixMove8, Model8Matrix, Model8Matrix); 
     
+    /* rotating light source */
+	if(lightMode == 2){
+		
+	}
 	
     /* Request redrawing forof window content */  
     glutPostRedisplay();

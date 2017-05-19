@@ -461,13 +461,13 @@ void Keyboard(unsigned char key, int x, int y)   {
 		else 
 			specularToggle = 1;
 		break;
-	case 'x':
+	case 'y':
 		if(light1Toggle ==1)
 			light1Toggle = 0;
 		else 
 			light1Toggle = 1;
 		break;
-	case 'y':
+	case 'x':
 		if(light2Toggle ==1)
 			light2Toggle = 0;
 		else 

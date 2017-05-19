@@ -43,13 +43,18 @@ Following keyboard controls are available for lightning control:
 	- `u` : turn on/off ambient lightning
 	- `i` : turn on/off diffuse lightning
 	- `o` : turn on/off specular lightning
-	- `x` : turn on/off left lamp
-	- `y` : turn on/off right lamp
+	- `y` : turn on/off left lamp
+	- `x` : turn on/off right lamp
 	
 	Switch lightning modes:
 	- `l` : switch between 2 lightning modes
 	- The second mode displays one light source inside the carousel.
 	
+	The values for ambient, diffuse and specular terms can be changed
+	in the `Carousel.c` file. You will find those variables at the end
+	of the first code segement (where all the other deklarations and 
+	definitions are). We didn't add keyboard functions to increase/decrease
+	those values, because we are slowly running out of keys. :)
 
 ## Execution
 

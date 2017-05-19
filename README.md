@@ -29,6 +29,15 @@ Following mouse/keyboard commands are available if you switched to camera mode 2
 	- `d` : move rightwards
 	- `t` : move upwards
 	- `g` : move downwards
+	
+Following keyboard controls are available for lightning control:
+
+	These commands will only change the color of the left light.
+	We did this to give a static reference from the second light.
+	- `6` : decrease the value of the color
+	- `7` : increase the value of the color
+	- `8` : decrease the hue of the color
+	- `9` : increase the hue of the color
 
 ## Execution
 

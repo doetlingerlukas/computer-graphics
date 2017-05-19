@@ -125,9 +125,9 @@ float rgb_g=0.1;
 float rgb_b=0.1;
 
 /* light sources */
-float LightPosition1[] = { -5.0, 3.0, -2.5 };
+float LightPosition1[] = { -6.0, 3.0, 3.0 };
 float LightColor1[] = { 1.0, 0.1, 0.1 };
-float LightPosition2[] = { 5.0, 3.0, -2.5};
+float LightPosition2[] = { 6.0, 3.0, 3.0};
 float LightColor2[] ={ 1.0, 0.1, 0.1};
 
 float ambientFactor = 1;
@@ -581,8 +581,8 @@ void OnIdle(){
     /* lamp */
     setScalingS(0.08, ScalingMatrix);    
     SetRotationX(90, RotationMatrixX2);
-    SetTranslation(5.0,0.0,-2.5, TranslationMatrixMove7);
-    SetTranslation(-5.0,0.0,-2.5, TranslationMatrixMove8);  
+    SetTranslation(6.0,0.0,3.0, TranslationMatrixMove7);
+    SetTranslation(-6.0,0.0,3.0, TranslationMatrixMove8);  
     /* rotate lamps*/
     MultiplyMatrix(RotationMatrixX2, InitialTransform, Model7Matrix); 
     MultiplyMatrix(RotationMatrixX2, InitialTransform, Model8Matrix); 

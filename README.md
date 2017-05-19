@@ -38,6 +38,11 @@ Following keyboard controls are available for lightning control:
 	- `7` : increase the value of the color
 	- `8` : decrease the hue of the color
 	- `9` : increase the hue of the color
+	
+	Lightning toggle controls:
+	- `u` : turn on/off ambient lightning
+	- `i` : turn on/off diffuse lightning
+	- `o` : turn on/off specular lightning
 
 ## Execution
 

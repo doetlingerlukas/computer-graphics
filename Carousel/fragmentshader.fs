@@ -1,5 +1,9 @@
 #version 330
 
+uniform float AmbientFactor;
+uniform float DiffuseFactor;
+uniform float SpecularFactor;
+
 uniform vec3 LightColor1;
 uniform vec3 LightColor2;
 uniform vec3 viewPos;
@@ -14,7 +18,7 @@ out vec4 color;
 
 void main()
 {
-	float ambientStrength = 0.2f;
+	float ambientStrength = AmbientFactor;
     vec3 ambient = ambientStrength * LightColor1;
     vec3 ambient2 = ambientStrength * LightColor2;
     
@@ -26,8 +30,10 @@ void main()
     vec3 diffuse = diff * LightColor1;
     float diff2 = max(dot(norm, lightDir2), 0.0);
     vec3 diffuse2 = diff2 * LightColor2;
+    diffuse *= vec3(DiffuseFactor);
+    diffuse2 *= vec3(DiffuseFactor);
     
-    float specularStrength = 0.5f;
+    float specularStrength = SpecularFactor;
     
     vec3 viewDir = normalize(viewPos - fragpos);
     vec3 reflectDir = reflect(-lightDir, norm);

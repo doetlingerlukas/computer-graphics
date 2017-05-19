@@ -128,11 +128,11 @@ float rgb_b=0.1;
 float LightPosition1[] = { -6.0, 3.0, 3.0 };
 float LightColor1[] = { 1.0, 0.1, 0.1 };
 float LightPosition2[] = { 6.0, 3.0, 3.0};
-float LightColor2[] ={ 1.0, 0.1, 0.1};
+float LightColor2[] ={ 0.0, 0.5, 0.5};
 
-float ambientFactor = 1;
-float diffuseFactor = 1;
-float specularFactor = 1;
+float ambientFactor = 0.2f;
+float diffuseFactor = 1.0f;
+float specularFactor = 1.5F;
 
 int ambientToggle = 1;
 int diffuseToggle = 1;
@@ -411,20 +411,40 @@ void Keyboard(unsigned char key, int x, int y)   {
 	case '8':
 		hsv_v -= 0.001;
 		if (hsv_v < 0.0){
-			hsv_v=0.03;
+			hsv_v=0.025;
 		}
 		printf("%f\n" , hsv_v);
 		hsv2rgb();
 		break;
 	case '9':
 		hsv_v += 0.001;
-		if (hsv_v > 0.03){
+		if (hsv_v > 0.025){
 			hsv_v=0.001;
 		}
 		printf("%f\n" , hsv_v);
 		hsv2rgb();
 		break;
-	  
+		
+	/* Toggle lightning factors */
+	case 'u':
+		if(ambientToggle ==1)
+			ambientToggle = 0;
+		else 
+			ambientToggle = 1;
+		break;
+	case 'i':
+		if(diffuseToggle ==1)
+			diffuseToggle = 0;
+		else 
+			diffuseToggle = 1;
+		break;
+	case 'o':
+		if(specularToggle ==1)
+			specularToggle = 0;
+		else 
+			specularToggle = 1;
+		break;
+	
 	/* Close the scene */
 	case 'q': case 'Q':  
 	    exit(0);    

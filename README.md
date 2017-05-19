@@ -45,6 +45,11 @@ Following keyboard controls are available for lightning control:
 	- `o` : turn on/off specular lightning
 	- `x` : turn on/off left lamp
 	- `y` : turn on/off right lamp
+	
+	Switch lightning modes:
+	- `l` : switch between 2 lightning modes
+	- The second mode displays one light source inside the carousel.
+	
 
 ## Execution
 

@@ -355,8 +355,8 @@ void Keyboard(unsigned char key, int x, int y)   {
 		}else{
 			lightMode = 1;
 			LightPosition1[0] = -6.0;
-			LightPosition1[0] = 3.0;
-			LightPosition1[0] = 3.0;
+			LightPosition1[1] = 3.0;
+			LightPosition1[2] = 3.0;
 			light2Toggle = 1;
 		}
 		break;
@@ -415,14 +415,14 @@ void Keyboard(unsigned char key, int x, int y)   {
 		if ((hsv_h -= 5) < 0){
 			hsv_h=360;
 		}
-		printf("%d \n" , hsv_h);
+		printf("Current hsv_h value: %d \n" , hsv_h);
 		hsv2rgb();
 		break;
 	case '7':
 		if ((hsv_h += 5)>360){
 			hsv_h=0;
 		}
-		printf("%d\n" , hsv_h);
+		printf("Current hsv_h value: %d\n" , hsv_h);
 		hsv2rgb();
 		break;
 	case '8':
@@ -430,7 +430,7 @@ void Keyboard(unsigned char key, int x, int y)   {
 		if (hsv_v < 0.0){
 			hsv_v=0.025;
 		}
-		printf("%f\n" , hsv_v);
+		printf("Current hsv_v value: %f\n" , hsv_v);
 		hsv2rgb();
 		break;
 	case '9':
@@ -438,7 +438,7 @@ void Keyboard(unsigned char key, int x, int y)   {
 		if (hsv_v > 0.025){
 			hsv_v=0.001;
 		}
-		printf("%f\n" , hsv_v);
+		printf("Current hsv_v value: %f\n" , hsv_v);
 		hsv2rgb();
 		break;
 		
@@ -653,7 +653,7 @@ void OnIdle(){
 		LightPosition1[0] = lp[0];
 		LightPosition1[1] = lp[1];
 		LightPosition1[2] = lp[2];
-	}
+	} 
 	
     /* Request redrawing forof window content */  
     glutPostRedisplay();

@@ -9,12 +9,14 @@ uniform vec3 LightPosition2;
 layout (location = 0) in vec3 Position;
 layout (location = 1) in vec3 Color;
 layout (location = 2) in vec3 Normal;
+layout (location = 3) in vec2 UV;
 
 out vec3 fragpos;
 out vec3 normal;
 out vec3 lightpos;
 out vec3 lightpos2;
 out vec3 fragcol;
+out vec2 UVcoords;
 
 void main()
 {
@@ -24,4 +26,5 @@ void main()
     lightpos = vec3(ViewMatrix * vec4(LightPosition1, 1.0));
     lightpos2 = vec3(ViewMatrix * vec4(LightPosition2, 1.0));
     fragcol = Color;
+    UVcoords = UV;
 }

@@ -33,40 +33,39 @@
 *
 *******************************************************************/
 
-void setupAndDraw(GLuint vbo, GLuint cbo, GLuint ibo, GLuint sp, float* mm)
-{
+void setupAndDraw(buffer_object* bo, GLuint sp, float* mm){
+	
 	glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, bo->VBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     
-    if(cbo != 0){
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, cbo);
-		glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0); 
-	}
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, bo->CBO);
+	glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 0, 0); 
 	
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bo->IBO);
     GLint size; 
     glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
     
-    if(0 != 0){
-		glEnableVertexAttribArray(2);
-		//glBindBuffer(GL_ARRAY_BUFFER, vn);
-		glVertexAttribPointer(
-			2,                                // attribute
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			0                          // array buffer offset
-		);
-	}
-    
-    /* Associate first Model with shader matrices */
+    glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, bo->VN);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
+	glEnableVertexAttribArray(3);
+	glBindBuffer(GL_ARRAY_BUFFER, bo->VT);
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	
+	/* Associate first Model with shader matrices */
     glUniformMatrix4fv(glGetUniformLocation(sp, "ModelMatrix"), 1, GL_TRUE, mm);
 
     /* Issue draw command, using indexed triangle list */
     glDrawElements(GL_TRIANGLES, size / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    
+    /* Disable attributes */
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
 }
 
 void etupAndDraw(buffer_object* bo, GLuint sp, float* mm){

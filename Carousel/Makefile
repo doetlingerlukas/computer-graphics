@@ -1,5 +1,5 @@
 CC = gcc
-OBJ = Carousel.o LoadShader.o Matrix.o StringExtra.o OBJParser.o List.o Setup.o
+OBJ = Carousel.o LoadShader.o LoadTexture.o Matrix.o StringExtra.o OBJParser.o List.o Setup.o
 CFLAGS = -g -Wall -Wextra
 LDLIBS = -lm -lglut -lGLEW -lGL
 

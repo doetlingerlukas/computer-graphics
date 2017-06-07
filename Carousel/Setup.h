@@ -21,10 +21,12 @@ typedef struct buffer_object{
 	GLuint CBO;
 	GLuint IBO;
 	GLuint VN;
+	GLuint VT;
 } buffer_object;
 
 typedef struct buffer_data{
 	GLfloat* vertex_buffer_data;
+	GLfloat* vertex_textures;
 	GLfloat* vertex_normals;
 	GLfloat* color_buffer_data;
 	GLushort* index_buffer_data;
@@ -40,7 +42,7 @@ typedef struct vertex{
 	GLfloat x, y, z;
 } vertex;
 
-void setupAndDraw(GLuint vbo, GLuint cbo, GLuint ibo, GLuint sp, float* mm);
+void setupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 void etupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 void setupVertexBuffer(GLuint vbo, GLfloat* vbo_data);
 void setupIndexBuffer(GLuint ibo, GLushort* ibo_data);

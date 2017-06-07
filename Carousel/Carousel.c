@@ -27,6 +27,7 @@
 
 /* Local includes */
 #include "LoadShader.h"   /* Provides loading function for shader code */
+#include "LoadTexture.h"  
 #include "Matrix.h"
 #include "Setup.h"
 #include "OBJParser.h"
@@ -50,8 +51,8 @@ buffer_object* pig4;
 buffer_object* lamp1;
 buffer_object* lamp2;
 
-/* Indices to vertex attributes; in this case positon and color */ 
-enum DataID {vPosition = 0, vColor = 1, vNormal = 2}; 
+/* Indices to vertex attributes */ 
+enum DataID {vPosition = 0, vColor = 1, vNormal = 2, vUV = 3}; 
 
 /* Strings for loading and storing shader code */
 static const char* VertexShaderString;
@@ -143,6 +144,11 @@ int specularToggle = 1;
 int light1Toggle = 1;
 int light2Toggle= 1;
 
+/* Variables for texture handling */
+GLuint TextureID;
+GLuint TextureUniform;
+TextureDataPtr Texture;
+
 /******************************************************************
 *
 * Display
@@ -163,21 +169,34 @@ void Display(){
     glUniformMatrix4fv(glGetUniformLocation(ShaderProgram, "ViewMatrix"), 1, GL_TRUE, ViewMatrix);    
        
     
+	/** Texturing **/
+	/* Activate first (and only) texture unit */
+    glActiveTexture(GL_TEXTURE0);
+
+    /* Bind current texture  */
+    glBindTexture(GL_TEXTURE_2D, TextureID);
+    
+    /* Get texture uniform handle from fragment shader */ 
+    TextureUniform  = glGetUniformLocation(ShaderProgram, "myTextureSampler");
+
+    /* Set location of uniform sampler variable */ 
+    glUniform1i(TextureUniform, 0);
+    
     /** Carousel **/
-    etupAndDraw(carousel, ShaderProgram, ModelMatrix);
+    setupAndDraw(carousel, ShaderProgram, ModelMatrix);
     
     /** Room **/
-    etupAndDraw(room, ShaderProgram, Model6Matrix);
+    setupAndDraw(room, ShaderProgram, Model6Matrix);
     
     /** Pigs **/
-	etupAndDraw(pig1, ShaderProgram, Model2Matrix);
-	etupAndDraw(pig2, ShaderProgram, Model3Matrix);
-	etupAndDraw(pig3, ShaderProgram, Model4Matrix);
-	etupAndDraw(pig4, ShaderProgram, Model5Matrix);
+	setupAndDraw(pig1, ShaderProgram, Model2Matrix);
+	setupAndDraw(pig2, ShaderProgram, Model3Matrix);
+	setupAndDraw(pig3, ShaderProgram, Model4Matrix);
+	setupAndDraw(pig4, ShaderProgram, Model5Matrix);
 	
 	 /**LAMP **/
-    etupAndDraw(lamp1, ShaderProgram, Model7Matrix);
-    etupAndDraw(lamp2, ShaderProgram, Model8Matrix);
+    setupAndDraw(lamp1, ShaderProgram, Model7Matrix);
+    setupAndDraw(lamp2, ShaderProgram, Model8Matrix);
 	
 	/** Light sources **/
 	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
@@ -203,6 +222,7 @@ void Display(){
 	
 	GLint viewPosLoc = glGetUniformLocation(ShaderProgram, "viewPos");
 	glUniform3f(viewPosLoc, camera_x, camera_y, camera_z);
+    
 	
 	/* Only draw lines */
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -683,6 +703,10 @@ void setupDataBufferObject(buffer_object* bo, buffer_data* bd, obj_scene_data d)
 	glGenBuffers(1, &bo->VN);
 	glBindBuffer(GL_ARRAY_BUFFER, bo->VN);
 	glBufferData(GL_ARRAY_BUFFER, d.vertex_count*3*sizeof(GLfloat), bd->vertex_normals, GL_STATIC_DRAW);
+	
+	glGenBuffers(1, &bo->VT);
+	glBindBuffer(GL_ARRAY_BUFFER, bo->VT);
+	glBufferData(GL_ARRAY_BUFFER, d.vertex_texture_count*2*sizeof(GLfloat), bd->vertex_textures, GL_STATIC_DRAW);
 
 }
 
@@ -804,6 +828,60 @@ void CreateShaderProgram(){
     glUseProgram(ShaderProgram);
 }
 
+/******************************************************************
+*
+* SetupTexture
+*
+* This function is called to load the texture and initialize
+* texturing parameters
+*
+*******************************************************************/
+
+void SetupTexture(void)
+{	
+    /* Allocate texture container */
+    Texture = malloc(sizeof(TextureDataPtr));
+
+    int success = LoadTexture("textures/wall.bmp", Texture);
+    if (!success)
+    {
+        printf("Error loading texture. Exiting.\n");
+	exit(-1);
+    }
+
+    /* Create texture name and store in handle */
+    glGenTextures(1, &TextureID);
+	
+    /* Bind texture */
+    glBindTexture(GL_TEXTURE_2D, TextureID);
+
+    /* Load texture image into memory */
+    glTexImage2D(GL_TEXTURE_2D,     /* Target texture */
+		 0,                 /* Base level */
+		 GL_RGB,            /* Each element is RGB triple */ 
+		 Texture->width,    /* Texture dimensions */ 
+            Texture->height, 
+		 0,                 /* Border should be zero */
+		 GL_BGR,            /* Data storage format for BMP file */
+		 GL_UNSIGNED_BYTE,  /* Type of pixel data, one byte per channel */
+		 Texture->data);    /* Pointer to image data  */
+ 
+    /* Next set up texturing parameters */
+
+    /* Repeat texture on edges when tiling */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    /* Linear interpolation for magnification */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    /* Trilinear MIP mapping for minification */ 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); 
+    glGenerateMipmap(GL_TEXTURE_2D); 
+
+    /* Note: MIP mapping not visible due to fixed, i.e. static camera */
+}
+
 
 
 /******************************************************************
@@ -825,10 +903,14 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
     /*  Copy mesh data from structs into appropriate arrays */ 
     int vert = d.vertex_count;
     int indx = d.face_count;
+    int texc = d.vertex_texture_count;
+    
     bd->vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
     bd->vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    bd->vertex_textures = (GLfloat*) calloc (texc*2, sizeof(GLfloat));
     bd->color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     bd->index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
+    
     /* Vertices */
     for(i=0; i<vert; i++){
         bd->vertex_buffer_data[i*3] = (GLfloat)(*d.vertex_list[i]).e[0];
@@ -849,6 +931,12 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
     }
     /* Normals */
     bd->vertex_normals = calcVertexNormals(d, bd);
+    
+    /* Textures */
+    for(i=0; i<texc; i++){
+		bd->vertex_textures[i*2] = (GLfloat)(*d.vertex_texture_list[i]).e[0];
+		bd->vertex_textures[i*2+1] = (GLfloat)(*d.vertex_texture_list[i]).e[1];
+	}
     
     return d;
 }
@@ -904,6 +992,9 @@ void Initialize(void){
 
     /* Setup shaders and shader program */
     CreateShaderProgram();  
+
+	/* Setup textures */
+	SetupTexture();
 
     /* Initialize matrices */
     SetIdentityMatrix(ProjectionMatrix);

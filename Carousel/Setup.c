@@ -109,8 +109,9 @@ GLfloat* calcRightVertices(obj_scene_data d, buffer_data* bd){
 	int i;
 	int vert = d.vertex_count;
     int indx = d.face_count;
+    int texc = d.vertex_texture_count;
     
-    GLfloat* final_vertices = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
+    GLfloat* final_vertices = (GLfloat*) calloc (texc*3, sizeof(GLfloat));
 	
 	GLfloat* vertex_old = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
 	GLushort* vertex_indices = (GLushort*) calloc (indx*3, sizeof(GLushort));
@@ -127,12 +128,9 @@ GLfloat* calcRightVertices(obj_scene_data d, buffer_data* bd){
 		vertex_indices[i*3+2] = (GLushort)(*d.face_list[i]).vertex_index[2];
     }
     for(i=0; i<indx; i++){
-		texture_indices[i*3] = (GLushort)(*d.face_list[i]).normal_index[0];
-		texture_indices[i*3+1] = (GLushort)(*d.face_list[i]).normal_index[1];
-		texture_indices[i*3+2] = (GLushort)(*d.face_list[i]).normal_index[2];
-		printf("%d ", texture_indices[i*3]);
-		printf("%d ", texture_indices[i*3+1]);
-		printf("%d \n", texture_indices[i*3+2]);
+		texture_indices[i*3] = (GLushort)(*d.face_list[i]).texture_index[0];
+		texture_indices[i*3+1] = (GLushort)(*d.face_list[i]).texture_index[1];
+		texture_indices[i*3+2] = (GLushort)(*d.face_list[i]).texture_index[2];
     }
 	
 	for(i=0; i<indx; i++){
@@ -143,9 +141,17 @@ GLfloat* calcRightVertices(obj_scene_data d, buffer_data* bd){
 		GLushort vi2 = vertex_indices[i*3+1];
 		GLushort vi3 = vertex_indices[i*3+2];
 		
-		final_vertices[ti1*1] = vertex_old[vi1*1];
-		final_vertices[ti2*1] = vertex_old[vi2*1];
-		final_vertices[ti3*1] = vertex_old[vi3*1];
+		final_vertices[ti1*3] = vertex_old[vi1*3];
+		final_vertices[ti1*3+1] = vertex_old[vi1*3+1];
+		final_vertices[ti1*3+2] = vertex_old[vi1*3+2];
+		
+		final_vertices[ti2*3] = vertex_old[vi2*3];
+		final_vertices[ti2*3+1] = vertex_old[vi2*3+1];
+		final_vertices[ti2*3+2] = vertex_old[vi2*3+2];
+		
+		final_vertices[ti3*3] = vertex_old[vi3*3];
+		final_vertices[ti3*3+1] = vertex_old[vi3*3+1];
+		final_vertices[ti3*3+2] = vertex_old[vi3*3+2];
 	}
 	
 	return final_vertices;

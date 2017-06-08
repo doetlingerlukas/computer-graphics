@@ -690,7 +690,7 @@ void OnIdle(){
 void setupDataBufferObject(buffer_object* bo, buffer_data* bd, obj_scene_data d){
 	glGenBuffers(1, &bo->VBO);
     glBindBuffer(GL_ARRAY_BUFFER, bo->VBO);
-    glBufferData(GL_ARRAY_BUFFER, d.vertex_count*3*sizeof(GLfloat), bd->vertex_buffer_data, GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, d.vertex_texture_count*3*sizeof(GLfloat), bd->vertex_buffer_data, GL_STATIC_DRAW);  
     
     glGenBuffers(1, &bo->IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bo->IBO);
@@ -716,11 +716,11 @@ void SetupDataBuffers(){
 	
 	/* Carousel */
     setupDataBufferObject(carousel, carousel_data, data_c);
-
+	
 	/* Room */
 	setupDataBufferObject(room, room_data, data_r);
     
-    /* Lamp */	
+    /* Lamp */
     setupDataBufferObject(lamp1, lamp_data, data_l);
     setupDataBufferObject(lamp2, lamp_data, data_l);
     
@@ -842,7 +842,7 @@ void SetupTexture(void)
     /* Allocate texture container */
     Texture = malloc(sizeof(TextureDataPtr));
 
-    int success = LoadTexture("textures/wall.bmp", Texture);
+    int success = LoadTexture("textures/pig_x.bmp", Texture);
     if (!success)
     {
         printf("Error loading texture. Exiting.\n");
@@ -905,18 +905,15 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
     int indx = d.face_count;
     int texc = d.vertex_texture_count;
     
-    bd->vertex_buffer_data = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+    bd->vertex_buffer_data = (GLfloat*) calloc (texc*3, sizeof(GLfloat));
     bd->vertex_normals = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
     bd->vertex_textures = (GLfloat*) calloc (texc*2, sizeof(GLfloat));
     bd->color_buffer_data = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
     bd->index_buffer_data = (GLushort*) calloc (indx*3, sizeof(GLushort));
     
     /* Vertices */
-    for(i=0; i<vert; i++){
-        bd->vertex_buffer_data[i*3] = (GLfloat)(*d.vertex_list[i]).e[0];
-		bd->vertex_buffer_data[i*3+1] = (GLfloat)(*d.vertex_list[i]).e[1];
-		bd->vertex_buffer_data[i*3+2] = (GLfloat)(*d.vertex_list[i]).e[2];
-    }
+    bd->vertex_buffer_data = calcRightVertices(d, bd);
+        
     /* Colors */
     for(i=0; i<indx; i++){
 		bd->color_buffer_data[i*3] = color.r != -1.0 ? color.r : (rand() % 100) / 100.0;
@@ -924,11 +921,8 @@ obj_scene_data setupObj(char* file, buffer_data* bd, rgb color){
 		bd->color_buffer_data[i*3+2] = color.b != -1.0 ? color.b : (rand() % 100) / 100.0;
     }
     /* Indices */
-    for(i=0; i<indx; i++){
-		bd->index_buffer_data[i*3] = (GLushort)(*d.face_list[i]).vertex_index[0];
-		bd->index_buffer_data[i*3+1] = (GLushort)(*d.face_list[i]).vertex_index[1];
-		bd->index_buffer_data[i*3+2] = (GLushort)(*d.face_list[i]).vertex_index[2];
-    }
+    bd->index_buffer_data = calcRightFaces(d, bd);
+    
     /* Normals */
     bd->vertex_normals = calcVertexNormals(d, bd);
     
@@ -963,7 +957,7 @@ void Initialize(void){
     char* filename1 = "models/carousel.obj"; 
     rgb colors1 = {1.0, 1.0, 1.0};
     data_c = setupObj(filename1, carousel_data, colors1);
-
+	
 	/* Load pig OBJ model */
     char* filename2 = "models/pig.obj"; 
     rgb colors2 = {1.0, 1.0, 1.0};
@@ -978,7 +972,6 @@ void Initialize(void){
 	char* filename4 = "models/room.obj"; 
 	rgb colors4 = {1.0, 1.0, 1.0};
 	data_r = setupObj(filename4, room_data, colors4);
-
 	
     /* Set background (clear) color to dark blue */ 
     glClearColor(0.0, 0.0, 0.8, 0.0);

@@ -164,19 +164,27 @@ void Display(){
        
     
     /** Carousel **/
+    carousel->tex_data = wall_tex;
     setupAndDraw(carousel, ShaderProgram, ModelMatrix);
     
     /** Room **/
+    room->tex_data = wall_tex;
     setupAndDraw(room, ShaderProgram, Model6Matrix);
     
     /** Pigs **/
+    pig1->tex_data = pig_tex;
+    pig2->tex_data = pig_tex;
+    pig3->tex_data = pig_tex;
+    pig4->tex_data = pig_tex;
 	setupAndDraw(pig1, ShaderProgram, Model2Matrix);
 	setupAndDraw(pig2, ShaderProgram, Model3Matrix);
 	setupAndDraw(pig3, ShaderProgram, Model4Matrix);
 	setupAndDraw(pig4, ShaderProgram, Model5Matrix);
 	
-	 /**LAMP **/
-    setupAndDraw(lamp1, ShaderProgram, Model7Matrix);
+	/**LAMP **/
+	lamp1->tex_data = wall_tex;
+	lamp2->tex_data = wall_tex;
+	setupAndDraw(lamp1, ShaderProgram, Model7Matrix);
     setupAndDraw(lamp2, ShaderProgram, Model8Matrix);
 	
 	/** Light sources **/
@@ -822,40 +830,40 @@ void SetupTexture(void)
     /* Allocate texture container */
     wall_tex = calloc(1, sizeof(struct texture_data));
     pig_tex = calloc(1, sizeof(struct texture_data));
-    
-
+    pig_tex->tex = calloc(1, sizeof(struct _TextureData));
+    wall_tex->tex = calloc(1, sizeof(struct _TextureData));
+printf("%p\n", pig_tex);
     int success = LoadTexture("textures/pig_x.bmp", pig_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }
+printf("data %p\n", wall_tex);
     success = LoadTexture("textures/wall.bmp", wall_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }
 
-    /* Create texture name and store in handle */
-    glGenTextures(1, &wall_tex->TX);
+
     glGenTextures(1, &pig_tex->TX);
-	
-    /* Bind texture */
-    glBindTexture(GL_TEXTURE_2D, wall_tex->TX);
     glBindTexture(GL_TEXTURE_2D, pig_tex->TX);
-    
-    /* Load texture image into memory */
     glTexImage2D(GL_TEXTURE_2D,     /* Target texture */
 		 0,                 /* Base level */
 		 GL_RGB,            /* Each element is RGB triple */ 
-		 wall_tex->tex->width,    /* Texture dimensions */ 
-         wall_tex->tex->height, 
+		 pig_tex->tex->width,    /* Texture dimensions */ 
+         pig_tex->tex->height, 
 		 0,                 /* Border should be zero */
 		 GL_BGR,            /* Data storage format for BMP file */
 		 GL_UNSIGNED_BYTE,  /* Type of pixel data, one byte per channel */
-		 wall_tex->tex->data);    /* Pointer to image data  */
+		 pig_tex->tex->data);    /* Pointer to image data  */
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glGenTextures(1, &wall_tex->TX);
+    glBindTexture(GL_TEXTURE_2D, wall_tex->TX);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
-		pig_tex->tex->width, pig_tex->tex->height,
-		0, GL_BGR, GL_UNSIGNED_BYTE, pig_tex->tex->data);
-	
-	
+		wall_tex->tex->width, wall_tex->tex->height,
+		0, GL_BGR, GL_UNSIGNED_BYTE, wall_tex->tex->data);
+
     /* Repeat texture on edges when tiling */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -867,17 +875,9 @@ void SetupTexture(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); 
     glGenerateMipmap(GL_TEXTURE_2D); 
 
-    /* Note: MIP mapping not visible due to fixed, i.e. static camera */
-    
-    /* add textures to objects */
-	carousel->tex_data = wall_tex;
-	room->tex_data = wall_tex;
-	pig1->tex_data = pig_tex;
-	pig2->tex_data = pig_tex;
-	pig3->tex_data = pig_tex;
-	pig4->tex_data = pig_tex;
-	lamp1->tex_data = wall_tex;
-	lamp2->tex_data = wall_tex;
+	// unbind texture
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 }
 
 

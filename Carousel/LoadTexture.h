@@ -19,7 +19,7 @@
 #define __LOAD_TEXTURE_H__
 
 /* Structure containing texture RGB array and dimensions  */  
-typedef struct 
+typedef struct _TextureData
 {
     unsigned char *data;
     unsigned int width, height;

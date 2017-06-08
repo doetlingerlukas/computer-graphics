@@ -1073,7 +1073,6 @@ int main(int argc, char** argv){
     /* Setup scene and rendering parameters */
     Initialize();
 
-
     /* Specify callback functions;enter GLUT event processing loop, 
      * handing control over to GLUT */
     glutIdleFunc(OnIdle);

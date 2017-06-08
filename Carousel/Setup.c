@@ -101,30 +101,71 @@ void etupAndDraw(buffer_object* bo, GLuint sp, float* mm){
 
 /******************************************************************
 *
-* SetupBuffers
+* Vertex texture fixes
 *
 *******************************************************************/
 
-void setupVertexBuffer(GLuint vbo, GLfloat* vbo_data)
-{
-	glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vbo_data), vbo_data, GL_STATIC_DRAW);
+GLfloat* calcRightVertices(obj_scene_data d, buffer_data* bd){
+	int i;
+	int vert = d.vertex_count;
+    int indx = d.face_count;
+    
+    GLfloat* final_vertices = (GLfloat*) calloc (indx*3, sizeof(GLfloat));
+	
+	GLfloat* vertex_old = (GLfloat*) calloc (vert*3, sizeof(GLfloat));
+	GLushort* vertex_indices = (GLushort*) calloc (indx*3, sizeof(GLushort));
+	GLushort* texture_indices = (GLushort*) calloc (indx*3, sizeof(GLushort));
+	
+    for(i=0; i<vert; i++){
+        vertex_old[i*3] = (GLfloat)(*d.vertex_list[i]).e[0];
+		vertex_old[i*3+1] = (GLfloat)(*d.vertex_list[i]).e[1];
+		vertex_old[i*3+2] = (GLfloat)(*d.vertex_list[i]).e[2];
+    }
+    for(i=0; i<indx; i++){
+		vertex_indices[i*3] = (GLushort)(*d.face_list[i]).vertex_index[0];
+		vertex_indices[i*3+1] = (GLushort)(*d.face_list[i]).vertex_index[1];
+		vertex_indices[i*3+2] = (GLushort)(*d.face_list[i]).vertex_index[2];
+    }
+    for(i=0; i<indx; i++){
+		texture_indices[i*3] = (GLushort)(*d.face_list[i]).normal_index[0];
+		texture_indices[i*3+1] = (GLushort)(*d.face_list[i]).normal_index[1];
+		texture_indices[i*3+2] = (GLushort)(*d.face_list[i]).normal_index[2];
+		printf("%d ", texture_indices[i*3]);
+		printf("%d ", texture_indices[i*3+1]);
+		printf("%d \n", texture_indices[i*3+2]);
+    }
+	
+	for(i=0; i<indx; i++){
+		GLushort ti1 = texture_indices[i*3];
+		GLushort ti2 = texture_indices[i*3+1];
+		GLushort ti3 = texture_indices[i*3+2];
+		GLushort vi1 = vertex_indices[i*3];
+		GLushort vi2 = vertex_indices[i*3+1];
+		GLushort vi3 = vertex_indices[i*3+2];
+		
+		final_vertices[ti1*1] = vertex_old[vi1*1];
+		final_vertices[ti2*1] = vertex_old[vi2*1];
+		final_vertices[ti3*1] = vertex_old[vi3*1];
+	}
+	
+	return final_vertices;
 }
 
-void setupIndexBuffer(GLuint ibo, GLushort* ibo_data)
-{
-	glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ibo_data), ibo_data, GL_STATIC_DRAW);
+GLushort* calcRightFaces(obj_scene_data d, buffer_data* bd){
+	int i;
+	int indx = d.face_count;
+	
+	GLushort* final_indices = (GLushort*) calloc (indx*3, sizeof(GLushort));
+
+	for(i=0; i<indx; i++){
+		final_indices[i*3] = (GLushort)(*d.face_list[i]).texture_index[0];
+		final_indices[i*3+1] = (GLushort)(*d.face_list[i]).texture_index[1];
+		final_indices[i*3+2] = (GLushort)(*d.face_list[i]).texture_index[2];
+    }
+	
+	return final_indices;
 }
 
-void setupColorBuffer(GLuint cbo, GLfloat* cbo_data)
-{
-	glGenBuffers(1, &cbo);
-    glBindBuffer(GL_ARRAY_BUFFER, cbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cbo_data), cbo_data, GL_STATIC_DRAW);
-}
 
 /******************************************************************
 *

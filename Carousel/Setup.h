@@ -17,13 +17,18 @@
 #include "OBJParser.h"
 #include "LoadTexture.h"
 
+typedef struct texture_data{
+	GLuint TX;
+	TextureDataPtr tex;
+} texture_data;
+
 typedef struct buffer_object{
 	GLuint VBO;
 	GLuint CBO;
 	GLuint IBO;
 	GLuint VN;
 	GLuint VT;
-	GLuint TX;
+	texture_data* tex_data;
 } buffer_object;
 
 typedef struct buffer_data{
@@ -32,7 +37,6 @@ typedef struct buffer_data{
 	GLfloat* vertex_normals;
 	GLfloat* color_buffer_data;
 	GLushort* index_buffer_data;
-	TextureDataPtr texture_data;
 } buffer_data;
 
 typedef struct rgb{
@@ -45,7 +49,7 @@ typedef struct vertex{
 	GLfloat x, y, z;
 } vertex;
 
-void setupAndDraw(buffer_object* bo, GLuint sp, float* mm, int tex);
+void setupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 void etupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 
 GLfloat* calcRightVertices(obj_scene_data d, buffer_data* bd);

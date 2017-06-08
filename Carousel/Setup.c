@@ -33,7 +33,7 @@
 *
 *******************************************************************/
 
-void setupAndDraw(buffer_object* bo, GLuint sp, float* mm, int tex){
+void setupAndDraw(buffer_object* bo, GLuint sp, float* mm){
 	
 	glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, bo->VBO);
@@ -51,13 +51,15 @@ void setupAndDraw(buffer_object* bo, GLuint sp, float* mm, int tex){
 	glBindBuffer(GL_ARRAY_BUFFER, bo->VN);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
+	glActiveTexture(GL_TEXTURE0);
+	
+	glBindTexture(GL_TEXTURE_2D, bo->tex_data->TX);
+    GLuint TextureUniform  = glGetUniformLocation(sp, "myTextureSampler");
+    glUniform1i(TextureUniform, 0);
+	
 	glEnableVertexAttribArray(3);
 	glBindBuffer(GL_ARRAY_BUFFER, bo->VT);
 	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	
-	glBindTexture(GL_TEXTURE_2D, bo->TX);
-    GLuint TextureUniform  = glGetUniformLocation(sp, "myTextureSampler");
-    glUniform1i(TextureUniform, tex);
 	
 	/* Associate first Model with shader matrices */
     glUniformMatrix4fv(glGetUniformLocation(sp, "ModelMatrix"), 1, GL_TRUE, mm);

@@ -15,6 +15,7 @@
 #define __SETUP_H__
 
 #include "OBJParser.h"
+#include "LoadTexture.h"
 
 typedef struct buffer_object{
 	GLuint VBO;
@@ -22,6 +23,7 @@ typedef struct buffer_object{
 	GLuint IBO;
 	GLuint VN;
 	GLuint VT;
+	GLuint TX;
 } buffer_object;
 
 typedef struct buffer_data{
@@ -30,6 +32,7 @@ typedef struct buffer_data{
 	GLfloat* vertex_normals;
 	GLfloat* color_buffer_data;
 	GLushort* index_buffer_data;
+	TextureDataPtr texture_data;
 } buffer_data;
 
 typedef struct rgb{
@@ -42,7 +45,7 @@ typedef struct vertex{
 	GLfloat x, y, z;
 } vertex;
 
-void setupAndDraw(buffer_object* bo, GLuint sp, float* mm);
+void setupAndDraw(buffer_object* bo, GLuint sp, float* mm, int tex);
 void etupAndDraw(buffer_object* bo, GLuint sp, float* mm);
 
 GLfloat* calcRightVertices(obj_scene_data d, buffer_data* bd);

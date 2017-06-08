@@ -144,10 +144,6 @@ int specularToggle = 1;
 int light1Toggle = 1;
 int light2Toggle= 1;
 
-/* Variables for texture handling */
-GLuint TextureID;
-GLuint TextureUniform;
-TextureDataPtr Texture;
 
 /******************************************************************
 *
@@ -170,33 +166,25 @@ void Display(){
        
     
 	/** Texturing **/
-	/* Activate first (and only) texture unit */
+	/* Activate texture units */
     glActiveTexture(GL_TEXTURE0);
-
-    /* Bind current texture  */
-    glBindTexture(GL_TEXTURE_2D, TextureID);
-    
-    /* Get texture uniform handle from fragment shader */ 
-    TextureUniform  = glGetUniformLocation(ShaderProgram, "myTextureSampler");
-
-    /* Set location of uniform sampler variable */ 
-    glUniform1i(TextureUniform, 0);
+    glActiveTexture(GL_TEXTURE1);
     
     /** Carousel **/
-    setupAndDraw(carousel, ShaderProgram, ModelMatrix);
+    setupAndDraw(carousel, ShaderProgram, ModelMatrix, 1);
     
     /** Room **/
-    setupAndDraw(room, ShaderProgram, Model6Matrix);
+    setupAndDraw(room, ShaderProgram, Model6Matrix, 1);
     
     /** Pigs **/
-	setupAndDraw(pig1, ShaderProgram, Model2Matrix);
-	setupAndDraw(pig2, ShaderProgram, Model3Matrix);
-	setupAndDraw(pig3, ShaderProgram, Model4Matrix);
-	setupAndDraw(pig4, ShaderProgram, Model5Matrix);
+	setupAndDraw(pig1, ShaderProgram, Model2Matrix, 0);
+	setupAndDraw(pig2, ShaderProgram, Model3Matrix, 0);
+	setupAndDraw(pig3, ShaderProgram, Model4Matrix, 0);
+	setupAndDraw(pig4, ShaderProgram, Model5Matrix, 0);
 	
 	 /**LAMP **/
-    setupAndDraw(lamp1, ShaderProgram, Model7Matrix);
-    setupAndDraw(lamp2, ShaderProgram, Model8Matrix);
+    setupAndDraw(lamp1, ShaderProgram, Model7Matrix, 1);
+    setupAndDraw(lamp2, ShaderProgram, Model8Matrix, 1);
 	
 	/** Light sources **/
 	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
@@ -840,32 +828,59 @@ void CreateShaderProgram(){
 void SetupTexture(void)
 {	
     /* Allocate texture container */
-    Texture = malloc(sizeof(TextureDataPtr));
+    pig_data->texture_data = malloc(sizeof(TextureDataPtr));
+    room_data->texture_data = malloc(sizeof(TextureDataPtr));
+	carousel_data->texture_data = malloc(sizeof(TextureDataPtr));
+	lamp_data->texture_data = malloc(sizeof(TextureDataPtr));
 
-    int success = LoadTexture("textures/pig_x.bmp", Texture);
-    if (!success)
-    {
-        printf("Error loading texture. Exiting.\n");
-	exit(-1);
+    int success = LoadTexture("textures/pig_x.bmp", pig_data->texture_data);
+    if (!success){
+        printf("Error loading texture. Exiting.\n"); exit(-1);
     }
+    success = LoadTexture("textures/wall.bmp", carousel_data->texture_data);
+    success = LoadTexture("textures/wall.bmp", room_data->texture_data);
+    success = LoadTexture("textures/wall.bmp", lamp_data->texture_data);
 
     /* Create texture name and store in handle */
-    glGenTextures(1, &TextureID);
+    glGenTextures(1, &carousel->TX);
+    glGenTextures(1, &room->TX);
+    glGenTextures(1, &pig1->TX);
+    glGenTextures(1, &pig2->TX);
+    glGenTextures(1, &pig3->TX);
+    glGenTextures(1, &pig4->TX);
+    glGenTextures(1, &lamp1->TX);
+    glGenTextures(1, &lamp1->TX);
 	
     /* Bind texture */
-    glBindTexture(GL_TEXTURE_2D, TextureID);
+    glBindTexture(GL_TEXTURE_2D, carousel->TX);
+    glBindTexture(GL_TEXTURE_2D, room->TX);
+    glBindTexture(GL_TEXTURE_2D, pig1->TX);
+    glBindTexture(GL_TEXTURE_2D, pig2->TX);
+    glBindTexture(GL_TEXTURE_2D, pig3->TX);
+    glBindTexture(GL_TEXTURE_2D, pig4->TX);
+    glBindTexture(GL_TEXTURE_2D, lamp1->TX);
+    glBindTexture(GL_TEXTURE_2D, lamp2->TX);
 
     /* Load texture image into memory */
     glTexImage2D(GL_TEXTURE_2D,     /* Target texture */
 		 0,                 /* Base level */
 		 GL_RGB,            /* Each element is RGB triple */ 
-		 Texture->width,    /* Texture dimensions */ 
-            Texture->height, 
+		 carousel_data->texture_data->width,    /* Texture dimensions */ 
+         carousel_data->texture_data->height, 
 		 0,                 /* Border should be zero */
 		 GL_BGR,            /* Data storage format for BMP file */
 		 GL_UNSIGNED_BYTE,  /* Type of pixel data, one byte per channel */
-		 Texture->data);    /* Pointer to image data  */
- 
+		 carousel_data->texture_data->data);    /* Pointer to image data  */
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+		room_data->texture_data->width, room_data->texture_data->width,
+		0, GL_BGR, GL_UNSIGNED_BYTE, room_data->texture_data->data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+		pig_data->texture_data->width, pig_data->texture_data->width,
+		0, GL_BGR, GL_UNSIGNED_BYTE, pig_data->texture_data->data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+		lamp_data->texture_data->width, lamp_data->texture_data->width,
+		0, GL_BGR, GL_UNSIGNED_BYTE, lamp_data->texture_data->data);
+	
     /* Next set up texturing parameters */
 
     /* Repeat texture on edges when tiling */

@@ -128,7 +128,7 @@ float rgb_b=0.1;
 
 /* light sources */
 float LightPosition1[] = { -6.0, 3.0, 3.0 };
-float LightColor1[] = { 1.0, 0.1, 0.1 };
+float LightColor1[] = { 1.0, 1.0, 1.0 };
 float LightPosition2[] = { 6.0, 3.0, 3.0};
 float LightColor2[] ={ 0.0, 0.5, 0.5};
 
@@ -832,12 +832,11 @@ void SetupTexture(void)
     pig_tex = calloc(1, sizeof(struct texture_data));
     pig_tex->tex = calloc(1, sizeof(struct _TextureData));
     wall_tex->tex = calloc(1, sizeof(struct _TextureData));
-printf("%p\n", pig_tex);
-    int success = LoadTexture("textures/pig_x.bmp", pig_tex->tex);
+	
+    int success = LoadTexture("textures/red_marble.bmp", pig_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }
-printf("data %p\n", wall_tex);
     success = LoadTexture("textures/wall.bmp", wall_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);

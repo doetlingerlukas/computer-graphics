@@ -27,8 +27,8 @@
 
 /* Local includes */
 #include "LoadShader.h"   /* Provides loading function for shader code */
-//#include "LoadTexture.h"
-//#define STB_IMAGE_IMPLEMENTATION
+#include "LoadTexture.h"
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"  
 #include "Matrix.h"
 #include "Setup.h"
@@ -611,12 +611,14 @@ void OnIdle(){
 	MultiplyMatrix(TranslateDown, Model6Matrix, Model6Matrix);
 	
 	/* Billboard */
+	float BillboardTranslation[16];
+	float BillboardMatrix[16];
 	MultiplyMatrix(RotationMatrixX, InitialTransform, Model9Matrix);
 	MultiplyMatrix(TranslateDown, Model9Matrix, Model9Matrix);
-	//SetIdentityMatrix(Model9Matrix);
-	float BillboardMatrix[16];
 	SetRotationY(-(rotate_y * (180.0/M_PI)), BillboardMatrix);
     MultiplyMatrix(BillboardMatrix, Model9Matrix, Model9Matrix);
+    SetTranslation(0.0, 0.0, -10.0, BillboardTranslation);
+    MultiplyMatrix(BillboardTranslation, Model9Matrix, Model9Matrix);
     
        
     /* Applay Transformation on the pigs */
@@ -871,14 +873,14 @@ void SetupTexture(void)
     success = LoadTexture("textures/wood.bmp", wood_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
-    }
+    }/*
     success = LoadTexture("textures/palm.bmp", cloud_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
-    }/*
-	cloud_tex->tex->data = stbi_load("textures/cloud.png", 
+    }*/
+	cloud_tex->tex->data = stbi_load("textures/cloud2.bmp", 
 		&cloud_tex->tex->width, &cloud_tex->tex->height,
-		&cloud_tex->tex->component, 0);*/
+		&cloud_tex->tex->component, 0);
 
     glGenTextures(1, &pig_tex->TX);
     glBindTexture(GL_TEXTURE_2D, pig_tex->TX);
@@ -909,12 +911,15 @@ void SetupTexture(void)
 		0, GL_BGR, GL_UNSIGNED_BYTE, wood_tex->tex->data);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
-
+	
+	glEnable (GL_BLEND); 
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
     glGenTextures(1, &cloud_tex->TX);
     glBindTexture(GL_TEXTURE_2D, cloud_tex->TX);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
 		cloud_tex->tex->width, cloud_tex->tex->height,
-		0, GL_BGR, GL_UNSIGNED_BYTE, cloud_tex->tex->data);
+		0, GL_RGBA, GL_UNSIGNED_BYTE, cloud_tex->tex->data);
 
     /* Repeat texture on edges when tiling */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

@@ -294,7 +294,8 @@ void SetInverse(float* m, float* r) {
 
  det = 1.0f / det;
 
- for (int i = 0; i < 16; i++)
+ int i;
+ for (i = 0; i < 16; i++)
   r[i] = inv[i] * det;
 
 }

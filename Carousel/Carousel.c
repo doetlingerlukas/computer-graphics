@@ -53,6 +53,7 @@ buffer_object* pig4;
 buffer_object* lamp1;
 buffer_object* lamp2;
 buffer_object* cloud;
+buffer_object* tree;
 
 /* Indices to vertex attributes */ 
 enum DataID {vPosition = 0, vColor = 1, vNormal = 2, vUV = 3}; 
@@ -73,9 +74,10 @@ float Model3Matrix[16]; /* pig 2 matrix */
 float Model4Matrix[16]; /* pig 3 matrix */
 float Model5Matrix[16]; /* pig 4 matrix */
 float Model6Matrix[16]; /* Room matrix */
-float Model7Matrix[16]; //For lamp
-float Model8Matrix[16]; /*for 2nd lamp*/
-float Model9Matrix[16]; /*for 2nd lamp*/
+float Model7Matrix[16]; /* lamp */
+float Model8Matrix[16]; /* 2nd lamp */
+float Model9Matrix[16]; /* cloud-billboard */
+float Model10Matrix[16]; /* tree-billboard */
 
 /* Transformation matrices for initial position */
 float TranslateOrigin[16];
@@ -114,6 +116,7 @@ texture_data* wall_tex;
 texture_data* pig_tex;
 texture_data* wood_tex;
 texture_data* cloud_tex;
+texture_data* tree_tex;
 
 
 /* Mouse and keyboard motion */
@@ -197,7 +200,9 @@ void Display(){
     
     /** billboards **/
     cloud->tex_data = cloud_tex;
+    tree->tex_data = tree_tex;
     setupAndDraw(cloud, ShaderProgram, Model9Matrix);
+    setupAndDraw(tree, ShaderProgram, Model10Matrix);
 	
 	/** Light sources **/
 	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
@@ -620,6 +625,13 @@ void OnIdle(){
     SetTranslation(0.0, 0.0, -10.0, BillboardTranslation);
     MultiplyMatrix(BillboardTranslation, Model9Matrix, Model9Matrix);
     
+    SetTranslation(4.5, -8.5, -4.5, BillboardTranslation);
+    MultiplyMatrix(RotationMatrixX, InitialTransform, Model10Matrix);
+	MultiplyMatrix(TranslateDown, Model10Matrix, Model10Matrix);
+	MultiplyMatrix(BillboardMatrix, Model10Matrix, Model10Matrix);
+	MultiplyMatrix(BillboardTranslation, Model10Matrix, Model10Matrix);
+
+    
        
     /* Applay Transformation on the pigs */
     /* Rotate pigs on X */
@@ -742,6 +754,7 @@ void SetupDataBuffers(){
 	
 	/* Billboards */
 	setupDataBufferObject(cloud, board_data, data_b);
+	setupDataBufferObject(tree, board_data, data_b);
 }
 
 
@@ -857,10 +870,12 @@ void SetupTexture(void)
     pig_tex = calloc(1, sizeof(struct texture_data));
     wood_tex = calloc(1, sizeof(struct texture_data));
     cloud_tex = calloc(1, sizeof(struct texture_data));
+    tree_tex = calloc(1, sizeof(struct texture_data));
     pig_tex->tex = calloc(1, sizeof(struct _TextureData));
     wall_tex->tex = calloc(1, sizeof(struct _TextureData));
     wood_tex->tex = calloc(1, sizeof(struct _TextureData));
     cloud_tex->tex = calloc(1, sizeof(struct _TextureData));
+    tree_tex->tex = calloc(1, sizeof(struct _TextureData));
 	
     int success = LoadTexture("textures/red_marble.bmp", pig_tex->tex);
     if (!success){
@@ -873,14 +888,15 @@ void SetupTexture(void)
     success = LoadTexture("textures/wood.bmp", wood_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
-    }/*
-    success = LoadTexture("textures/palm.bmp", cloud_tex->tex);
-    if (!success){
-        printf("Error loading texture. Exiting.\n"); exit(-1);
-    }*/
+    }
+    
+    /* Loading billboard textures with transparent background */
 	cloud_tex->tex->data = stbi_load("textures/cloud2.bmp", 
 		&cloud_tex->tex->width, &cloud_tex->tex->height,
 		&cloud_tex->tex->component, 0);
+	tree_tex->tex->data = stbi_load("textures/tree.bmp", 
+		&tree_tex->tex->width, &tree_tex->tex->height,
+		&tree_tex->tex->component, 0);
 
     glGenTextures(1, &pig_tex->TX);
     glBindTexture(GL_TEXTURE_2D, pig_tex->TX);
@@ -920,6 +936,15 @@ void SetupTexture(void)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
 		cloud_tex->tex->width, cloud_tex->tex->height,
 		0, GL_RGBA, GL_UNSIGNED_BYTE, cloud_tex->tex->data);
+		
+	
+	glGenerateMipmap(GL_TEXTURE_2D);
+	
+	glGenTextures(1, &tree_tex->TX);
+    glBindTexture(GL_TEXTURE_2D, tree_tex->TX);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+		tree_tex->tex->width, tree_tex->tex->height,
+		0, GL_RGBA, GL_UNSIGNED_BYTE, tree_tex->tex->data);
 
     /* Repeat texture on edges when tiling */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -1000,6 +1025,7 @@ void Initialize(void){
 	lamp1 = calloc(1, sizeof(struct buffer_object));
 	lamp2 = calloc(1, sizeof(struct buffer_object));
 	cloud = calloc(1, sizeof(struct buffer_object));
+	tree = calloc(1, sizeof(struct buffer_object));
 	
 	carousel_data = calloc(1, sizeof(struct buffer_data));
 	pig_data = calloc(1, sizeof(struct buffer_data));

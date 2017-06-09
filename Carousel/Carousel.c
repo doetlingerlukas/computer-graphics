@@ -29,7 +29,7 @@
 #include "LoadShader.h"   /* Provides loading function for shader code */
 #include "LoadTexture.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"  
+#include "stb_image.h"  /* for loading textures with transparent background */
 #include "Matrix.h"
 #include "Setup.h"
 #include "OBJParser.h"
@@ -860,6 +860,9 @@ void CreateShaderProgram(){
 *
 * This function is called to load the texture and initialize
 * texturing parameters
+* 
+* This function will be refactored and shortened for the final
+* assignment!
 *
 *******************************************************************/
 
@@ -877,6 +880,7 @@ void SetupTexture(void)
     cloud_tex->tex = calloc(1, sizeof(struct _TextureData));
     tree_tex->tex = calloc(1, sizeof(struct _TextureData));
 	
+	/* load normal textures */
     int success = LoadTexture("textures/red_marble.bmp", pig_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
@@ -898,6 +902,8 @@ void SetupTexture(void)
 		&tree_tex->tex->width, &tree_tex->tex->height,
 		&tree_tex->tex->component, 0);
 
+
+	/* bind textures */
     glGenTextures(1, &pig_tex->TX);
     glBindTexture(GL_TEXTURE_2D, pig_tex->TX);
     glTexImage2D(GL_TEXTURE_2D,     /* Target texture */

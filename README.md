@@ -56,6 +56,21 @@ Following keyboard controls are available for lightning control:
 	definitions are). We didn't add keyboard functions to increase/decrease
 	those values, because we are slowly running out of keys. :)
 
+## Texturing
+
+This animated scene uses textures!
+Every obj-file which is loaded can be correctly textured if it provieds
+right **vertex-textures**. This is guaranteed by a custom function that
+maps every vertex-texture to the right triangle (you can find this function
+in the `Setup.c` file.
+There are currently **3 different textures** mapped to objects. 
+Keep in mind that the texture at the carousel is not very nice, since the
+obj-file of the carousel has wrong vertex-textures!
+
+We have also implemented 2 billboard textures. One tree and one cloud.
+They are always facing the camera since they also rotate when the 
+camera rotates, but they will always stay at the same position.
+
 ## Execution
 
 This Project uses a Makefile to build and run it.

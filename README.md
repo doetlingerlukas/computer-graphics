@@ -3,6 +3,13 @@
 This is a animated Carousel for the Computer Graphics course
 in the SS 2017.
 
+Content of this README:
+
+	- controls
+	- texturing
+	- execution of the program
+
+
 ## Controls
 
 Following keyboard controls are available:
@@ -62,7 +69,7 @@ This animated scene uses textures!
 Every obj-file which is loaded can be correctly textured if it provieds
 right **vertex-textures**. This is guaranteed by a custom function that
 maps every vertex-texture to the right triangle (you can find this function
-in the `Setup.c` file.
+in the `Setup.c` file).
 There are currently **3 different textures** mapped to objects. 
 Keep in mind that the texture at the carousel is not very nice, since the
 obj-file of the carousel has wrong vertex-textures!
@@ -70,6 +77,8 @@ obj-file of the carousel has wrong vertex-textures!
 We have also implemented 2 billboard textures. One tree and one cloud.
 They are always facing the camera since they also rotate when the 
 camera rotates, but they will always stay at the same position.
+Keep in mind that this is only possible if you are in camera mode `2` 
+and use the mouse (or trackpad) to rotate.
 
 ## Execution
 

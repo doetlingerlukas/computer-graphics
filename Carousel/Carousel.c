@@ -610,9 +610,13 @@ void OnIdle(){
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model6Matrix);
 	MultiplyMatrix(TranslateDown, Model6Matrix, Model6Matrix);
 	
-	/* Cloud */
+	/* Billboard */
 	MultiplyMatrix(RotationMatrixX, InitialTransform, Model9Matrix);
 	MultiplyMatrix(TranslateDown, Model9Matrix, Model9Matrix);
+	//SetIdentityMatrix(Model9Matrix);
+	float BillboardMatrix[16];
+	SetRotationY(-(rotate_y * (180.0/M_PI)), BillboardMatrix);
+    MultiplyMatrix(BillboardMatrix, Model9Matrix, Model9Matrix);
     
        
     /* Applay Transformation on the pigs */
@@ -868,7 +872,7 @@ void SetupTexture(void)
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }
-    success = LoadTexture("textures/wall.bmp", cloud_tex->tex);
+    success = LoadTexture("textures/palm.bmp", cloud_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }/*

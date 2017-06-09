@@ -2,10 +2,10 @@
 # who needs an obj-generator ?
 
 o room
-v -7 		5 		-7
-v -7 		10 		-7
-v 7 		10 		-7
-v 7 		5 		-7
+v -3 		7 		-14
+v -3 		13 		-14
+v 3 		13 		-14
+v 3 		7 		-14
 vt 0.0		 0.0
 vt 0.0		 1.0
 vt 1.0		 1.0

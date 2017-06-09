@@ -47,6 +47,6 @@ void main()
     vec3 specular = specularStrength * spec * LightColor1;
     vec3 specular2 = specularStrength * spec2 * LightColor2;
     
-    vec3 result = (ambient + ambient2 + diffuse + diffuse2 + specular + specular2) * fragcol;
+    vec3 result = (ambient + ambient2 + diffuse + diffuse2 + specular + specular2);
     color = texture2D(myTextureSampler, UVcoords) * vec4(result, 1.0f);
 }

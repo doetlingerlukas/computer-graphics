@@ -1,0 +1,15 @@
+# custom hand written OBJ file
+# who needs an obj-generator ?
+
+o room
+v -7 		5 		-7
+v -7 		10 		-7
+v 7 		10 		-7
+v 7 		5 		-7
+vt 0.0		 0.0
+vt 0.0		 1.0
+vt 1.0		 1.0
+vt 1.0		 0.0
+s 0
+f 1/1 	4/4 	3/3
+f 3/3 	2/2 	1/1

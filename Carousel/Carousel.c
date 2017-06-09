@@ -27,7 +27,9 @@
 
 /* Local includes */
 #include "LoadShader.h"   /* Provides loading function for shader code */
-#include "LoadTexture.h"  
+//#include "LoadTexture.h"
+//#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"  
 #include "Matrix.h"
 #include "Setup.h"
 #include "OBJParser.h"
@@ -50,6 +52,7 @@ buffer_object* pig3;
 buffer_object* pig4;
 buffer_object* lamp1;
 buffer_object* lamp2;
+buffer_object* cloud;
 
 /* Indices to vertex attributes */ 
 enum DataID {vPosition = 0, vColor = 1, vNormal = 2, vUV = 3}; 
@@ -72,6 +75,7 @@ float Model5Matrix[16]; /* pig 4 matrix */
 float Model6Matrix[16]; /* Room matrix */
 float Model7Matrix[16]; //For lamp
 float Model8Matrix[16]; /*for 2nd lamp*/
+float Model9Matrix[16]; /*for 2nd lamp*/
 
 /* Transformation matrices for initial position */
 float TranslateOrigin[16];
@@ -102,10 +106,14 @@ buffer_data* lamp_data;
 obj_scene_data data_l;
 buffer_data* room_data;
 obj_scene_data data_r;
+buffer_data* board_data;
+obj_scene_data data_b;
 
 /* texture data */
 texture_data* wall_tex;
 texture_data* pig_tex;
+texture_data* wood_tex;
+texture_data* cloud_tex;
 
 
 /* Mouse and keyboard motion */
@@ -164,7 +172,7 @@ void Display(){
        
     
     /** Carousel **/
-    carousel->tex_data = wall_tex;
+    carousel->tex_data = wood_tex;
     setupAndDraw(carousel, ShaderProgram, ModelMatrix);
     
     /** Room **/
@@ -181,11 +189,15 @@ void Display(){
 	setupAndDraw(pig3, ShaderProgram, Model4Matrix);
 	setupAndDraw(pig4, ShaderProgram, Model5Matrix);
 	
-	/**LAMP **/
+	/** Lamps **/
 	lamp1->tex_data = wall_tex;
 	lamp2->tex_data = wall_tex;
 	setupAndDraw(lamp1, ShaderProgram, Model7Matrix);
     setupAndDraw(lamp2, ShaderProgram, Model8Matrix);
+    
+    /** billboards **/
+    cloud->tex_data = cloud_tex;
+    setupAndDraw(cloud, ShaderProgram, Model9Matrix);
 	
 	/** Light sources **/
 	GLint LightPos1Uniform = glGetUniformLocation(ShaderProgram, "LightPosition1");
@@ -597,6 +609,10 @@ void OnIdle(){
     /* Room */   
     MultiplyMatrix(RotationMatrixX, InitialTransform, Model6Matrix);
 	MultiplyMatrix(TranslateDown, Model6Matrix, Model6Matrix);
+	
+	/* Cloud */
+	MultiplyMatrix(RotationMatrixX, InitialTransform, Model9Matrix);
+	MultiplyMatrix(TranslateDown, Model9Matrix, Model9Matrix);
     
        
     /* Applay Transformation on the pigs */
@@ -717,6 +733,9 @@ void SetupDataBuffers(){
 	setupDataBufferObject(pig2, pig_data, data_p);
 	setupDataBufferObject(pig3, pig_data, data_p);
 	setupDataBufferObject(pig4, pig_data, data_p);
+	
+	/* Billboards */
+	setupDataBufferObject(cloud, board_data, data_b);
 }
 
 
@@ -830,8 +849,12 @@ void SetupTexture(void)
     /* Allocate texture container */
     wall_tex = calloc(1, sizeof(struct texture_data));
     pig_tex = calloc(1, sizeof(struct texture_data));
+    wood_tex = calloc(1, sizeof(struct texture_data));
+    cloud_tex = calloc(1, sizeof(struct texture_data));
     pig_tex->tex = calloc(1, sizeof(struct _TextureData));
     wall_tex->tex = calloc(1, sizeof(struct _TextureData));
+    wood_tex->tex = calloc(1, sizeof(struct _TextureData));
+    cloud_tex->tex = calloc(1, sizeof(struct _TextureData));
 	
     int success = LoadTexture("textures/red_marble.bmp", pig_tex->tex);
     if (!success){
@@ -841,7 +864,17 @@ void SetupTexture(void)
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }
-
+    success = LoadTexture("textures/wood.bmp", wood_tex->tex);
+    if (!success){
+        printf("Error loading texture. Exiting.\n"); exit(-1);
+    }
+    success = LoadTexture("textures/wall.bmp", cloud_tex->tex);
+    if (!success){
+        printf("Error loading texture. Exiting.\n"); exit(-1);
+    }/*
+	cloud_tex->tex->data = stbi_load("textures/cloud.png", 
+		&cloud_tex->tex->width, &cloud_tex->tex->height,
+		&cloud_tex->tex->component, 0);*/
 
     glGenTextures(1, &pig_tex->TX);
     glBindTexture(GL_TEXTURE_2D, pig_tex->TX);
@@ -862,6 +895,22 @@ void SetupTexture(void)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
 		wall_tex->tex->width, wall_tex->tex->height,
 		0, GL_BGR, GL_UNSIGNED_BYTE, wall_tex->tex->data);
+		
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+    glGenTextures(1, &wood_tex->TX);
+    glBindTexture(GL_TEXTURE_2D, wood_tex->TX);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+		wood_tex->tex->width, wood_tex->tex->height,
+		0, GL_BGR, GL_UNSIGNED_BYTE, wood_tex->tex->data);
+	
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+    glGenTextures(1, &cloud_tex->TX);
+    glBindTexture(GL_TEXTURE_2D, cloud_tex->TX);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+		cloud_tex->tex->width, cloud_tex->tex->height,
+		0, GL_BGR, GL_UNSIGNED_BYTE, cloud_tex->tex->data);
 
     /* Repeat texture on edges when tiling */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -941,11 +990,13 @@ void Initialize(void){
 	pig4 = calloc(1, sizeof(struct buffer_object));
 	lamp1 = calloc(1, sizeof(struct buffer_object));
 	lamp2 = calloc(1, sizeof(struct buffer_object));
+	cloud = calloc(1, sizeof(struct buffer_object));
 	
 	carousel_data = calloc(1, sizeof(struct buffer_data));
 	pig_data = calloc(1, sizeof(struct buffer_data));
 	lamp_data = calloc(1, sizeof(struct buffer_data));
 	room_data = calloc(1, sizeof(struct buffer_data));
+	board_data = calloc(1, sizeof(struct buffer_data));
 	
 	    
     /*  Copy mesh data from structs into appropriate arrays */ 
@@ -965,10 +1016,15 @@ void Initialize(void){
 	rgb colors3 = {1.0, 1.0, 1.0};
 	data_l = setupObj(filename3, lamp_data, colors3);
 	
-	/*Load lamp OBJ model */
+	/*Load room OBJ model */
 	char* filename4 = "models/room.obj"; 
 	rgb colors4 = {1.0, 1.0, 1.0};
 	data_r = setupObj(filename4, room_data, colors4);
+
+	/*Load board OBJ model */
+	char* filename5 = "models/board.obj"; 
+	rgb colors5 = {1.0, 1.0, 1.0};
+	data_b = setupObj(filename5, board_data, colors5);
 	
     /* Set background (clear) color to dark blue */ 
     glClearColor(0.0, 0.0, 0.8, 0.0);

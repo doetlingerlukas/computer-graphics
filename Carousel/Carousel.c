@@ -114,7 +114,7 @@ obj_scene_data data_b;
 /* texture data */
 texture_data* wall_tex;
 texture_data* pig_tex;
-texture_data* wood_tex;
+texture_data* uni_tex;
 texture_data* cloud_tex;
 texture_data* tree_tex;
 
@@ -177,7 +177,7 @@ void Display(){
        
     
     /** Carousel **/
-    carousel->tex_data = wood_tex;
+    carousel->tex_data = uni_tex;
     setupAndDraw(carousel, ShaderProgram, ModelMatrix);
     
     /** Room **/
@@ -195,8 +195,8 @@ void Display(){
 	setupAndDraw(pig4, ShaderProgram, Model5Matrix);
 	
 	/** Lamps **/
-	lamp1->tex_data = wall_tex;
-	lamp2->tex_data = wall_tex;
+	lamp1->tex_data = uni_tex;
+	lamp2->tex_data = uni_tex;
 	setupAndDraw(lamp1, ShaderProgram, Model7Matrix);
     setupAndDraw(lamp2, ShaderProgram, Model8Matrix);
     
@@ -888,12 +888,12 @@ void SetupTexture(void)
     /* Allocate texture container */
     wall_tex = calloc(1, sizeof(struct texture_data));
     pig_tex = calloc(1, sizeof(struct texture_data));
-    wood_tex = calloc(1, sizeof(struct texture_data));
+    uni_tex = calloc(1, sizeof(struct texture_data));
     cloud_tex = calloc(1, sizeof(struct texture_data));
     tree_tex = calloc(1, sizeof(struct texture_data));
     pig_tex->tex = calloc(1, sizeof(struct _TextureData));
     wall_tex->tex = calloc(1, sizeof(struct _TextureData));
-    wood_tex->tex = calloc(1, sizeof(struct _TextureData));
+    uni_tex->tex = calloc(1, sizeof(struct _TextureData));
     cloud_tex->tex = calloc(1, sizeof(struct _TextureData));
     tree_tex->tex = calloc(1, sizeof(struct _TextureData));
 	
@@ -906,7 +906,7 @@ void SetupTexture(void)
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }
-    success = LoadTexture("textures/wood.bmp", wood_tex->tex);
+    success = LoadTexture("textures/unicolor.bmp", uni_tex->tex);
     if (!success){
         printf("Error loading texture. Exiting.\n"); exit(-1);
     }
@@ -943,11 +943,11 @@ void SetupTexture(void)
 		
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-    glGenTextures(1, &wood_tex->TX);
-    glBindTexture(GL_TEXTURE_2D, wood_tex->TX);
+    glGenTextures(1, &uni_tex->TX);
+    glBindTexture(GL_TEXTURE_2D, uni_tex->TX);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
-		wood_tex->tex->width, wood_tex->tex->height,
-		0, GL_BGR, GL_UNSIGNED_BYTE, wood_tex->tex->data);
+		uni_tex->tex->width, uni_tex->tex->height,
+		0, GL_BGR, GL_UNSIGNED_BYTE, uni_tex->tex->data);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 	
@@ -1071,7 +1071,7 @@ void Initialize(void){
     data_p = setupObj(filename2, pig_data, colors2);
     
     /*Load lamp OBJ model */
-	char* filename3 = "models/3d-model.obj"; 
+	char* filename3 = "models/lamp.obj"; 
 	rgb colors3 = {1.0, 1.0, 1.0};
 	data_l = setupObj(filename3, lamp_data, colors3);
 	

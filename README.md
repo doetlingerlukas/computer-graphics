@@ -37,7 +37,7 @@ Following mouse/keyboard commands are available if you switched to camera mode 2
 	- `t` : move upwards
 	- `g` : move downwards
 	
-Following keyboard controls are available for lightning control:
+Following keyboard controls are available for lightning/fog control:
 
 	These commands will only change the color of the left light.
 	We did this to give a static reference from the second light.
@@ -45,6 +45,11 @@ Following keyboard controls are available for lightning control:
 	- `7` : increase the value of the color
 	- `8` : decrease the hue of the color
 	- `9` : increase the hue of the color
+	
+	Fog controls:
+	- `f` : turn on/off fog
+	- `m` : increase fog density
+	- `n` : decrease fog density
 	
 	Lightning toggle controls:
 	- `u` : turn on/off ambient lightning

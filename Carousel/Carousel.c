@@ -512,6 +512,12 @@ void Keyboard(unsigned char key, int x, int y)   {
 		else 
 			fogToggle = 1;
 		break;
+	case 'n':
+		fogDensity -= 0.02f;
+		break;
+	case 'm':
+		fogDensity += 0.02f;
+		break;
 		
 	/* Close the scene */
 	case 'q': case 'Q':  
@@ -1156,7 +1162,7 @@ int main(int argc, char** argv){
     glutInitContextProfile(GLUT_CORE_PROFILE);
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-    glutInitWindowSize(800, 800);
+    glutInitWindowSize(1000, 1000);
     glutInitWindowPosition(600, 600);
     glutCreateWindow("CG Proseminar - Carousel by Manuel Buchauer, Davide De Sclavis and Lukas Dötlinger");
 

@@ -3,6 +3,7 @@
 uniform float AmbientFactor;
 uniform float DiffuseFactor;
 uniform float SpecularFactor;
+uniform float FogDensity;
 
 uniform vec3 LightColor1;
 uniform vec3 LightColor2;
@@ -18,6 +19,8 @@ in vec3 fragcol;
 in vec2 UVcoords;
 
 out vec4 color;
+
+const vec4 fogColor = vec4(0.5, 0.5, 0.5, 1.0);
 
 void main()
 {
@@ -48,5 +51,13 @@ void main()
     vec3 specular2 = specularStrength * spec2 * LightColor2;
     
     vec3 result = (ambient + ambient2 + diffuse + diffuse2 + specular + specular2);
+    
+    float dist = length(fragpos.z);
+    float fogFactor = 1.0 /exp(dist * FogDensity);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+    
     color = texture2D(myTextureSampler, UVcoords) * vec4(result, 1.0f);
+    if(FogDensity > 0){
+		color = mix(fogColor, color, fogFactor);
+    }
 }

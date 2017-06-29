@@ -143,10 +143,12 @@ float LightColor1[] = { 1.0, 1.0, 1.0 };
 float LightPosition2[] = { 6.0, 3.0, 3.0};
 float LightColor2[] ={ 0.0, 0.5, 0.5};
 
+float fogDensity = 0.1f;
 float ambientFactor = 0.2f;
 float diffuseFactor = 1.0f;
 float specularFactor = 1.5F;
 
+int fogToggle = 0;
 int ambientToggle = 1;
 int diffuseToggle = 1;
 int specularToggle = 1;
@@ -225,6 +227,9 @@ void Display(){
 	
 	GLint SpecularFactorUniform = glGetUniformLocation(ShaderProgram, "SpecularFactor");
 	glUniform1f(SpecularFactorUniform, specularFactor * specularToggle);
+	
+	GLint FogDensityUniform = glGetUniformLocation(ShaderProgram, "FogDensity");
+	glUniform1f(FogDensityUniform, fogDensity * fogToggle);
 	
 	GLint viewPosLoc = glGetUniformLocation(ShaderProgram, "viewPos");
 	glUniform3f(viewPosLoc, camera_x, camera_y, camera_z);
@@ -500,6 +505,14 @@ void Keyboard(unsigned char key, int x, int y)   {
 			light2Toggle = 1;
 		break;
 	
+	/* Fog controls */
+	case 'f':
+		if(fogToggle == 1)
+			fogToggle = 0;
+		else 
+			fogToggle = 1;
+		break;
+		
 	/* Close the scene */
 	case 'q': case 'Q':  
 	    exit(0);    
@@ -1067,8 +1080,9 @@ void Initialize(void){
 	rgb colors5 = {1.0, 1.0, 1.0};
 	data_b = setupObj(filename5, board_data, colors5);
 	
-    /* Set background (clear) color to dark blue */ 
-    glClearColor(0.0, 0.0, 0.8, 0.0);
+    /* Set background color to grey (to match fog) */ 
+    glClearColor(0.5, 0.5, 0.5, 1.0);
+    glClearDepth(1);
 
     /* Enable depth testing */
     glEnable(GL_DEPTH_TEST);
@@ -1124,8 +1138,6 @@ void Initialize(void){
     glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-	
-	
 }
 
 

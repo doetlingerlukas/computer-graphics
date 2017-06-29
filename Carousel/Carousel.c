@@ -874,8 +874,6 @@ void CreateShaderProgram(){
 * This function is called to load the texture and initialize
 * texturing parameters
 * 
-* This function will be refactored and shortened for the final
-* assignment!
 *
 *******************************************************************/
 
@@ -947,6 +945,7 @@ void SetupTexture(void)
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 	
+	/* Used for alpha blending */
 	glEnable (GL_BLEND); 
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	

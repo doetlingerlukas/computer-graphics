@@ -56,7 +56,11 @@ void main()
     float fogFactor = 1.0 /exp(dist * FogDensity);
     fogFactor = clamp(fogFactor, 0.0, 1.0);
     
-    color = texture2D(myTextureSampler, UVcoords) * vec4(result, 1.0f);
+    vec4 texColor = texture2D(myTextureSampler, UVcoords);
+    color = texColor * vec4(result, 1.0f);
+    
+    if(texColor.a < 0.1)
+		discard;
     if(FogDensity > 0){
 		color = mix(fogColor, color, fogFactor);
     }

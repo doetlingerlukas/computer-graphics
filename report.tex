@@ -1,0 +1,44 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\begin{document}
+	\begin{titlepage}
+		\begin{center}
+			\LARGE\textbf{Project Summary}\\
+			
+			\large{Proseminar Computer Graphics}\\
+			\large{SS 2017}\\
+			\vspace{2cm}
+			\includegraphics[width=15cm]{merry-go-round}	
+		\end{center}
+	\end{titlepage}
+
+\section{Outline}
+The goal of this project during the semester was to create a shader based OpenGL program showing an animated merry-go-round with several effects. We were given 5 programming assignments, which we had to implement during the semester.
+\\
+Find details about controls and usage in our \textbf{README.md} file.
+
+\section{General structure}
+Due to the large amount of code we needed to implement the individual programming assignments we decided on outsourcing some parts of our code into different header-files with their respective c-files. Otherwise our main-file would have been grown to some thousands of lines of code.\\
+The \textbf{Carousel.c} is our main file including the initialisation of OpenGL and GLEW. This file also combines functions from other files and includes our main-function.\\
+In the \textbf{models-folder} we have stored our objects as for example the pigs and the merry-go-round which we load with our \textbf{OBJ-Parser.c}. The \textbf{textures-folder} stores our textures as for example for the walls and the pigs which are loaded with the functions in the \textbf{LoadShader.c}.\\
+Other important functions are to be found in \textbf{Setup.c}. For loading the billboard textures we used another picture loader, \textbf{stb\_image.h}, since the given picture-loader can't load images with transperent parts.\\
+
+\section{First assignment}
+The goal of the first assignment was to create a 3D model of a merry-go-round and add some animation to it. To create the model of the merry-go-round we calculated the vertices on a sheet of paper and then transfered it into our program. Within the second assignment we changed that and loaded our merry-go-round model with the \textbf{OBJ-Parser} to save some lines in our main program. More informations at \textit{Second assignment}. As animation we decided for a rotation. To add that rotation to the merry-go-round we created a matrix using the given method \textbf{SetRotationY()} and multiplied it with our transformation matrix. We individually created transformation matrices for every model, for example the pigs with their sliding animation. 
+\newpage
+\section{Second assignment}
+In the second assignment the first task was to improve the model of the merry-go-round. We decided to construct a new merry-go-round obj file with the help of \textit{https://www.tinkercad.com/} and load it with the \textbf{OBJ-Parser.c}. \\
+The second and third tasks were to add camera modes. So we first implemented a function called \textbf{Keyboard()} and a function called \textbf{Mouse()} for the user-interaction. In our \textbf{OnIdle()} we set the rotations and translations for the \textit{ViewMatrix} as we multiplied the view matrix with the \textbf{RotationMatrixAnimView} and the \textbf{TranslationMatrixView}.
+\section{Third assignment}
+For the third assignment multiple light sources had to be implemented. First we defined the position of the light sources and its colors. In the \textbf{Display()} function the data of the light sources have to be passed to the shader. For the keyboard control of the light sources the \textbf{Keyboard()} function is used where the different light sources can be switched off and on, modes can be changed (for example into ambient) and hue and color of the light sources can be changed. To change the hue and value of the colors also the \textbf{hsv2rgb()} function is used, where the hsv values, edited by the user, are converted into suitable rgb values. In the \textbf{onIdle()} function another matrix multiplication is used to create the rotating light source.
+We also implemented a full functioning Phong-Shader as described in the lecture. To make this possible we first needed to calculate the vertex normals. We wrote a function to do this, to find in \textbf{Setup.c}, since most OBJ-files we came across had wrong normals. We then use those to calculate the color for every vertex with the shading effect in our \textbf{fragment Shader}. 
+\section{Fourth assignment}
+The fourth assignment was about textures. So the first task was to add textures to our scene. To make this possible for all obj files, we implemented functions in the \textbf{Setup.c} to match the right vertex coordinates to the texture coordinates, since the \textbf{OBJParser.c} can't do this. Without those functions, we would not be able to display textures correctly. We added textures to the room and to our pigs. The textures are loaded with the functions in the \textbf{LoadTexture.c}. We have also implemented two billboards in our scene. One cloud, which hovers over the room and a tree to clarify the using of billboards. In our \textbf{OnIdle()} we give the billboard the necessary rotations and translations as needed for the task. This leads to the effect that the billboards are always facing to the camera view.
+\section{Fifth assignment}
+The fifth assignment was about the finalization of our scene. The task was to include at least one advanced visual effect. We decided to implement fog in our scene. For the implementation we used our shader in combination with the fog blending from the lecture. We also modified the the \textbf{Keyboard()} function to enable or disable the fog effect.
+
+
+
+\end{document}

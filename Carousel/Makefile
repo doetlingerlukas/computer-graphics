@@ -1,6 +1,6 @@
 CC = gcc
 OBJ = Carousel.o LoadShader.o LoadTexture.o Matrix.o StringExtra.o OBJParser.o List.o Setup.o
-CFLAGS = -g -Wall -Wextra
+CFLAGS = -g -Wno-unused-variable -Wno-unused-parameter -Wall -Wextra
 LDLIBS = -lm -lglut -lGLEW -lGL
 
 Carousel: $(OBJ)

@@ -1,2 +1,5 @@
 *.o
-/Carousel/Carousel
+*.ppm
+
+OpenGL-scene/Carousel/Carousel
+

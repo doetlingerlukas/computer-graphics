@@ -1,5 +1,10 @@
+# Compiled files
 *.o
+
+# Output files
 *.ppm
 
-OpenGL-scene/Carousel/Carousel
-
+# Executables
+*.exe
+*.out
+*.app

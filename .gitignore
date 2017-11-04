@@ -8,3 +8,5 @@
 *.exe
 *.out
 *.app
+/Radiosity/Radiosity
+/OpenGL-scene/Carousel/Carousel

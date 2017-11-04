@@ -185,15 +185,20 @@ struct Image
     }
 };
 
-
-
 /*------------------------------------------------------------------
 | Basic geometric element of scene description;
 | Rectangles are subdivided into smaller patches for radiosity
 | computation (subdivision equal for all rectangles)
 ------------------------------------------------------------------*/
+
+/* help function for triangle */
+double area_of_triangle( double a, double b, double c ) {
+	double s = (a+b+c)/2;
+	return sqrt(s*(s-a)*(s-b)*(s-c));
+}
+
 struct Triangle {
-	Vector p;
+	Vector a;
 	Vector edge_a, edge_b;
 	Color emission, color;
 	Vector normal;
@@ -202,13 +207,67 @@ struct Triangle {
 	int a_num, b_num;
 	double a_len, b_len;
 	
-	Triangle( const Vector p_, const Vector &a_, const Vector &b_, 
+	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
               const Color &emission_, const Color &color_) :
-              p(p_), edge_a(a_), edge_b(b_), emission(emission_), color(color_){
+              a(p0_), edge_a(a_), edge_b(b_), emission(emission_), color(color_){
 		normal = edge_a.Cross(edge_b);
 		normal = normal.Normalized();
 		a_len = edge_a.Length();
 		b_len = edge_b.Length();
+	}
+	
+	Color sample_patch(int ia, int ib) const 
+    {
+        if (ia < 0) ia = 0;
+        if (ia >= a_num) ia = a_num - 1;
+        if (ib < 0) ib = 0;
+        if (ib >= b_num) ib = b_num - 1;
+        return patch[ia * b_num + ib];
+    }
+
+    void init_patchs(const int a_num_, const int b_num_) 
+    {
+        a_num = a_num_;
+        b_num = b_num_;
+        patch.clear();
+        patch.resize(a_num * b_num);
+    }
+	
+	/* Triangle-ray intersection test */
+    const double intersect(const Ray &ray) 
+    {
+        /* Check for plane-ray intersection first */
+        const double t = (a - ray.org).Dot(normal) / ray.dir.Dot(normal);
+        if (t <= 0.00001)
+            return 0.0;
+
+        /* Determine if intersection is within rectangle */
+        Vector p = ray.org + ray.dir * t; /* point to be checked */
+        Vector a_to_p = p - a;
+        Vector b = p + edge_a;
+        Vector c = p + edge_b;
+        Vector b_to_p = p - b;
+        Vector c_to_p = p - c;
+        Vector edge_c = c - b;
+		
+		double area = area_of_triangle(edge_c.Length(), edge_b.Length(), 
+			edge_a.Length());
+		double area0 = area_of_triangle(edge_c.Length(), b_to_p.Length(), 
+			c_to_p.Length());
+		double area1 = area_of_triangle(edge_b.Length(), c_to_p.Length(), 
+			a_to_p.Length());
+		double area2 = area_of_triangle(edge_a.Length(), b_to_p.Length(), 
+			a_to_p.Length());
+        
+        double lambda0 = area0/area;
+        double lambda1 = area1/area;
+        double lambda2 = area2/area;
+        
+        if((lambda0 < 0.0) || (lambda1 < 0.0) || (lambda2 < 0.0)){
+			return 0.0;
+		}
+        
+        return t;
 	}
 };
 

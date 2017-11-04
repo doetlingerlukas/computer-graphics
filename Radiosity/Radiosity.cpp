@@ -108,6 +108,11 @@ struct Vector
                       (z * b.x) - (x * b.z), 
                       (x * b.y) - (y * b.x));
     }
+    
+    const Vector Invert() const 
+    {
+		return Vector(-x, -y, -z);
+	}
 };
 
 typedef Vector Color;
@@ -187,6 +192,26 @@ struct Image
 | Rectangles are subdivided into smaller patches for radiosity
 | computation (subdivision equal for all rectangles)
 ------------------------------------------------------------------*/
+struct Triangle {
+	Vector p;
+	Vector edge_a, edge_b;
+	Color emission, color;
+	Vector normal;
+	
+	vector<Color> patch;
+	int a_num, b_num;
+	double a_len, b_len;
+	
+	Triangle( const Vector p_, const Vector &a_, const Vector &b_, 
+              const Color &emission_, const Color &color_) :
+              p(p_), edge_a(a_), edge_b(b_), emission(emission_), color(color_){
+		normal = edge_a.Cross(edge_b);
+		normal = normal.Normalized();
+		a_len = edge_a.Length();
+		b_len = edge_b.Length();
+	}
+};
+
 struct Rectangle 
 {
     Vector p0;                     
@@ -288,6 +313,34 @@ Rectangle recs[] =
               Vector(), Color(0.75, 0.75, 0.75)), /* Top */
 };
 
+
+vector<Triangle> Split_Rectangle(Rectangle rec) {
+	vector<Triangle> tris;
+	
+	tris.push_back(Triangle(rec.p0, rec.edge_a, rec.edge_b, rec.emission, 
+			rec.color));
+	tris.push_back(Triangle(rec.p0.operator +(rec.edge_a.operator +(rec.edge_b)),
+			(rec.edge_a.Invert()) , (rec.edge_b.Invert()) ,
+			rec.emission, rec.color));
+			
+	return tris;
+}
+
+vector<Triangle> Rectangles_To_Triangles() {
+	unsigned int recs_size = sizeof(recs)/sizeof(recs[0]);
+	vector<Triangle> tris;
+	
+	for(unsigned int i = 0; i < recs_size; i++){
+		vector<Triangle> temp_tris = Split_Rectangle(recs[i]);
+		tris.push_back(temp_tris[0]);
+		tris.push_back(temp_tris[1]);
+	}
+	
+	return tris;
+}
+
+/* Triangle version of recs*/
+vector<Triangle> tris = Rectangles_To_Triangles();
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;

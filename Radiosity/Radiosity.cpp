@@ -408,18 +408,18 @@ vector<Triangle> tris = Rectangles_To_Triangles();
 *******************************************************************/
 bool Intersect_Scene(const Ray &ray, double *t, int *id, Vector *normal) 
 {
-    const int n = int(sizeof(recs) / sizeof(Rectangle));
+    const int n = int(sizeof(tris) / sizeof(Triangle));
     *t  = 1e20;
     *id = -1;
 	
     for (int i = 0; i < n; i ++)
     {
-        double d = recs[i].intersect(ray);
+        double d = tris[i].intersect(ray);
         if (d > 0.0 && d < *t) 
         {
             *t  = d;
             *id = i;
-            *normal = recs[i].normal;
+            *normal = tris[i].normal;
         }
     }
     return *t < 1e20;
@@ -438,11 +438,11 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
                             const int mc_sample) 
 {
     /* Total number of patches in scene */
-    const int n = int(sizeof(recs) / sizeof(Rectangle));
+    const int n = tris.size();
     for (int i = 0; i < n; i ++) 
     {
-        recs[i].init_patchs(a_div_num, b_div_num); 
-        patch_num += recs[i].a_num * recs[i].b_num;
+        tris[i].init_patchs(a_div_num, b_div_num); 
+        patch_num += tris[i].a_num * tris[i].b_num;
     }
     
     std::cout << "Number of rectangles: " << n << endl;
@@ -463,15 +463,22 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
     {
         int patch_i = 0;
         for (int k = 0; k < i; k ++)
-            patch_i += recs[k].a_num * recs[k].b_num;
+            patch_i += tris[k].a_num * tris[k].b_num;
 
-        for (int ia = 0; ia < recs[i].a_num; ia ++) 
+        for (int ia = 0; ia < tris[i].a_num; ia ++) 
         {
-            for (int ib = 0; ib < recs[i].b_num; ib ++) 
+            for (int ib = 0; ib < tris[i].b_num; ib = ib + 4) 
             {
-                patch_area[patch_i + ia* recs[i].b_num + ib] =
-					((recs[i].edge_a / recs[i].a_num).
-                            Cross((recs[i].edge_b / recs[i].b_num))).Length();  
+				int index = patch_i + ia* tris[i].b_num + ib;
+                patch_area[index] = ((tris[i].edge_a / (tris[i].b_num / 2)).
+					Cross((tris[i].edge_b / (tris[i].b_num / 2)))).Length() / 2;  
+                patch_area[index + 1] = ((tris[i].edge_a / (tris[i].b_num / 2)).
+					Cross((tris[i].edge_b / (tris[i].b_num / 2)))).Length() / 2;  
+                patch_area[index + 2] = ((((tris[i].a + tris[i].edge_b) - 
+					(tris[i].a + tris[i].edge_a)) / (tris[i].b_num / 2)).
+					Cross((tris[i].edge_a / (tris[i].b_num / 2)))).Length() / 2;  
+                patch_area[index + 3] = ((tris[i].edge_a / (tris[i].b_num / 2)).
+					Cross((tris[i].edge_b / (tris[i].b_num / 2)))).Length() / 2;  
             }
         }
     }
@@ -483,7 +490,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
     {
         offset[i] = 0;
         for (int k = 0; k < i; k ++)
-            offset[i] += recs[k].a_num * recs[k].b_num;
+            offset[i] += tris[k].a_num * tris[k].b_num;
     }
 
     /* Loop over all rectangles in scene */
@@ -494,24 +501,24 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
         cout << i << " "; 
 		
         /* Loop over all patches in rectangle i */
-        for (int ia = 0; ia < recs[i].a_num; ia ++) 
+        for (int ia = 0; ia < tris[i].a_num; ia ++) 
         {
             cout << "*" << flush;
-            for (int ib = 0; ib < recs[i].b_num; ib ++) 
+            for (int ib = 0; ib < tris[i].b_num; ib ++) 
             {
-                const Vector normal_i = recs[i].normal;
+                const Vector normal_i = tris[i].normal;
  
                 int patch_j = 0;
 
                 /* Loop over all rectangles in scene for rectangle i */
                 for (int j = 0; j < n; j ++) 
                 {
-                    const Vector normal_j = recs[j].normal;
+                    const Vector normal_j = tris[j].normal;
 
                     /* Loop over all patches in rectangle j */
-                    for (int ja = 0; ja < recs[j].a_num; ja ++) 
+                    for (int ja = 0; ja < tris[j].a_num; ja ++) 
                     {
-                        for (int jb = 0; jb < recs[j].b_num; jb ++) 
+                        for (int jb = 0; jb < tris[j].b_num; jb ++) 
                         {				
                             /* Do not compute form factors for patches on same rectangle;
                                also exploit symmetry to reduce computation;
@@ -525,8 +532,8 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
  
                                 /* Uniform PDF for Monte Carlo (1/Ai)x(1/Aj) */
                                 const double pdf = 
-                                    (1.0 / patch_area[offset[i] + ia*recs[i].b_num + ib]) *
-                                    (1.0 / patch_area[offset[j] + ja*recs[j].b_num + jb]);
+                                    (1.0 / patch_area[offset[i] + ia*tris[i].b_num + ib]) *
+                                    (1.0 / patch_area[offset[j] + ja*tris[j].b_num + jb]);
 
                                 /* Determine rays of NixNi uniform samples of patch 
                                    on i to NjxNj uniform samples of patch on j */
@@ -544,12 +551,12 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
                                                 const double u2 = (double)(jas + 0.5) / Nj, 
                                                              u3 = (double)(jbs + 0.5) / Nj;
 
-                                                const Vector xi = recs[i].p0 + 
-                                                    recs[i].edge_a * ((double)(ia + u0) / recs[i].a_num) + 
-                                                    recs[i].edge_b * ((double)(ib + u1) / recs[i].b_num);
-                                                const Vector xj = recs[j].p0 + 
-                                                    recs[j].edge_a * ((double)(ja + u2) / recs[j].a_num) +
-                                                    recs[j].edge_b * ((double)(jb + u3) / recs[j].b_num);
+                                                const Vector xi = tris[i].a + 
+                                                    tris[i].edge_a * ((double)(ia + u0) / tris[i].a_num) + 
+                                                    tris[i].edge_b * ((double)(ib + u1) / tris[i].b_num);
+                                                const Vector xj = tris[j].a + 
+                                                    tris[j].edge_a * ((double)(ja + u2) / tris[j].a_num) +
+                                                    tris[j].edge_b * ((double)(jb + u3) / tris[j].b_num);
 
                                                 /* Check for visibility between sample points */
                                                 const Vector ij = (xj - xi).Normalized();
@@ -630,39 +637,39 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
 void Calculate_Radiosity(const int iteration) 
 {
-    const int n = int(sizeof(recs) / sizeof(Rectangle));
+    const int n = int(sizeof(tris) / sizeof(Triangle));
     int patch_i = 0;
 	
     for (int i = 0; i < n; i ++) 
     {
-        for (int ia = 0; ia < recs[i].a_num; ia ++) 
+        for (int ia = 0; ia < tris[i].a_num; ia ++) 
         {
-            for (int ib = 0; ib < recs[i].b_num; ib ++) 
+            for (int ib = 0; ib < tris[i].b_num; ib ++) 
             {
                 Color B;
 
                 int patch_j = 0;
                 for (int j = 0; j < n; j ++) 
                 {
-                    for (int ja = 0; ja < recs[j].a_num; ja ++) 
+                    for (int ja = 0; ja < tris[j].a_num; ja ++) 
                     {
-                        for (int jb = 0; jb < recs[j].b_num; jb ++) 
+                        for (int jb = 0; jb < tris[j].b_num; jb ++) 
                         {
                             const double Fij = form_factor[patch_i * patch_num + patch_j];
 					 
                             /* Add form factor multiplied with radiosity of previous step */		
                             if (Fij > 0.0)
-                                B = B + Fij * recs[j].patch[ja * recs[j].b_num + jb];
+                                B = B + Fij * tris[j].patch[ja * tris[j].b_num + jb];
 
                             patch_j ++;
                         }
                     }
                 }
                 /* Multiply sum with color of patch and add emission */
-                B = recs[i].color.MultComponents(B) + recs[i].emission;
+                B = tris[i].color.MultComponents(B) + tris[i].emission;
   
                 /* Store overall patch radiosity of current iteration */
-                recs[i].patch[ia * recs[i].b_num + ib] = B;
+                tris[i].patch[ia * tris[i].b_num + ib] = B;
                 patch_i ++;
             }
         }
@@ -716,11 +723,11 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
     }
 
     /* Determine intersection point on rectangle */
-    const Rectangle &obj = recs[id];
+    const Triangle &obj = tris[id];
     const Vector hitpoint = ray.org + t * ray.dir; 
 
     /* Determine intersected patch */
-    const Vector v = hitpoint - obj.p0;
+    const Vector v = hitpoint - obj.a;
     const double a_len = v.Dot(obj.edge_a.Normalized());
     const double b_len = v.Dot(obj.edge_b.Normalized());
             
@@ -795,8 +802,8 @@ int main(int argc, char **argv)
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 12;
-    int patches_b = 12;
+    int patches_a = 8;
+    int patches_b = 8;
     int MC_samples = 3;
 
     Calculate_Form_Factors(patches_a, patches_b, MC_samples);

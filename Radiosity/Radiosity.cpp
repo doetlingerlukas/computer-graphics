@@ -465,6 +465,19 @@ bool Intersect_Scene(const Ray &ray, double *t, int *id, Vector *normal)
 * Computation accelerated by exploiting symmetries of form factor
 * estimation;
 *******************************************************************/
+Vector get_sample_point(Vector v1, Vector v2, Vector v3){
+	srand(time(nullptr));
+	
+	double epsilon1 = drand48();
+	double epsilon2 = drand48();
+	
+	double lambda0 = 1 - sqrt(epsilon1);
+	double lambda1 = epsilon2 - sqrt(epsilon1);
+	double lambda2 = 1 - lambda0 - lambda1;
+	
+	return lambda0 * v1 + lambda1 * v2 + lambda2 * v3;
+}
+
 void Calculate_Form_Factors(const int a_div_num, const int b_div_num, 
                             const int mc_sample) 
 {
@@ -550,10 +563,11 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
                             if (i < j) 
                             {
                                 double F = 0;
-
-                                /* Monte Carlo integration of form factor double integral */
-                                const int Ni = mc_sample, Nj = mc_sample;
- 
+                                
+                                
+                                vector<Vector> patches_i = tris[i].patches[patch_i - offset[i]];
+                                vector<Vector> patches_j = tris[j].patches[patch_j - offset[j]];
+								
                                 /* Uniform PDF for Monte Carlo (1/Ai)x(1/Aj) */
                                 const double pdf = 
                                     (1.0 / patch_area[offset[i] + ia*tris[i].b_num + ib]) *
@@ -561,61 +575,47 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
                                 /* Determine rays of NixNi uniform samples of patch 
                                    on i to NjxNj uniform samples of patch on j */
-                                for (int ias = 0; ias < Ni; ias ++) 
-                                {
-                                    for (int ibs = 0; ibs < Ni; ibs ++) 
-                                    {
-                                        for (int jas = 0; jas < Nj; jas ++) 
+                                for (int is = 0; is < mc_sample; is ++) {
+                                    for (int js = 0; js < mc_sample; js ++) {
+                                    
+										/* Determine sample points xi, xj on both patches */
+                                        
+                                        const Vector xi = get_sample_point(patches_i[0], patches_i[1],
+											patches_i[2]);
+                                        const Vector xj = get_sample_point(patches_j[0], patches_j[1],
+											patches_j[2]);
+
+                                        /* Check for visibility between sample points */
+                                        const Vector ij = (xj - xi).Normalized();
+
+                                        double t; 
+                                        int id;
+                                        Vector normal; 
+                                        if (Intersect_Scene(Ray(xi, ij), &t, &id, &normal) && 
+											id != j) 
                                         {
-                                            for (int jbs = 0; jbs < Nj; jbs ++) 
-                                            {
-                                                /* Determine sample points xi, xj on both patches */
-                                                const double u0 = (double)(ias + 0.5) / Ni, 
-                                                             u1 = (double)(ibs + 0.5) / Ni;
-                                                const double u2 = (double)(jas + 0.5) / Nj, 
-                                                             u3 = (double)(jbs + 0.5) / Nj;
+											continue; /* If intersection with other rectangle */
+                                        }
 
-                                                const Vector xi = tris[i].a + 
-                                                    tris[i].edge_a * ((double)(ia + u0) / tris[i].a_num) + 
-                                                    tris[i].edge_b * ((double)(ib + u1) / tris[i].b_num);
-                                                const Vector xj = tris[j].a + 
-                                                    tris[j].edge_a * ((double)(ja + u2) / tris[j].a_num) +
-                                                    tris[j].edge_b * ((double)(jb + u3) / tris[j].b_num);
+                                        /* Cosines of angles beteen normals and ray inbetween */
+                                        const double d0 = normal_i.Dot(ij);
+                                        const double d1 = normal_j.Dot(-1.0 * ij);
 
-                                                /* Check for visibility between sample points */
-                                                const Vector ij = (xj - xi).Normalized();
+                                        /* Continue if patches facing each other */
+                                        if (d0 > 0.0 && d1 > 0.0) 
+                                        {
+											/* Sample form factor */
+                                            const double K = d0 * d1 / 
+												(M_PI * (xj - xi).LengthSquared());
 
-                                                double t; 
-                                                int id;
-                                                Vector normal; 
-                                                if (Intersect_Scene(Ray(xi, ij), &t, &id, &normal) && 
-                                                    id != j) 
-                                                {
-                                                    continue; /* If intersection with other rectangle */
-                                                }
-
-                                                /* Cosines of angles beteen normals and ray inbetween */
-                                                const double d0 = normal_i.Dot(ij);
-                                                const double d1 = normal_j.Dot(-1.0 * ij);
-
-                                                /* Continue if patches facing each other */
-                                                if (d0 > 0.0 && d1 > 0.0) 
-                                                {
-                                                    /* Sample form factor */
-                                                    const double K = d0 * d1 / 
-                                                            (M_PI * (xj - xi).LengthSquared());
-
-                                                    /* Add weighted sample to estimate */
-                                                    F += K / pdf;
-                                                   
-                                                }
-                                            }
+                                            /* Add weighted sample to estimate */
+												F += K / pdf;
                                         }
                                     }
                                 } 
 
                                 /* Divide by number of samples */
-                                F /= (Ni) * (Ni) * (Nj) * (Nj); 
+                                F /= (mc_sample) * (mc_sample); 
  
                                 form_factor[patch_i * patch_num + patch_j] = F;
                             }
@@ -744,10 +744,11 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
     Vector normal; 
 
     /* Find intersected rectangle */
-    if (!Intersect_Scene(ray, &t, &id, &normal))
-    {
+    if (!Intersect_Scene(ray, &t, &id, &normal)) {
         return BackgroundColor;    
     }
+    
+    cout << "lol" << " ";
 
     /* Determine intersection point on rectangle */
     const Triangle &obj = tris[id];
@@ -767,6 +768,7 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
     /* Bicubic interpolation for smooth image */
     if (interpolation)  
     {
+		/*
         Color c[4][4];
 
         int ia = int(da - 0.5);
@@ -791,10 +793,15 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
         if (dy >= 1.0) dy = 1.0;
  
         return bicubicInterpolate(c, dx, dy) * Over_M_PI;
+        */
+        return Color();
     }
     else
     {         
+		/*
         return obj.patch[ia * obj.b_num + ib] * Over_M_PI;
+        */
+        return Color();
     }
 }
 

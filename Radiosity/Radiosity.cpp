@@ -34,6 +34,8 @@
 #include <cstring>
 #include <vector>
 
+#include <unistd.h>
+
 using namespace std;
 
 const double Over_M_PI = 1.0/M_PI;
@@ -244,8 +246,8 @@ struct Triangle {
         /* Determine if intersection is within rectangle */
         Vector p = ray.org + ray.dir * t; /* point to be checked */
         Vector a_to_p = p - a;
-        Vector b = p + edge_a;
-        Vector c = p + edge_b;
+        Vector b = a + edge_a;
+        Vector c = a + edge_b;
         Vector b_to_p = p - b;
         Vector c_to_p = p - c;
         Vector edge_c = c - b;
@@ -263,7 +265,7 @@ struct Triangle {
         double lambda1 = area1/area;
         double lambda2 = area2/area;
         
-        if((lambda0 < 0.0) || (lambda1 < 0.0) || (lambda2 < 0.0)){
+        if((lambda0 <= 0.0) || (lambda1 <= 0.0) || (lambda2 <= 0.0)){
 			return 0.0;
 		}
         
@@ -445,7 +447,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
         patch_num += tris[i].a_num * tris[i].b_num;
     }
     
-    std::cout << "Number of rectangles: " << n << endl;
+    std::cout << "Number of triangles: " << n << endl;
     cout << "Number of patches: " << patch_num << endl;
     int form_factor_num = patch_num * patch_num;
     cout << "Number of form factors: " << form_factor_num << endl;
@@ -458,7 +460,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
     double *patch_area = new double[patch_num];
     memset(patch_area, 0.0, sizeof(double) * patch_num);
 
-    /* Precompute patch areas, assuming same size for each rectangle */
+    /* Precompute patch areas, assuming same size for each triangle */
     for (int i = 0; i < n; i ++) 
     {
         int patch_i = 0;
@@ -467,18 +469,11 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
         for (int ia = 0; ia < tris[i].a_num; ia ++) 
         {
-            for (int ib = 0; ib < tris[i].b_num; ib = ib + 4) 
+            for (int ib = 0; ib < tris[i].b_num; ib ++) 
             {
 				int index = patch_i + ia* tris[i].b_num + ib;
-                patch_area[index] = ((tris[i].edge_a / (tris[i].b_num / 2)).
-					Cross((tris[i].edge_b / (tris[i].b_num / 2)))).Length() / 2;  
-                patch_area[index + 1] = ((tris[i].edge_a / (tris[i].b_num / 2)).
-					Cross((tris[i].edge_b / (tris[i].b_num / 2)))).Length() / 2;  
-                patch_area[index + 2] = ((((tris[i].a + tris[i].edge_b) - 
-					(tris[i].a + tris[i].edge_a)) / (tris[i].b_num / 2)).
-					Cross((tris[i].edge_a / (tris[i].b_num / 2)))).Length() / 2;  
-                patch_area[index + 3] = ((tris[i].edge_a / (tris[i].b_num / 2)).
-					Cross((tris[i].edge_b / (tris[i].b_num / 2)))).Length() / 2;  
+                patch_area[index] = ((tris[i].edge_a / tris[i].b_num).
+					Cross((tris[i].edge_b / tris[i].b_num))).Length() / 2;    
             }
         }
     }
@@ -583,6 +578,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
                                                     /* Add weighted sample to estimate */
                                                     F += K / pdf;
+                                                   
                                                 }
                                             }
                                         }
@@ -624,6 +620,8 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
              /* Clamp to [0,1] */
              if(form_factor[i * patch_num + j] > 1.0) 
                  form_factor[i * patch_num + j] = 1.0;
+                 
+             //cout << form_factor[i * patch_num + j] << endl;
         }
     }
 }
@@ -802,8 +800,8 @@ int main(int argc, char **argv)
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 8;
-    int patches_b = 8;
+    int patches_a = 4;
+    int patches_b = 4;
     int MC_samples = 3;
 
     Calculate_Form_Factors(patches_a, patches_b, MC_samples);

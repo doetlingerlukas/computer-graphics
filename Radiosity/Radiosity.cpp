@@ -209,6 +209,8 @@ struct Triangle {
 	int a_num, b_num;
 	double a_len, b_len;
 	
+	vector<vector<Vector>> patches;
+	
 	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
               const Color &emission_, const Color &color_) :
               a(p0_), edge_a(a_), edge_b(b_), emission(emission_), color(color_){
@@ -216,6 +218,33 @@ struct Triangle {
 		normal = normal.Normalized();
 		a_len = edge_a.Length();
 		b_len = edge_b.Length();
+	}
+	
+	void calc_patches() {
+		Vector e_a = edge_a / a_num;
+		Vector e_b = edge_b / b_num;
+		
+		int row = 0;
+		int row_size = b_num;
+		while (row_size > 0){
+			for(int i = 0; i < row_size; i++){
+				int y = row/2;
+				int offset = row % 2;
+				
+				Vector v1 = a + (i + offset) * e_a + y * e_b;
+				Vector v2 = a + (i + 1) * e_a + (y + offset) * e_b;
+				Vector v3 = a + i * e_a + (y + 1) * e_b;
+				
+				patches.push_back({v1, v2, v3});
+				
+			}
+		
+			row++;
+			
+			if (row % 2 == 1){
+				row_size--;
+			}
+		}
 	}
 	
 	Color sample_patch(int ia, int ib) const 
@@ -270,7 +299,7 @@ struct Triangle {
 		}
         
         return t;
-	}
+	}	
 };
 
 struct Rectangle 

@@ -731,41 +731,35 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
 void Calculate_Radiosity(const int iteration) 
 {
-    const int n = int(sizeof(tris) / sizeof(Triangle));
+    const int n = tris.size();
     int patch_i = 0;
 	
-    for (int i = 0; i < n; i ++) 
-    {
-        for (int ia = 0; ia < tris[i].a_num; ia ++) 
-        {
-            for (int ib = 0; ib < tris[i].b_num; ib ++) 
-            {
-                Color B;
-
-                int patch_j = 0;
-                for (int j = 0; j < n; j ++) 
-                {
-                    for (int ja = 0; ja < tris[j].a_num; ja ++) 
-                    {
-                        for (int jb = 0; jb < tris[j].b_num; jb ++) 
-                        {
-                            const double Fij = form_factor[patch_i * patch_num + patch_j];
+    for (int i = 0; i < n; i ++) {
+		
+        for (unsigned long ip = 0; ip < tris[i].patches.size(); ip ++)  {
+			
+            Color B;
+            int patch_j = 0;
+            
+			for (int j = 0; j < n; j ++) {
+				
+                for (unsigned long jp = 0; jp < tris[j].patches.size(); jp ++) {
+						
+					const double Fij = form_factor[patch_i * patch_num + patch_j];
 					 
-                            /* Add form factor multiplied with radiosity of previous step */		
-                            if (Fij > 0.0)
-                                B = B + Fij * tris[j].patch[ja * tris[j].b_num + jb];
-
-                            patch_j ++;
-                        }
-                    }
-                }
-                /* Multiply sum with color of patch and add emission */
-                B = tris[i].color.MultComponents(B) + tris[i].emission;
-  
-                /* Store overall patch radiosity of current iteration */
-                tris[i].patch[ia * tris[i].b_num + ib] = B;
-                patch_i ++;
+					/* Add form factor multiplied with radiosity of previous step */		
+					if (Fij > 0.0) {
+						B = B + Fij * tris[j].patch[jp];
+					}
+					patch_j ++;
+				}
             }
+            /* Multiply sum with color of patch and add emission */
+            B = tris[i].color.MultComponents(B) + tris[i].emission;
+  
+            /* Store overall patch radiosity of current iteration */
+			tris[i].patch[ip] = B;
+			patch_i ++;
         }
     }
 }

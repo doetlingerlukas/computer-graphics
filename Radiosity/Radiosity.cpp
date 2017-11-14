@@ -602,101 +602,96 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
     /* Offsets for indexing of patches in 1D-array */
     int *offset = new int[n];
     
-    for (int i = 0; i < n; i ++) 
-    {
+    for (int i = 0; i < n; i ++) {
         offset[i] = 0;
         for (int k = 0; k < i; k ++)
-            offset[i] += tris[k].a_num * tris[k].b_num;
+            offset[i] += tris[k].patches.size();
     }
 
-    /* Loop over all rectangles in scene */
+    /* Loop over all triangles in scene */
     for (int i = 0; i < n; i ++) {
 		
         int patch_i = offset[i];	
         cout << i << " "; 
 		
-        /* Loop over all patches in rectangle i */
-        for (int ia = 0; ia < tris[i].a_num; ia ++) {
+        /* Loop over all patches in triangles i */
+        for (unsigned long ip = 0; ip < tris[i].patches.size(); ip ++) {
 			
             cout << "*" << flush;
-            
-            for (int ib = 0; ib < tris[i].b_num; ib ++) {
 				
-                const Vector normal_i = tris[i].normal;
+            const Vector normal_i = tris[i].normal;
  
-                int patch_j = 0;
+            int patch_j = 0;
 
-                /* Loop over all rectangles in scene for rectangle i */
-                for (int j = 0; j < n; j ++) 
-                {
-                    const Vector normal_j = tris[j].normal;
+            /* Loop over all triangles in scene for triangle i */
+            for (int j = 0; j < n; j ++) {
+				
+				const Vector normal_j = tris[j].normal;
 
-                    /* Loop over all patches in rectangle j */
-                    for (unsigned long jp = 0; jp < tris[j].patches.size(); jp ++) {
+				/* Loop over all patches in triangle j */
+                for (unsigned long jp = 0; jp < tris[j].patches.size(); jp ++) {
                       				
-						/* Do not compute form factors for patches on same rectangle;
-						   also exploit symmetry to reduce computation;
-                           intemediate values; will be divided by patch area below */
-                        if (i < j) {
-							double F = 0;
+					/* Do not compute form factors for patches on same rectangle;
+						also exploit symmetry to reduce computation;
+                        intemediate values; will be divided by patch area below */
+					if (i < j) {
+						double F = 0;
                                 
                                 
-                            vector<Vector> patches_i = tris[i].patches[patch_i - offset[i]];
-                            vector<Vector> patches_j = tris[j].patches[patch_j - offset[j]];
+						vector<Vector> patches_i = tris[i].patches[patch_i - offset[i]];
+						vector<Vector> patches_j = tris[j].patches[patch_j - offset[j]];
 								
-                            /* Uniform PDF for Monte Carlo (1/Ai)x(1/Aj) */
-                            const double pdf = 
-								(1.0 / patch_area[offset[i] + ia*tris[i].b_num + ib]) *
-                                (1.0 / patch_area[offset[j] + jp]);
+						/* Uniform PDF for Monte Carlo (1/Ai)x(1/Aj) */
+						const double pdf = 
+							(1.0 / patch_area[offset[i] + ip]) *
+							(1.0 / patch_area[offset[j] + jp]);
 
-                            /* Determine rays of NixNi uniform samples of patch 
-                               on i to NjxNj uniform samples of patch on j */
-                            for (int is = 0; is < mc_sample; is ++) {
-								for (int js = 0; js < mc_sample; js ++) {
+                        /* Determine rays of NixNi uniform samples of patch 
+							on i to NjxNj uniform samples of patch on j */
+                        for (int is = 0; is < mc_sample; is ++) {
+							for (int js = 0; js < mc_sample; js ++) {
                                     
-									/* Determine sample points xi, xj on both patches */
-                                        
-                                    const Vector xi = get_sample_point(patches_i[0], patches_i[1],
-										patches_i[2]);
-                                    const Vector xj = get_sample_point(patches_j[0], patches_j[1],
-										patches_j[2]);
+								/* Determine sample points xi, xj on both patches */
+                                const Vector xi = get_sample_point(patches_i[0], patches_i[1], 
+									patches_i[2]);
+                                const Vector xj = get_sample_point(patches_j[0], patches_j[1],
+									patches_j[2]);
 
-                                    /* Check for visibility between sample points */
-                                    const Vector ij = (xj - xi).Normalized();
+                                /* Check for visibility between sample points */
+                                const Vector ij = (xj - xi).Normalized();
 
-                                    double t; 
-                                    int id;
-                                    Vector normal; 
-                                    if (Intersect_Scene(Ray(xi, ij), &t, &id, &normal) && id != j) {
-										continue; /* If intersection with other rectangle */
-                                    }
-
-                                    /* Cosines of angles beteen normals and ray inbetween */
-                                    const double d0 = normal_i.Dot(ij);
-                                    const double d1 = normal_j.Dot(-1.0 * ij);
-
-                                    /* Continue if patches facing each other */
-                                    if (d0 > 0.0 && d1 > 0.0) {
-										/* Sample form factor */
-                                        const double K = d0 * d1 / (M_PI * (xj - xi).LengthSquared());
-
-                                        /* Add weighted sample to estimate */
-										F += K / pdf;
-                                    }
+                                double t; 
+                                int id;
+                                Vector normal; 
+                                if (Intersect_Scene(Ray(xi, ij), &t, &id, &normal) && id != j) {
+									continue; /* If intersection with other rectangle */
                                 }
-                            } 
 
-                            /* Divide by number of samples */
-                            F /= (mc_sample) * (mc_sample); 
+                                /* Cosines of angles beteen normals and ray inbetween */
+                                const double d0 = normal_i.Dot(ij);
+                                const double d1 = normal_j.Dot(-1.0 * ij);
+
+                                /* Continue if patches facing each other */
+                                if (d0 > 0.0 && d1 > 0.0) {
+									/* Sample form factor */
+                                    const double K = d0 * d1 / (M_PI * (xj - xi).LengthSquared());
+
+                                    /* Add weighted sample to estimate */
+									F += K / pdf;
+                                }
+                            }
+                        } 
+
+                        /* Divide by number of samples */
+                        F /= (mc_sample) * (mc_sample); 
  
-                            form_factor[patch_i * patch_num + patch_j] = F;
-						}
-                        patch_j ++;
+                        form_factor[patch_i * patch_num + patch_j] = F;
+					}
+                    patch_j ++;
                         
-                    }
                 }
-                patch_i ++;
             }
+            patch_i ++;
         }
 
         cout << endl;

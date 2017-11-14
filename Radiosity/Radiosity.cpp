@@ -478,39 +478,8 @@ vector<Triangle> Rectangles_To_Triangles() {
 }
 
 /* Triangle version of recs*/
-//vector<Triangle> tris = Rectangles_To_Triangles();
+vector<Triangle> tris = Rectangles_To_Triangles();
 
-vector<Triangle> tris = {
-  /* Cornell Box walls */
-  Triangle(Vector(  0.0,  0.0,   0.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:   bottom-left
-  Triangle(Vector(100.0, 80.0,   0.0), Vector(-100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:   top-right
-  Triangle(Vector(  0.0,  0.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,   0.0, -170.0), Color(), Color(0.75, 0.75, 0.75)), // Bottom: front-left
-  Triangle(Vector(100.0,  0.0,   0.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,   0.0,  170.0), Color(), Color(0.75, 0.75, 0.75)), // Bottom: back-right
-  Triangle(Vector(  0.0, 80.0,   0.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,   0.0,  170.0), Color(), Color(0.75, 0.75, 0.75)), // Top:    back-left
-  Triangle(Vector(100.0, 80.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,   0.0, -170.0), Color(), Color(0.75, 0.75, 0.75)), // Top:    front-right
-  Triangle(Vector(  0.0,  0.0, 170.0), Vector(   0.0, 0.0, -170.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.75, 0.25, 0.25)), // Left:   front-bottom
-  Triangle(Vector(  0.0, 80.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.25, 0.25)), // Left:   back-top
-  Triangle(Vector(100.0,  0.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.25, 0.25, 0.75)), // Right:  back-bottom
-  Triangle(Vector(100.0, 80.0, 170.0), Vector(   0.0, 0.0, -170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.25, 0.75)), // Right:  front-top
-  Triangle(Vector(100.0,  0.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.0,  1.0,  0.0)),  // Front:  bottom-right (not visible)
-  Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.0,  1.0,  0.0)),  // Front:  top-left (not visible)
-
-  /* Area light source on top */
-  Triangle(Vector(40.0, 79.99, 65.0), Vector( 20.0, 0.0, 0.0), Vector(0.0, 0.0,  20.0), Color(12, 12, 12), Color(0.75, 0.75, 0.75)), // back-left
-  Triangle(Vector(60.0, 79.99, 85.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0), Color(12, 12, 12), Color(0.75, 0.75, 0.75)), // front-right
-
-  /* Cuboid in room */
-  Triangle(Vector(30.0,  0.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Right: front-bottom
-  Triangle(Vector(30.0, 40.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Right: back-top
-  Triangle(Vector(10.0,  0.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Left:  back-bottom
-  Triangle(Vector(10.0, 40.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Left:  front-top
-  Triangle(Vector(10.0,  0.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Front: bottom-left
-  Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Front: top-right
-  Triangle(Vector(30.0,  0.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:  bottom-right
-  Triangle(Vector(10.0,  4.0,  80.0), Vector( 20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:  top-left
-  Triangle(Vector(10.0, 40.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,   0.0, -20.0), Color(), Color(0.75, 0.75, 0.75)), // Top:   front-left
-  Triangle(Vector(30.0, 40.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,   0.0,  20.0), Color(), Color(0.75, 0.75, 0.75)), // Top:   back-right
-};
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
 * Returns true if intersection is found, as well as ray parameter
@@ -554,7 +523,9 @@ Vector get_sample_point(Vector v1, Vector v2, Vector v3){
 	double lambda1 = epsilon2 * sqrt(epsilon1);
 	double lambda2 = 1.0 - lambda0 - lambda1;
 	
-	return lambda0 * v1 + lambda1 * v2 + lambda2 * v3;
+	Vector q = lambda0 * v1 + lambda1 * v2 + lambda2 * v3;
+	
+	return q;
 }
 
 void Calculate_Form_Factors(const int a_div_num, const int b_div_num, 
@@ -828,7 +799,7 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
     /* Bicubic interpolation for smooth image */
     if (interpolation)  
     {
-		/*
+		
         Color c[4][4];
 
         int ia = int(da - 0.5);
@@ -853,15 +824,10 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
         if (dy >= 1.0) dy = 1.0;
  
         return bicubicInterpolate(c, dx, dy) * Over_M_PI;
-        */
-        return Color();
     }
     else
     {         
-		/*
         return obj.patch[ia * obj.b_num + ib] * Over_M_PI;
-        */
-        return Color();
     }
 }
 

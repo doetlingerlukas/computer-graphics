@@ -262,18 +262,51 @@ struct Triangle {
         b_num = b_num_;
         patch.clear();
         patch.resize(a_num * b_num);
+        calc_patches();
     }
 	
 	/* Triangle-ray intersection test */
-    const double intersect(const Ray &ray) 
-    {
-        /* Check for plane-ray intersection first */
+    double intersect(const Ray &ray) {
+		
+		static const double EPSILON = 0.0000001;
+
+		Vector c = a + edge_a;
+        Vector b = a + edge_b;
+        
+		Vector edge_1 = b - a;
+		Vector edge_2 = c - a;
+
+		Vector h = ray.dir.Cross(edge_2);
+		double ax = edge_1.Dot(h);
+
+		if (ax > -EPSILON && ax < EPSILON)
+			return 0.0;
+
+		double f = 1.0 / ax;
+		Vector s = ray.org - a;
+		double u = f * s.Dot(h);
+
+		if (u < 0.0 || u > 1.0)
+			return 0.0;
+
+		Vector q = s.Cross(edge_1);
+		double v = f * ray.dir.Dot(q);
+
+		if (v < 0.0 || u + v > 1.0)
+			return 0.0;
+
+		double t = f * edge_2.Dot(q);
+
+		if (t <= EPSILON)
+			return 0.0;
+
+		return t;
+		/*
         const double t = (a - ray.org).Dot(normal) / ray.dir.Dot(normal);
         if (t <= 0.00001)
             return 0.0;
 
-        /* Determine if intersection is within rectangle */
-        Vector p = ray.org + ray.dir * t; /* point to be checked */
+        Vector p = ray.org + ray.dir * t;
         Vector a_to_p = p - a;
         Vector b = a + edge_a;
         Vector c = a + edge_b;
@@ -294,12 +327,13 @@ struct Triangle {
         double lambda1 = area1/area;
         double lambda2 = area2/area;
         
-        if((lambda0 <= 0.0) || (lambda1 <= 0.0) || (lambda2 <= 0.0)){
+        if((lambda0 < 0.0) || (lambda1 < 0.0) || (lambda2 < 0.0)){
 			return 0.0;
 		}
         
         return t;
-	}	
+        */
+	} 
 };
 
 struct Rectangle 
@@ -430,8 +464,39 @@ vector<Triangle> Rectangles_To_Triangles() {
 }
 
 /* Triangle version of recs*/
-vector<Triangle> tris = Rectangles_To_Triangles();
+//vector<Triangle> tris = Rectangles_To_Triangles();
 
+vector<Triangle> tris = {
+  /* Cornell Box walls */
+  Triangle(Vector(  0.0,  0.0,   0.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:   bottom-left
+  Triangle(Vector(100.0, 80.0,   0.0), Vector(-100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:   top-right
+  Triangle(Vector(  0.0,  0.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,   0.0, -170.0), Color(), Color(0.75, 0.75, 0.75)), // Bottom: front-left
+  Triangle(Vector(100.0,  0.0,   0.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,   0.0,  170.0), Color(), Color(0.75, 0.75, 0.75)), // Bottom: back-right
+  Triangle(Vector(  0.0, 80.0,   0.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,   0.0,  170.0), Color(), Color(0.75, 0.75, 0.75)), // Top:    back-left
+  Triangle(Vector(100.0, 80.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,   0.0, -170.0), Color(), Color(0.75, 0.75, 0.75)), // Top:    front-right
+  Triangle(Vector(  0.0,  0.0, 170.0), Vector(   0.0, 0.0, -170.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.75, 0.25, 0.25)), // Left:   front-bottom
+  Triangle(Vector(  0.0, 80.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.25, 0.25)), // Left:   back-top
+  Triangle(Vector(100.0,  0.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.25, 0.25, 0.75)), // Right:  back-bottom
+  Triangle(Vector(100.0, 80.0, 170.0), Vector(   0.0, 0.0, -170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.25, 0.75)), // Right:  front-top
+  Triangle(Vector(100.0,  0.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.0,  1.0,  0.0)),  // Front:  bottom-right (not visible)
+  Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.0,  1.0,  0.0)),  // Front:  top-left (not visible)
+
+  /* Area light source on top */
+  Triangle(Vector(40.0, 79.99, 65.0), Vector( 20.0, 0.0, 0.0), Vector(0.0, 0.0,  20.0), Color(12, 12, 12), Color(0.75, 0.75, 0.75)), // back-left
+  Triangle(Vector(60.0, 79.99, 85.0), Vector(-20.0, 0.0, 0.0), Vector(0.0, 0.0, -20.0), Color(12, 12, 12), Color(0.75, 0.75, 0.75)), // front-right
+
+  /* Cuboid in room */
+  Triangle(Vector(30.0,  0.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Right: front-bottom
+  Triangle(Vector(30.0, 40.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Right: back-top
+  Triangle(Vector(10.0,  0.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Left:  back-bottom
+  Triangle(Vector(10.0, 40.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Left:  front-top
+  Triangle(Vector(10.0,  0.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Front: bottom-left
+  Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Front: top-right
+  Triangle(Vector(30.0,  0.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:  bottom-right
+  Triangle(Vector(10.0,  4.0,  80.0), Vector( 20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0), Color(), Color(0.75, 0.75, 0.75)), // Back:  top-left
+  Triangle(Vector(10.0, 40.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,   0.0, -20.0), Color(), Color(0.75, 0.75, 0.75)), // Top:   front-left
+  Triangle(Vector(30.0, 40.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,   0.0,  20.0), Color(), Color(0.75, 0.75, 0.75)), // Top:   back-right
+};
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
 * Returns true if intersection is found, as well as ray parameter
@@ -818,8 +883,48 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 * Rendered result saved as PPM image file
 *******************************************************************/
 
-int main(int argc, char **argv) 
-{
+int main(int argc, char **argv) {
+	
+	/* tests */
+	auto triangle = Triangle(Vector(2.0, 2.0, 0.0), Vector(2.0, 0.0, 0.0), 
+		Vector(0.0, 2.0, 0.0), Color(), Color());
+    auto ray = Ray(Vector(2.25, 2.25, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
+    auto intersection = triangle.intersect(ray);
+    if (intersection > 0.0) {cout << "true" << endl;}
+    else {cout << "fail" << endl;}
+    
+    intersection = 0.0;
+
+	triangle = Triangle(Vector(0.0, 0.0, 0.0), Vector(2.0, 0.0, 0.0), 
+		Vector(0.0, 2.0, 0.0), Color(), Color());
+    ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection > 0.0) {cout << "true" << endl;}
+    else {cout << "fail" << endl;}
+  
+	intersection = 0.0;
+
+    ray = Ray(Vector(0.1, 0.1, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection > 0.0) {cout << "true" << endl;}
+    else {cout << "fail" << endl;}
+    
+    intersection = 1.0;
+
+    ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, -1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection == 0.0) {cout << "true" << endl;}
+    else {cout << "fail" << endl;}
+		
+	intersection = 1.0;
+	
+    ray = Ray(Vector(2.0, 2.0, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection == 0.0) {cout << "true" << endl;}
+    else {cout << "fail" << endl;}
+ 
+ 
+	/* main part */
     int width = 640;
     int height = 480;
     int samples = 4;

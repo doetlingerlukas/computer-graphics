@@ -4,7 +4,7 @@ LD = g++
 OBJ = Radiosity.o 
 TARGET = Radiosity
 
-CFLAGS = -O3 -Wall
+CFLAGS = -O3 -Wall -std=c++1y
 LDLIBS =
 INCLUDES = 
 

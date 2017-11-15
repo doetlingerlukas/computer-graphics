@@ -219,6 +219,7 @@ struct Triangle {
 	double a_len, b_len;
 	
 	vector<vector<Vector>> patches;
+	vector<Triangle> tri_patches;
 	
 	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
               const Color &emission_, const Color &color_) :
@@ -254,6 +255,8 @@ struct Triangle {
 				
 				patches.push_back({v1, v2, v3});
 				
+				tri_patches.push_back(Triangle(v1, v1 - v3, v1 - v2, emission, 
+					color));				
 			}
 		
 			row++;
@@ -287,11 +290,11 @@ struct Triangle {
 		
 		static const double EPSILON = 0.0000001;
         
-		Vector edge_1 = b - a;
-		Vector edge_2 = c - a;
+		Vector b_to_a = b - a;
+		Vector c_to_a = c - a;
 
-		Vector h = ray.dir.Cross(edge_2);
-		double ax = edge_1.Dot(h);
+		Vector h = ray.dir.Cross(c_to_a);
+		double ax = b_to_a.Dot(h);
 
 		if (ax > -EPSILON && ax < EPSILON)
 			return 0.0;
@@ -303,13 +306,13 @@ struct Triangle {
 		if (u < 0.0 || u > 1.0)
 			return 0.0;
 
-		Vector q = s.Cross(edge_1);
+		Vector q = s.Cross(b_to_a);
 		double v = f * ray.dir.Dot(q);
 
 		if (v < 0.0 || u + v > 1.0)
 			return 0.0;
 
-		double t = f * edge_2.Dot(q);
+		double t = f * c_to_a.Dot(q);
 
 		if (t <= EPSILON)
 			return 0.0;
@@ -782,7 +785,7 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
     
 
     /* Determine intersection point on rectangle */
-    const Triangle &obj = tris[id];
+    Triangle &obj = tris[id];
     const Vector hitpoint = ray.org + t * ray.dir; 
 
     /* Determine intersected patch */
@@ -795,6 +798,16 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 
     int ia = int(da); if (ia >= obj.a_num) ia --;
     int ib = int(db); if (ib >= obj.b_num) ib --;
+    
+    int index = 0;
+    
+    for(unsigned long ip = 0; ip < obj.tri_patches.size(); ip++){
+		if(obj.tri_patches[ip].intersect(ray) > 0.0){
+			index = ip;
+		}
+	}
+	
+	return obj.patch[index];
             
     /* Bicubic interpolation for smooth image */
     if (interpolation)  
@@ -827,7 +840,7 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
     }
     else
     {         
-        return obj.patch[ia * obj.b_num + ib] * Over_M_PI;
+        return obj.patch[index] * Over_M_PI;
     }
 }
 
@@ -851,7 +864,7 @@ int main(int argc, char **argv) {
 		Vector(0.0, 2.0, 0.0), Color(), Color());
     auto ray = Ray(Vector(2.25, 2.25, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
     auto intersection = triangle.intersect(ray);
-    if (intersection > 0.0) {cout << "true" << endl;}
+    if (intersection > 0.0) {}
     else {cout << "fail" << endl;}
     
     intersection = 0.0;
@@ -860,28 +873,28 @@ int main(int argc, char **argv) {
 		Vector(0.0, 2.0, 0.0), Color(), Color());
     ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
     intersection = triangle.intersect(ray);
-    if (intersection > 0.0) {cout << "true" << endl;}
+    if (intersection > 0.0) {}
     else {cout << "fail" << endl;}
   
 	intersection = 0.0;
 
     ray = Ray(Vector(0.1, 0.1, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
     intersection = triangle.intersect(ray);
-    if (intersection > 0.0) {cout << "true" << endl;}
+    if (intersection > 0.0) {}
     else {cout << "fail" << endl;}
     
     intersection = 1.0;
 
     ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, -1.0).Normalized());
     intersection = triangle.intersect(ray);
-    if (intersection == 0.0) {cout << "true" << endl;}
+    if (intersection == 0.0) {}
     else {cout << "fail" << endl;}
 		
 	intersection = 1.0;
 	
     ray = Ray(Vector(2.0, 2.0, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
     intersection = triangle.intersect(ray);
-    if (intersection == 0.0) {cout << "true" << endl;}
+    if (intersection == 0.0) {}
     else {cout << "fail" << endl;}
  
  
@@ -902,8 +915,8 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 4;
-    int patches_b = 4;
+    int patches_a = 12;
+    int patches_b = 12;
     int MC_samples = 3;
 
     Calculate_Form_Factors(patches_a, patches_b, MC_samples);

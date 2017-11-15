@@ -255,7 +255,7 @@ struct Triangle {
 				
 				patches.push_back({v1, v2, v3});
 				
-				tri_patches.push_back(Triangle(v1, v1 - v3, v1 - v2, emission, 
+				tri_patches.push_back(Triangle(v1, v3 - v1, v2 - v1, emission, 
 					color));				
 			}
 		
@@ -915,8 +915,8 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 12;
-    int patches_b = 12;
+    int patches_a = 8;
+    int patches_b = 8;
     int MC_samples = 3;
 
     Calculate_Form_Factors(patches_a, patches_b, MC_samples);

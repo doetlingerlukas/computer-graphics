@@ -247,15 +247,15 @@ struct Triangle {
 		while (row_size > 0){
 			for(int i = 0; i < row_size; i++){
 				int y = row/2;
-				int offset = row % 2;
+				int orientation = row % 2;
 				
-				Vector v1 = a + (i + offset) * e_a + y * e_b;
-				Vector v2 = a + (i + 1) * e_a + (y + offset) * e_b;
+				Vector v1 = a + (i + orientation) * e_a + y * e_b;
+				Vector v2 = a + (i + 1) * e_a + (y + orientation) * e_b;
 				Vector v3 = a + i * e_a + (y + 1) * e_b;
 				
 				patches.push_back({v1, v2, v3});
 				
-				tri_patches.push_back(Triangle(v1, v3 - v1, v2 - v1, emission, 
+				tri_patches.push_back(Triangle(v1, v2 - v1, v3 - v1, emission, 
 					color));				
 			}
 		
@@ -285,11 +285,12 @@ struct Triangle {
         calc_patches();
     }
 	
-	/* Triangle-ray intersection test */
+	/* Triangle-ray intersection test. */
+	/* Implementation of the Möller-Trumbore intersection algorithm */
+	/* based on wikipedia.org */
     double intersect(const Ray &ray) {
 		
 		static const double EPSILON = 0.0000001;
-        
 		Vector b_to_a = b - a;
 		Vector c_to_a = c - a;
 
@@ -325,8 +326,6 @@ struct Triangle {
 
         Vector p = ray.org + ray.dir * t;
         Vector a_to_p = p - a;
-        Vector b = a + edge_a;
-        Vector c = a + edge_b;
         Vector b_to_p = p - b;
         Vector c_to_p = p - c;
         Vector edge_c = c - b;
@@ -788,17 +787,7 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
     Triangle &obj = tris[id];
     const Vector hitpoint = ray.org + t * ray.dir; 
 
-    /* Determine intersected patch */
-    const Vector v = hitpoint - obj.a;
-    const double a_len = v.Dot(obj.edge_a.Normalized());
-    const double b_len = v.Dot(obj.edge_b.Normalized());
-            
-    double da = obj.a_num * a_len / obj.a_len;
-    double db = obj.b_num * b_len / obj.b_len;
-
-    int ia = int(da); if (ia >= obj.a_num) ia --;
-    int ib = int(db); if (ib >= obj.b_num) ib --;
-    
+    /* Determine intersected patch */    
     int index = 0;
     
     for(unsigned long ip = 0; ip < obj.tri_patches.size(); ip++){
@@ -806,41 +795,16 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 			index = ip;
 		}
 	}
-	
-	return obj.patch[index];
             
     /* Bicubic interpolation for smooth image */
     if (interpolation)  
     {
 		
-        Color c[4][4];
-
-        int ia = int(da - 0.5);
-        int ib = int(db - 0.5);
-                
-        for (int i = 0; i < 4; i ++) 
-        {
-            for (int j = 0; j < 4; j ++) 
-            {
-                c[i][j] = obj.sample_patch(ia + i - 1, ib + j - 1);
-            }
-        }
-               
-        int ia0 = int(da - 0.5);
-        int ib0 = int(db - 0.5); 
-        double dx = da - ia0 - 0.5;
-        double dy = db - ib0 - 0.5;
-
-        if (dx < 0.0)  dx = 0.0;
-        if (dx >= 1.0) dx = 1.0;
-        if (dy < 0.0)  dy = 0.0;
-        if (dy >= 1.0) dy = 1.0;
- 
-        return bicubicInterpolate(c, dx, dy) * Over_M_PI;
+        return obj.patch[index];
     }
     else
     {         
-        return obj.patch[index] * Over_M_PI;
+        return obj.patch[index];
     }
 }
 

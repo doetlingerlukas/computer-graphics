@@ -23,8 +23,11 @@ $(TARGET).o: $(TARGET).cpp
 
 clean:
 	rm -f *.o $(TARGET)
+	
+run: clean all
+		./Radiosity
 
-.PHONY: clean
+.PHONY: clean run
 
 # Dependencies
 $(TARGET): $(OBJ)

@@ -785,19 +785,19 @@ Color interpolate_vertex(vector<Color> data) {
 
 /* interpolate all vertices for a patch */
 vector<vector<Color>> patch_vertices_interpolation(
-	vector<vector<vector<Color>>> to_interpolate) {
+	vector<vector<vector<Color>>> to_i) {
 	
-	vector<vector<Color>> colors;
+	vector<vector<Color>> colors1;
 	
-	for(vector<vector<Color>> patch_data : to_interpolate){
+	for(vector<vector<Color>> patch_data : to_i){
 		vector<Color> patch_color;
 		for(vector<Color> vertex : patch_data){
 			patch_color.push_back(interpolate_vertex(vertex));
 		}
-		colors.push_back(patch_color);
+		colors1.push_back(patch_color);
 	}
 	
-	return colors;
+	return colors1;
 }
 
 /* calculate all patch_vertex colors for triangle by interpolation */
@@ -828,10 +828,7 @@ vector<vector<Color>> color_for_patch_vertices(Triangle tri) {
 					
 				}
 				
-				colors.push_back(vertex1);
-				colors.push_back(vertex2);
-				colors.push_back(vertex3);
-				to_interpolate.push_back(colors);
+				to_interpolate.push_back({vertex1, vertex2, vertex3});
 			}
 		}
 	}
@@ -911,8 +908,18 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 		double lambda2 = a2 / patch.area;
 		double lambda3 = a3 / patch.area;
 		
-		return (cs[0] * lambda1) + (cs[1] * lambda2) + (cs[2] * lambda3);
+		Color final_c = ((cs[0] * lambda1) + (cs[1] * lambda2)) + (cs[2] * lambda3);
+		
+		if(final_c.x < 0.0) final_c.x = 0.0;
+		if(final_c.x > 1.0) final_c.x = 1.0;
+		if(final_c.y < 0.0) final_c.y = 0.0;
+		if(final_c.y > 1.0) final_c.y = 1.0;
+		if(final_c.z < 0.0) final_c.z = 0.0;
+		if(final_c.z > 1.0) final_c.z = 1.0;
+		
+		return final_c;
 		//return obj.patch[index];
+		
     } else {         
         return obj.patch[index];
     }

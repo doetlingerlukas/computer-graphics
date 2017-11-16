@@ -115,6 +115,15 @@ struct Vector
     {
 		return Vector(-x, -y, -z);
 	}
+	
+	const bool Equals(const Vector &b) const
+	{
+		if(x == b.x && y == b.y && z == b.z){
+			return true;
+		} else {
+			return false;
+		}
+	}
 };
 
 typedef Vector Color;
@@ -762,6 +771,89 @@ Color bicubicInterpolate (Color p[4][4], double x, double y)
     return cubicInterpolate(arr, x);
 }
 
+/* interpolate colors for a vertex */
+Color interpolate_vertex(vector<Color> data) {
+	Color to_return = Color(0.0, 0.0, 0.0);
+	
+	for(Color c : data) {
+		to_return = to_return + c;
+	}
+	int size = (int) 1 / data.size();
+	
+	return to_return * size;
+}
+
+/* interpolate all vertices for a patch */
+vector<vector<Color>> patch_vertices_interpolation(
+	vector<vector<vector<Color>>> to_interpolate) {
+	
+	vector<vector<Color>> colors;
+	
+	for(vector<vector<Color>> patch_data : to_interpolate){
+		vector<Color> patch_color;
+		for(vector<Color> vertex : patch_data){
+			patch_color.push_back(interpolate_vertex(vertex));
+		}
+		colors.push_back(patch_color);
+	}
+	
+	return colors;
+}
+
+/* calculate all patch_vertex colors for triangle by interpolation */
+vector<vector<Color>> color_for_patch_vertices(Triangle tri) {
+	
+	vector<vector<Color>> colors;
+	vector<vector<vector<Color>>> to_interpolate;
+	
+	for(unsigned int t = 0; t < tris.size(); t++) {
+		if(tri.normal.Equals(tris[t].normal)) {
+			for(unsigned int pi = 0; pi < tri.tri_patches.size(); pi++) {
+				
+				vector<Color> vertex1;
+				vector<Color> vertex2;
+				vector<Color> vertex3;
+				
+				for(unsigned int pj = 0; pj < tris[t].tri_patches.size(); pj++) {
+					
+					if(tri.a.Equals(tris[t].tri_patches[pj].a)){
+						vertex1.push_back(tris[t].patch[pj]);
+					}
+					if(tri.b.Equals(tris[t].tri_patches[pj].b)){
+						vertex2.push_back(tris[t].patch[pj]);
+					}
+					if(tri.c.Equals(tris[t].tri_patches[pj].c)){
+						vertex3.push_back(tris[t].patch[pj]);
+					}
+					
+				}
+				
+				to_interpolate.push_back({vertex1, vertex2, vertex3});
+				cout << vertex1.size() << " ";
+			}
+		}
+	}
+	
+	colors = patch_vertices_interpolation(to_interpolate);
+	
+	return colors;
+}
+
+/* calculate all vertex colors */
+vector<vector<vector<Color>>> all_vertex_colors () {
+	
+	vector<vector<vector<Color>>> vertex_colors;
+	
+	for(Triangle tri : tris) {
+		vertex_colors.push_back(color_for_patch_vertices(tri));
+	}
+	
+	return vertex_colors;
+}
+
+/* vertex color values */
+/* sorted by triangle -> patches -> (A Color, B Color, C Color) */
+vector<vector<vector<Color>>> triangle_vertex_colors = all_vertex_colors();
 
 /******************************************************************
 * Compute radiance from radiosity by shooting rays into the scene;
@@ -789,21 +881,40 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 
     /* Determine intersected patch */    
     int index = 0;
-    
     for(unsigned long ip = 0; ip < obj.tri_patches.size(); ip++){
 		if(obj.tri_patches[ip].intersect(ray) > 0.0){
 			index = ip;
 		}
 	}
             
-    /* Bicubic interpolation for smooth image */
-    if (interpolation)  
-    {
+    /* Barycentric interpolation for smooth image */
+    if (interpolation) {
+		//cout << triangle_vertex_colors[0].size() << " ";
+		/*
+		vector<vector<Color>> c = triangle_vertex_colors[id];
+		vector<Color> cs = c[index];
+		cout << "lol" << " ";
+		Triangle patch = obj.tri_patches[index];
+		*/
+		/* h represents the hitpoint *//*
+		double a_to_h = (hitpoint - patch.a).Length();
+		double b_to_h = (hitpoint - patch.b).Length();
+		double c_to_h = (hitpoint - patch.c).Length();
 		
-        return obj.patch[index];
-    }
-    else
-    {         
+		double a1 = area_of_triangle(c_to_h, b_to_h, 
+			(patch.c - patch.b).Length());
+		double a2 = area_of_triangle(a_to_h, c_to_h, 
+			(patch.c - patch.a).Length());
+		double a3 = area_of_triangle(a_to_h, b_to_h, 
+			(patch.b - patch.a).Length());
+			
+		double lambda1 = a1 / patch.area;
+		double lambda2 = a2 / patch.area;
+		double lambda3 = a3 / patch.area;
+		
+		return (cs[0] * lambda1) + (cs[1] * lambda2) + (cs[2] * lambda3);*/
+		return obj.patch[index];
+    } else {         
         return obj.patch[index];
     }
 }
@@ -823,7 +934,7 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 
 int main(int argc, char **argv) {
 	
-	/* tests */
+	/* tests for the intersection test */
 	auto triangle = Triangle(Vector(2.0, 2.0, 0.0), Vector(2.0, 0.0, 0.0), 
 		Vector(0.0, 2.0, 0.0), Color(), Color());
     auto ray = Ray(Vector(2.25, 2.25, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
@@ -879,8 +990,8 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 8;
-    int patches_b = 8;
+    int patches_a = 4;
+    int patches_b = 4;
     int MC_samples = 3;
 
     Calculate_Form_Factors(patches_a, patches_b, MC_samples);

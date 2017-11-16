@@ -775,12 +775,12 @@ Color bicubicInterpolate (Color p[4][4], double x, double y)
 Color interpolate_vertex(vector<Color> data) {
 	Color to_return = Color(0.0, 0.0, 0.0);
 	
-	for(Color c : data) {
-		to_return = to_return + c;
+	double i = 0.0;
+	for(i = 0.0; i < data.size(); i++) {
+		to_return = to_return + data[i];
 	}
-	int size = (int) 1 / data.size();
 	
-	return to_return * size;
+	return Color((to_return.x / i), (to_return.y / i), (to_return.z / i));
 }
 
 /* interpolate all vertices for a patch */
@@ -828,8 +828,10 @@ vector<vector<Color>> color_for_patch_vertices(Triangle tri) {
 					
 				}
 				
-				to_interpolate.push_back({vertex1, vertex2, vertex3});
-				cout << vertex1.size() << " ";
+				colors.push_back(vertex1);
+				colors.push_back(vertex2);
+				colors.push_back(vertex3);
+				to_interpolate.push_back(colors);
 			}
 		}
 	}
@@ -853,7 +855,7 @@ vector<vector<vector<Color>>> all_vertex_colors () {
 
 /* vertex color values */
 /* sorted by triangle -> patches -> (A Color, B Color, C Color) */
-vector<vector<vector<Color>>> triangle_vertex_colors = all_vertex_colors();
+vector<vector<vector<Color>>> triangle_vertex_colors;
 
 /******************************************************************
 * Compute radiance from radiosity by shooting rays into the scene;
@@ -889,14 +891,11 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
             
     /* Barycentric interpolation for smooth image */
     if (interpolation) {
-		//cout << triangle_vertex_colors[0].size() << " ";
-		/*
-		vector<vector<Color>> c = triangle_vertex_colors[id];
-		vector<Color> cs = c[index];
-		cout << "lol" << " ";
+		
+		vector<Color> cs = triangle_vertex_colors[id][index];
+		
 		Triangle patch = obj.tri_patches[index];
-		*/
-		/* h represents the hitpoint *//*
+		
 		double a_to_h = (hitpoint - patch.a).Length();
 		double b_to_h = (hitpoint - patch.b).Length();
 		double c_to_h = (hitpoint - patch.c).Length();
@@ -912,8 +911,8 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 		double lambda2 = a2 / patch.area;
 		double lambda3 = a3 / patch.area;
 		
-		return (cs[0] * lambda1) + (cs[1] * lambda2) + (cs[2] * lambda3);*/
-		return obj.patch[index];
+		return (cs[0] * lambda1) + (cs[1] * lambda2) + (cs[2] * lambda3);
+		//return obj.patch[index];
     } else {         
         return obj.patch[index];
     }
@@ -1005,6 +1004,8 @@ int main(int argc, char **argv) {
         Calculate_Radiosity(i);
     }
     cout << endl;
+ 
+	triangle_vertex_colors = all_vertex_colors();
  
     /* Loop over image rows */
     for (int y = 0; y < height; y ++) 

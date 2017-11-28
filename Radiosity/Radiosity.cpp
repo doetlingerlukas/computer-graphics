@@ -216,6 +216,27 @@ Vector calc_normal(Vector a, Vector b, Vector c){
 	return u.Cross(v);
 }
 
+/* interpolate colors for a vertex */
+Color interpolate_vertex(vector<Color> data) {
+	Color to_return = Color(0.0, 0.0, 0.0);
+	
+	double i = data.size();
+	for(unsigned int i = 0; i < data.size(); i++) {
+		to_return = to_return + data[i];
+	}
+	
+	Color r = Color(
+		(to_return.x > 0 ? (to_return.x / i) : 0), 
+		(to_return.y > 0 ? (to_return.y / i) : 0), 
+		(to_return.z > 0 ? (to_return.z / i) : 0));
+		
+	cout << r.x << ",";
+	cout << r.y << ",";
+	cout << r.z << " ";
+	
+	return r;
+}
+
 struct Triangle {
 	Vector a, b, c;
 	Vector edge_a, edge_b;
@@ -224,10 +245,12 @@ struct Triangle {
 	double area;
 	
 	vector<Color> patch;
+	vector<Color> vertex_colors;
 	int a_num, b_num;
 	double a_len, b_len;
 	
 	vector<vector<Vector>> patches;
+	/* for easy intersection test with subpatches */
 	vector<Triangle> tri_patches;
 	
 	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
@@ -245,6 +268,28 @@ struct Triangle {
 		double b_to_c = (b - c).Length();
 		
 		area = area_of_triangle(a_to_b, a_to_c, b_to_c);
+	}
+	
+	void calc_vertex_colors(vector<Triangle> patches) {
+		vector<Color> a_colors;
+		vector<Color> b_colors;
+		vector<Color> c_colors;
+		
+		for(Triangle p : patches) {
+			if (a.Equals(p.a)) {
+				a_colors.push_back(p.color);
+			}
+			if (b.Equals(p.b)) {
+				b_colors.push_back(p.color);
+			}
+			if (c.Equals(p.c)) {
+				c_colors.push_back(p.color);
+			}
+		}
+		
+		vertex_colors.push_back(interpolate_vertex(a_colors));
+		vertex_colors.push_back(interpolate_vertex(b_colors));
+		vertex_colors.push_back(interpolate_vertex(c_colors));
 	}
 	
 	void calc_patches() {
@@ -328,36 +373,6 @@ struct Triangle {
 			return 0.0;
 
 		return t;
-		/*
-        const double t = (a - ray.org).Dot(normal) / ray.dir.Dot(normal);
-        if (t <= 0.00001)
-            return 0.0;
-
-        Vector p = ray.org + ray.dir * t;
-        Vector a_to_p = p - a;
-        Vector b_to_p = p - b;
-        Vector c_to_p = p - c;
-        Vector edge_c = c - b;
-		
-		double area = area_of_triangle(edge_c.Length(), edge_b.Length(), 
-			edge_a.Length());
-		double area0 = area_of_triangle(edge_c.Length(), b_to_p.Length(), 
-			c_to_p.Length());
-		double area1 = area_of_triangle(edge_b.Length(), c_to_p.Length(), 
-			a_to_p.Length());
-		double area2 = area_of_triangle(edge_a.Length(), b_to_p.Length(), 
-			a_to_p.Length());
-        
-        double lambda0 = area0/area;
-        double lambda1 = area1/area;
-        double lambda2 = area2/area;
-        
-        if((lambda0 < 0.0) || (lambda1 < 0.0) || (lambda2 < 0.0)){
-			return 0.0;
-		}
-        
-        return t;
-        */
 	} 
 };
 
@@ -771,18 +786,6 @@ Color bicubicInterpolate (Color p[4][4], double x, double y)
     return cubicInterpolate(arr, x);
 }
 
-/* interpolate colors for a vertex */
-Color interpolate_vertex(vector<Color> data) {
-	Color to_return = Color(0.0, 0.0, 0.0);
-	
-	double i = 0.0;
-	for(i = 0.0; i < data.size(); i++) {
-		to_return = to_return + data[i];
-	}
-	
-	return Color((to_return.x / i), (to_return.y / i), (to_return.z / i));
-}
-
 /* interpolate all vertices for a patch */
 vector<vector<Color>> patch_vertices_interpolation(
 	vector<vector<vector<Color>>> to_i) {
@@ -816,13 +819,19 @@ vector<vector<Color>> color_for_patch_vertices(Triangle tri) {
 				
 				for(unsigned int pj = 0; pj < tris[t].tri_patches.size(); pj++) {
 					
-					if(tri.a.Equals(tris[t].tri_patches[pj].a)){
+					if(tri.a.Equals(tris[t].tri_patches[pj].a) || 
+						tri.b.Equals(tris[t].tri_patches[pj].a) ||
+						tri.c.Equals(tris[t].tri_patches[pj].a)){
 						vertex1.push_back(tris[t].patch[pj]);
 					}
-					if(tri.b.Equals(tris[t].tri_patches[pj].b)){
+					if(tri.b.Equals(tris[t].tri_patches[pj].b) ||
+						tri.a.Equals(tris[t].tri_patches[pj].b) ||
+						tri.c.Equals(tris[t].tri_patches[pj].b)){
 						vertex2.push_back(tris[t].patch[pj]);
 					}
-					if(tri.c.Equals(tris[t].tri_patches[pj].c)){
+					if(tri.c.Equals(tris[t].tri_patches[pj].c) ||
+						tri.a.Equals(tris[t].tri_patches[pj].c) ||
+						tri.b.Equals(tris[t].tri_patches[pj].c)){
 						vertex3.push_back(tris[t].patch[pj]);
 					}
 					
@@ -908,17 +917,14 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 		double lambda2 = a2 / patch.area;
 		double lambda3 = a3 / patch.area;
 		
-		Color final_c = ((cs[0] * lambda1) + (cs[1] * lambda2)) + (cs[2] * lambda3);
+		Color interp = ((cs[0] * lambda1) + (cs[1] * lambda2)) + (cs[2] * lambda3);
 		
-		if(final_c.x < 0.0) final_c.x = 0.0;
-		if(final_c.x > 1.0) final_c.x = 1.0;
-		if(final_c.y < 0.0) final_c.y = 0.0;
-		if(final_c.y > 1.0) final_c.y = 1.0;
-		if(final_c.z < 0.0) final_c.z = 0.0;
-		if(final_c.z > 1.0) final_c.z = 1.0;
-		
-		return final_c;
-		//return obj.patch[index];
+		/*
+		cout << cs[0].x << " "; 
+        cout << cs[1].x << " "; 
+        cout << cs[2].x << endl; 
+		*/
+		return interp;
 		
     } else {         
         return obj.patch[index];
@@ -996,8 +1002,8 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 8;
-    int patches_b = 8;
+    int patches_a = 4;
+    int patches_b = 4;
     int MC_samples = 3;
 
     Calculate_Form_Factors(patches_a, patches_b, MC_samples);
@@ -1013,6 +1019,19 @@ int main(int argc, char **argv) {
     cout << endl;
  
 	triangle_vertex_colors = all_vertex_colors();
+	
+	/* get all patches in one vector */
+	vector<Triangle> all_patches = tris[0].tri_patches;
+	for(unsigned int i = 1; i < tris.size(); i++) {
+		all_patches.insert(all_patches.end(), tris[i].tri_patches.begin(), 
+			tris[i].tri_patches.end());
+	}
+	
+	for(Triangle t : tris) {
+		for(Triangle p : t.tri_patches) {
+			p.calc_vertex_colors(all_patches);
+		}
+	}
  
     /* Loop over image rows */
     for (int y = 0; y < height; y ++) 

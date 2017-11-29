@@ -229,10 +229,6 @@ Color interpolate_vertex(vector<Color> data) {
 		(to_return.x > 0 ? (to_return.x / i) : 0), 
 		(to_return.y > 0 ? (to_return.y / i) : 0), 
 		(to_return.z > 0 ? (to_return.z / i) : 0));
-		
-	cout << r.x << ",";
-	cout << r.y << ",";
-	cout << r.z << " ";
 	
 	return r;
 }
@@ -713,9 +709,7 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
              /* Clamp to [0,1] */
              if(form_factor[i * patch_num + j] > 1.0) 
                  form_factor[i * patch_num + j] = 1.0;
-                 
-             //cout << form_factor[i * patch_num + j] << endl;
-        }
+		}
     }
 }
 
@@ -756,6 +750,7 @@ void Calculate_Radiosity(const int iteration)
   
             /* Store overall patch radiosity of current iteration */
 			tris[i].patch[ip] = B;
+			
 			patch_i ++;
         }
     }
@@ -817,21 +812,25 @@ vector<vector<Color>> color_for_patch_vertices(Triangle tri) {
 				vector<Color> vertex2;
 				vector<Color> vertex3;
 				
+				vertex1.push_back(tris[t].patch[pi]);
+				vertex2.push_back(tris[t].patch[pi]);
+				vertex3.push_back(tris[t].patch[pi]);
+				
 				for(unsigned int pj = 0; pj < tris[t].tri_patches.size(); pj++) {
 					
-					if(tri.a.Equals(tris[t].tri_patches[pj].a) || 
-						tri.b.Equals(tris[t].tri_patches[pj].a) ||
-						tri.c.Equals(tris[t].tri_patches[pj].a)){
+					if(tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].a) || 
+						tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].a) ||
+						tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].a)){
 						vertex1.push_back(tris[t].patch[pj]);
 					}
-					if(tri.b.Equals(tris[t].tri_patches[pj].b) ||
-						tri.a.Equals(tris[t].tri_patches[pj].b) ||
-						tri.c.Equals(tris[t].tri_patches[pj].b)){
+					if(tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].b) ||
+						tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].b) ||
+						tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].b)){
 						vertex2.push_back(tris[t].patch[pj]);
 					}
-					if(tri.c.Equals(tris[t].tri_patches[pj].c) ||
-						tri.a.Equals(tris[t].tri_patches[pj].c) ||
-						tri.b.Equals(tris[t].tri_patches[pj].c)){
+					if(tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].c) ||
+						tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].c) ||
+						tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].c)){
 						vertex3.push_back(tris[t].patch[pj]);
 					}
 					
@@ -1019,19 +1018,6 @@ int main(int argc, char **argv) {
     cout << endl;
  
 	triangle_vertex_colors = all_vertex_colors();
-	
-	/* get all patches in one vector */
-	vector<Triangle> all_patches = tris[0].tri_patches;
-	for(unsigned int i = 1; i < tris.size(); i++) {
-		all_patches.insert(all_patches.end(), tris[i].tri_patches.begin(), 
-			tris[i].tri_patches.end());
-	}
-	
-	for(Triangle t : tris) {
-		for(Triangle p : t.tri_patches) {
-			p.calc_vertex_colors(all_patches);
-		}
-	}
  
     /* Loop over image rows */
     for (int y = 0; y < height; y ++) 

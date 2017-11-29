@@ -998,8 +998,8 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 4;
-    int patches_b = 4;
+    int patches_a = 8;
+    int patches_b = 8;
     int MC_samples = 3;
 
     Calculate_Form_Factors(patches_a, patches_b, MC_samples);

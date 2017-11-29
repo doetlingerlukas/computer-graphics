@@ -804,41 +804,38 @@ vector<vector<Color>> color_for_patch_vertices(Triangle tri) {
 	vector<vector<Color>> colors;
 	vector<vector<vector<Color>>> to_interpolate;
 	
-	for(unsigned int t = 0; t < tris.size(); t++) {
-		if(tri.normal.Equals(tris[t].normal)) {
-			for(unsigned int pi = 0; pi < tri.tri_patches.size(); pi++) {
-				
-				vector<Color> vertex1;
-				vector<Color> vertex2;
-				vector<Color> vertex3;
-				
-				vertex1.push_back(tris[t].patch[pi]);
-				vertex2.push_back(tris[t].patch[pi]);
-				vertex3.push_back(tris[t].patch[pi]);
+	for(unsigned int pi = 0; pi < tri.tri_patches.size(); pi++) {
+		
+		vector<Color> vertex1;
+		vector<Color> vertex2;
+		vector<Color> vertex3;
+		
+		for(unsigned int t = 0; t < tris.size(); t++) {
+			if(tri.normal.Equals(tris[t].normal)) {
 				
 				for(unsigned int pj = 0; pj < tris[t].tri_patches.size(); pj++) {
 					
 					if(tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].a) || 
-						tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].a) ||
-						tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].a)){
+						tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].b) ||
+						tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].c)){
 						vertex1.push_back(tris[t].patch[pj]);
 					}
-					if(tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].b) ||
-						tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].b) ||
-						tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].b)){
+					if(tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].a) ||
+						tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].b) ||
+						tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].c)){
 						vertex2.push_back(tris[t].patch[pj]);
 					}
-					if(tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].c) ||
-						tri.tri_patches[pi].a.Equals(tris[t].tri_patches[pj].c) ||
-						tri.tri_patches[pi].b.Equals(tris[t].tri_patches[pj].c)){
+					if(tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].a) ||
+						tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].b) ||
+						tri.tri_patches[pi].c.Equals(tris[t].tri_patches[pj].c)){
 						vertex3.push_back(tris[t].patch[pj]);
 					}
 					
 				}
-				
-				to_interpolate.push_back({vertex1, vertex2, vertex3});
 			}
 		}
+		
+		to_interpolate.push_back({vertex1, vertex2, vertex3});
 	}
 	
 	colors = patch_vertices_interpolation(to_interpolate);

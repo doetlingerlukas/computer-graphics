@@ -3,7 +3,7 @@
 * Radiosity.cpp
 *
 * Description: This file demonstrates global illumination rendering
-* based on the radiosity method. The geometry is divided into patches
+* based on the radiosity method. The geometry (triangles) is divided into patches
 * for which the form factors are determined employing Monte Carlo 
 * integration. Radiosity values for the patches are computed with
 * an iterative solver. The final image (i.e. radiance) is obtained 
@@ -16,8 +16,9 @@
 *
 * http://kagamin.net/hole/license.txt
 * http://kagamin.net/hole/smallpt-license.txt
-*
-* Advanced Computer Graphics Proseminar WS 2015
+* 
+* Code was extended by Manuel Buchauer, Davide De Sclavis and Lukas Dötlinger
+* during the Advanced Computer Graphics Proseminar WS 2017.
 * 
 * Interactive Graphics and Simulation Group
 * Institute of Computer Science
@@ -42,6 +43,9 @@ const double Over_M_PI = 1.0/M_PI;
 
 static double *form_factor;
 static int patch_num = 0;
+
+/* Define test function (to be found at the end of the file */
+void test_intersection();
 
 /*------------------------------------------------------------------
 | Struct for standard vector operations in 3D 
@@ -198,8 +202,8 @@ struct Image
 
 /*------------------------------------------------------------------
 | Basic geometric element of scene description;
-| Rectangles are subdivided into smaller patches for radiosity
-| computation (subdivision equal for all rectangles)
+| Triangles are subdivided into smaller patches for radiosity
+| computation (subdivision equal for all triangle)
 ------------------------------------------------------------------*/
 
 /* help function for triangle */
@@ -216,23 +220,6 @@ Vector calc_normal(Vector a, Vector b, Vector c){
 	return u.Cross(v);
 }
 
-/* interpolate colors for a vertex */
-Color interpolate_vertex(vector<Color> data) {
-	Color to_return = Color(0.0, 0.0, 0.0);
-	
-	double i = data.size();
-	for(unsigned int i = 0; i < data.size(); i++) {
-		to_return = to_return + data[i];
-	}
-	
-	Color r = Color(
-		(to_return.x > 0 ? (to_return.x / i) : 0), 
-		(to_return.y > 0 ? (to_return.y / i) : 0), 
-		(to_return.z > 0 ? (to_return.z / i) : 0));
-	
-	return r;
-}
-
 struct Triangle {
 	Vector a, b, c;
 	Vector edge_a, edge_b;
@@ -241,7 +228,6 @@ struct Triangle {
 	double area;
 	
 	vector<Color> patch;
-	vector<Color> vertex_colors;
 	int a_num, b_num;
 	double a_len, b_len;
 	
@@ -264,28 +250,6 @@ struct Triangle {
 		double b_to_c = (b - c).Length();
 		
 		area = area_of_triangle(a_to_b, a_to_c, b_to_c);
-	}
-	
-	void calc_vertex_colors(vector<Triangle> patches) {
-		vector<Color> a_colors;
-		vector<Color> b_colors;
-		vector<Color> c_colors;
-		
-		for(Triangle p : patches) {
-			if (a.Equals(p.a)) {
-				a_colors.push_back(p.color);
-			}
-			if (b.Equals(p.b)) {
-				b_colors.push_back(p.color);
-			}
-			if (c.Equals(p.c)) {
-				c_colors.push_back(p.color);
-			}
-		}
-		
-		vertex_colors.push_back(interpolate_vertex(a_colors));
-		vertex_colors.push_back(interpolate_vertex(b_colors));
-		vertex_colors.push_back(interpolate_vertex(c_colors));
 	}
 	
 	void calc_patches() {
@@ -439,6 +403,8 @@ struct Rectangle
 * These are defined by:
 * - vector to corner(origin), edge a, edge b 
 * - emitted light energy (light sources), surface reflectivity (~color)
+* Rectangles are split to triangles by helper function, to generate
+* a triangular scene.
 *******************************************************************/
 Rectangle recs[] = 
 {	
@@ -528,13 +494,15 @@ bool Intersect_Scene(const Ray &ray, double *t, int *id, Vector *normal) {
 
 /******************************************************************
 * Determine all form factors for all pairs of patches (of all
-* rectangles);
+* triangles);
 * Evaluation of integrals in form factor equation is done via
 * Monte Carlo integration; samples are uniformly distributed and
 * equally weighted;
 * Computation accelerated by exploiting symmetries of form factor
 * estimation;
 *******************************************************************/
+
+/* Function to calculate a sample point inside a triangle */
 Vector get_sample_point(Vector v1, Vector v2, Vector v3){
 	srand(time(nullptr));
 	
@@ -641,39 +609,37 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
 
                         /* Determine rays of NixNi uniform samples of patch 
 							on i to NjxNj uniform samples of patch on j */
-                        for (int is = 0; is < mc_sample; is ++) {
-							for (int js = 0; js < mc_sample; js ++) {
+                        for (int s = 0; s < (mc_sample*mc_sample); s ++) {
                                     
-								/* Determine sample points xi, xj on both patches */
-                                const Vector xi = get_sample_point(patches_i[0], patches_i[1], 
-									patches_i[2]);
-                                const Vector xj = get_sample_point(patches_j[0], patches_j[1],
-									patches_j[2]);
+							/* Determine sample points xi, xj on both patches */
+                            const Vector xi = get_sample_point(patches_i[0], patches_i[1], 
+								patches_i[2]);
+                            const Vector xj = get_sample_point(patches_j[0], patches_j[1],
+								patches_j[2]);
 
-                                /* Check for visibility between sample points */
-                                const Vector ij = (xj - xi).Normalized();
+                            /* Check for visibility between sample points */
+                            const Vector ij = (xj - xi).Normalized();
 
-                                double t; 
-                                int id;
-                                Vector normal; 
-                                if (Intersect_Scene(Ray(xi, ij), &t, &id, &normal) && id != j) {
-									continue; /* If intersection with other rectangle */
-                                }
-
-                                /* Cosines of angles beteen normals and ray inbetween */
-                                const double d0 = normal_i.Dot(ij);
-                                const double d1 = normal_j.Dot(-1.0 * ij);
-
-                                /* Continue if patches facing each other */
-                                if (d0 > 0.0 && d1 > 0.0) {
-									/* Sample form factor */
-                                    const double K = d0 * d1 / (M_PI * (xj - xi).LengthSquared());
-
-                                    /* Add weighted sample to estimate */
-									F += K / pdf;
-                                }
+                            double t; 
+                            int id;
+                            Vector normal; 
+                            if (Intersect_Scene(Ray(xi, ij), &t, &id, &normal) && id != j) {
+								continue; /* If intersection with other rectangle */
                             }
-                        } 
+
+                            /* Cosines of angles beteen normals and ray inbetween */
+                            const double d0 = normal_i.Dot(ij);
+                            const double d1 = normal_j.Dot(-1.0 * ij);
+
+                            /* Continue if patches facing each other */
+                            if (d0 > 0.0 && d1 > 0.0) {
+								/* Sample form factor */
+								const double K = d0 * d1 / (M_PI * (xj - xi).LengthSquared());
+
+                                /* Add weighted sample to estimate */
+								F += K / pdf;
+							}
+						} 
 
                         /* Divide by number of samples */
                         F /= (mc_sample) * (mc_sample); 
@@ -758,27 +724,26 @@ void Calculate_Radiosity(const int iteration)
 
 
 /******************************************************************
-* Helper functions for smooth bicubic (Catmull-Rom) interpolation 
-* using 4x4 color patches;
-* First interpolate in y, followed by interpolation of results in x
+* Helper functions for smooth barycentric interpolation 
+* Calculate all colors for a vertex.
+* These values are used in the Radiance function.
 *******************************************************************/
 
-Color cubicInterpolate (Color p[4], double x) 
-{
-    return p[1] + 0.5 * x * (p[2] - p[0] + x * (2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + 
-                                                 x * (3.0*(p[1] - p[2]) + p[3] - p[0])));
-}
-
-Color bicubicInterpolate (Color p[4][4], double x, double y) 
-{
-	Color arr[4];
-
-	arr[0] = cubicInterpolate(p[0], y);
-	arr[1] = cubicInterpolate(p[1], y);
-	arr[2] = cubicInterpolate(p[2], y);
-	arr[3] = cubicInterpolate(p[3], y);
+/* interpolate colors for a vertex */
+Color interpolate_vertex(vector<Color> data) {
+	Color to_return = Color(0.0, 0.0, 0.0);
 	
-    return cubicInterpolate(arr, x);
+	double i = data.size();
+	for(unsigned int i = 0; i < data.size(); i++) {
+		to_return = to_return + data[i];
+	}
+	
+	Color r = Color(
+		(to_return.x > 0 ? (to_return.x / i) : 0), 
+		(to_return.y > 0 ? (to_return.y / i) : 0), 
+		(to_return.z > 0 ? (to_return.z / i) : 0));
+	
+	return r;
 }
 
 /* interpolate all vertices for a patch */
@@ -864,7 +829,7 @@ vector<vector<vector<Color>>> triangle_vertex_colors;
 * Radiance directly proportional to radiosity for assumed diffuse
 * emitters/surfaces (multiply by PI);
 * At intersections either constant patch color is returned or a
-* smoothly interpolated color of 4x4 neighboring patches
+* smoothly interpolated color using barycentric interpolation.
 *******************************************************************/
 
 Color Radiance(const Ray &ray, const int depth, bool interpolation = true) 
@@ -915,19 +880,12 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 		
 		Color interp = ((cs[0] * lambda1) + (cs[1] * lambda2)) + (cs[2] * lambda3);
 		
-		/*
-		cout << cs[0].x << " "; 
-        cout << cs[1].x << " "; 
-        cout << cs[2].x << endl; 
-		*/
 		return interp;
 		
     } else {         
         return obj.patch[index];
     }
 }
-
-
 
 /******************************************************************
 * Main routine: Computation of radiosity image
@@ -943,43 +901,7 @@ Color Radiance(const Ray &ray, const int depth, bool interpolation = true)
 int main(int argc, char **argv) {
 	
 	/* tests for the intersection test */
-	auto triangle = Triangle(Vector(2.0, 2.0, 0.0), Vector(2.0, 0.0, 0.0), 
-		Vector(0.0, 2.0, 0.0), Color(), Color());
-    auto ray = Ray(Vector(2.25, 2.25, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
-    auto intersection = triangle.intersect(ray);
-    if (intersection > 0.0) {}
-    else {cout << "fail" << endl;}
-    
-    intersection = 0.0;
-
-	triangle = Triangle(Vector(0.0, 0.0, 0.0), Vector(2.0, 0.0, 0.0), 
-		Vector(0.0, 2.0, 0.0), Color(), Color());
-    ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
-    intersection = triangle.intersect(ray);
-    if (intersection > 0.0) {}
-    else {cout << "fail" << endl;}
-  
-	intersection = 0.0;
-
-    ray = Ray(Vector(0.1, 0.1, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
-    intersection = triangle.intersect(ray);
-    if (intersection > 0.0) {}
-    else {cout << "fail" << endl;}
-    
-    intersection = 1.0;
-
-    ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, -1.0).Normalized());
-    intersection = triangle.intersect(ray);
-    if (intersection == 0.0) {}
-    else {cout << "fail" << endl;}
-		
-	intersection = 1.0;
-	
-    ray = Ray(Vector(2.0, 2.0, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
-    intersection = triangle.intersect(ray);
-    if (intersection == 0.0) {}
-    else {cout << "fail" << endl;}
- 
+	test_intersection();
  
 	/* main part */
     int width = 640;
@@ -1014,6 +936,7 @@ int main(int argc, char **argv) {
     }
     cout << endl;
  
+	/* Calculate colors for each vertex */
 	triangle_vertex_colors = all_vertex_colors();
  
     /* Loop over image rows */
@@ -1083,4 +1006,47 @@ int main(int argc, char **argv) {
 	
     img.Save(string("image_patches.ppm"));
     img_interpolated.Save(string("image_smooth.ppm"));
+}
+
+/**********************************************************************
+ * Function that tests the intersection test of a triangle
+ *********************************************************************/
+void test_intersection() {
+	
+	auto triangle = Triangle(Vector(2.0, 2.0, 0.0), Vector(2.0, 0.0, 0.0), 
+		Vector(0.0, 2.0, 0.0), Color(), Color());
+    auto ray = Ray(Vector(2.25, 2.25, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
+    auto intersection = triangle.intersect(ray);
+    if (intersection > 0.0) {}
+    else {cout << "fail" << endl;}
+    
+    intersection = 0.0;
+
+	triangle = Triangle(Vector(0.0, 0.0, 0.0), Vector(2.0, 0.0, 0.0), 
+		Vector(0.0, 2.0, 0.0), Color(), Color());
+    ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, 1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection > 0.0) {}
+    else {cout << "fail" << endl;}
+  
+	intersection = 0.0;
+
+    ray = Ray(Vector(0.1, 0.1, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection > 0.0) {}
+    else {cout << "fail" << endl;}
+    
+    intersection = 1.0;
+
+    ray = Ray(Vector(0.1, 0.1, -1.0), Vector(0.0, 0.0, -1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection == 0.0) {}
+    else {cout << "fail" << endl;}
+		
+	intersection = 1.0;
+	
+    ray = Ray(Vector(2.0, 2.0, 1.0), Vector(0.0, 0.0, -1.0).Normalized());
+    intersection = triangle.intersect(ray);
+    if (intersection == 0.0) {}
+    else {cout << "fail" << endl;}
 }

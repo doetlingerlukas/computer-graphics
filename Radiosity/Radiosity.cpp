@@ -228,7 +228,7 @@ struct Triangle {
 	double area;
 	
 	vector<Color> patch;
-	int a_num, b_num;
+	int div_num;
 	double a_len, b_len;
 	
 	vector<vector<Vector>> patches;
@@ -253,11 +253,11 @@ struct Triangle {
 	}
 	
 	void calc_patches() {
-		Vector e_a = edge_a / a_num;
-		Vector e_b = edge_b / b_num;
+		Vector e_a = edge_a / div_num;
+		Vector e_b = edge_b / div_num;
 		
 		int row = 0;
-		int row_size = b_num;
+		int row_size = div_num;
 		while (row_size > 0){
 			for(int i = 0; i < row_size; i++){
 				int y = row/2;
@@ -280,22 +280,12 @@ struct Triangle {
 			}
 		}
 	}
-	
-	Color sample_patch(int ia, int ib) const 
-    {
-        if (ia < 0) ia = 0;
-        if (ia >= a_num) ia = a_num - 1;
-        if (ib < 0) ib = 0;
-        if (ib >= b_num) ib = b_num - 1;
-        return patch[ia * b_num + ib];
-    }
 
-    void init_patchs(const int a_num_, const int b_num_) 
+    void init_patchs(const int num) 
     {
-        a_num = a_num_;
-        b_num = b_num_;
+        div_num = num;
         patch.clear();
-        patch.resize(a_num * b_num);
+        patch.resize(num * 4);
         calc_patches();
     }
 	
@@ -518,15 +508,15 @@ Vector get_sample_point(Vector v1, Vector v2, Vector v3){
 	return q;
 }
 
-void Calculate_Form_Factors(const int a_div_num, const int b_div_num, 
+void Calculate_Form_Factors(const int div_num, 
                             const int mc_sample) 
 {
     /* Total number of patches in scene */
     const int n = tris.size();
     for (int i = 0; i < n; i ++) 
     {
-        tris[i].init_patchs(a_div_num, b_div_num); 
-        patch_num += tris[i].a_num * tris[i].b_num;
+        tris[i].init_patchs(div_num); 
+        patch_num += tris[i].div_num * 4;
     }
     
     std::cout << "Number of triangles: " << n << endl;
@@ -547,15 +537,13 @@ void Calculate_Form_Factors(const int a_div_num, const int b_div_num,
     {
         int patch_i = 0;
         for (int k = 0; k < i; k ++)
-            patch_i += tris[k].a_num * tris[k].b_num;
+            patch_i += tris[k].div_num * 4;
 
-        for (int ia = 0; ia < tris[i].a_num; ia ++) 
+        for (int ip = 0; ip < (tris[i].div_num * 4); ip ++) 
         {
-            for (int ib = 0; ib < tris[i].b_num; ib ++) 
-            {
-				int index = patch_i + ia* tris[i].b_num + ib;
+				int index = patch_i + ip;
                 patch_area[index] = tris[i].area / tris[i].patches.size(); 
-            }
+        
         }
     }
     
@@ -920,11 +908,10 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches_a = 8;
-    int patches_b = 8;
+    int patches = 4;
     int MC_samples = 3;
 
-    Calculate_Form_Factors(patches_a, patches_b, MC_samples);
+    Calculate_Form_Factors(patches, MC_samples);
 
     /* Iterative solution of radiosity linear system */
     cout << "Calculating radiosity" << endl;

@@ -253,39 +253,49 @@ struct Triangle {
 	}
 	
 	void calc_patches() {
-		Vector e_a = edge_a / div_num;
-		Vector e_b = edge_b / div_num;
+		vector<vector<Vector>> ps;
+		vector<Triangle> ts;
 		
-		int row = 0;
-		int row_size = div_num;
-		while (row_size > 0){
-			for(int i = 0; i < row_size; i++){
-				int y = row/2;
-				int orientation = row % 2;
-				
-				Vector v1 = a + (i + orientation) * e_a + y * e_b;
-				Vector v2 = a + (i + 1) * e_a + (y + orientation) * e_b;
-				Vector v3 = a + i * e_a + (y + 1) * e_b;
-				
-				patches.push_back({v1, v2, v3});
-				
-				tri_patches.push_back(Triangle(v1, v2 - v1, v3 - v1, emission, 
-					color));				
-			}
+		ps.push_back({a, b, c});
+		ts.push_back(Triangle(a, b - a, c - a, emission, color));
 		
-			row++;
+		for(int d = 0; d < div_num; d++) {
+			unsigned int size  = ts.size();
 			
-			if (row % 2 == 1){
-				row_size--;
+			for(unsigned int e = 0; e < size; e++){
+				/* divide triangle in 4 subtriangles */
+				Triangle t1 = Triangle(ts[e].a, (ts[e].a + (ts[e].edge_a / 2)) - ts[e].a,
+					(ts[e].a + (ts[e].edge_b / 2)) - ts[e].a, ts[e].emission, ts[e].color);
+				Triangle t2 = Triangle(t1.b, ts[e].b - t1.b, 
+					(t1.b + (ts[e].edge_b / 2)) - t1.b, ts[e].emission, ts[e].color);
+				Triangle t3 = Triangle(t1.c, t1.b - t1.c, t2.c - t1.c, ts[e].emission,
+					ts[e].color);
+				Triangle t4 = Triangle(t1.c, t2.c - t1.c, ts[e].c - t1.c, ts[e].emission,
+					ts[e].color);
+				
+				ts.push_back(t1);
+				ps.push_back({t1.a, t1.b, t1.c});
+				ts.push_back(t2);
+				ps.push_back({t2.a, t2.b, t2.c});
+				ts.push_back(t3);
+				ps.push_back({t3.a, t3.b, t3.c});
+				ts.push_back(t4);
+				ps.push_back({t4.a, t4.b, t4.c});
+				
+				ts.erase(ts.begin() + 0);
+				ps.erase(ps.begin() + 0);
 			}
 		}
+		
+		patches = ps;
+		tri_patches = ts;
 	}
 
     void init_patchs(const int num) 
     {
         div_num = num;
         patch.clear();
-        patch.resize(num * 4);
+        patch.resize(4);
         calc_patches();
     }
 	
@@ -516,7 +526,7 @@ void Calculate_Form_Factors(const int div_num,
     for (int i = 0; i < n; i ++) 
     {
         tris[i].init_patchs(div_num); 
-        patch_num += tris[i].div_num * 4;
+        patch_num += pow(4.0, div_num);
     }
     
     std::cout << "Number of triangles: " << n << endl;
@@ -537,9 +547,9 @@ void Calculate_Form_Factors(const int div_num,
     {
         int patch_i = 0;
         for (int k = 0; k < i; k ++)
-            patch_i += tris[k].div_num * 4;
+            patch_i += 4;
 
-        for (int ip = 0; ip < (tris[i].div_num * 4); ip ++) 
+        for (int ip = 0; ip < 4; ip ++) 
         {
 				int index = patch_i + ip;
                 patch_area[index] = tris[i].area / tris[i].patches.size(); 
@@ -908,10 +918,10 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patches = 4;
+    int patch_div = 1; /* There will be 4^patch_div triangular patches. */
     int MC_samples = 3;
 
-    Calculate_Form_Factors(patches, MC_samples);
+    Calculate_Form_Factors(patch_div, MC_samples);
 
     /* Iterative solution of radiosity linear system */
     cout << "Calculating radiosity" << endl;

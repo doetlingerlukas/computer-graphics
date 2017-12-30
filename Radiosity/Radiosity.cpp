@@ -272,7 +272,7 @@ struct Triangle {
 					(ts[e].a + (ts[e].edge_b / 2)) - ts[e].a, ts[e].emission, ts[e].color);
 				Triangle t2 = Triangle(t1.b, ts[e].b - t1.b, 
 					(t1.b + (ts[e].edge_b / 2)) - t1.b, ts[e].emission, ts[e].color);
-				Triangle t3 = Triangle(t1.c, t1.b - t1.c, t2.c - t1.c, ts[e].emission,
+				Triangle t3 = Triangle(t2.c, t1.c - t2.c, t2.a - t2.c, ts[e].emission,
 					ts[e].color);
 				Triangle t4 = Triangle(t1.c, t2.c - t1.c, ts[e].c - t1.c, ts[e].emission,
 					ts[e].color);
@@ -918,7 +918,7 @@ int main(int argc, char **argv) {
 
     cout << "Calculating form factors" << endl;
     int patch_div = 3; /* There will be 4^patch_div triangular patches. */
-    int MC_samples = 3;
+    int MC_samples = 3; /* There will be MC_sample * MC_sample samples per patch */
 
     Calculate_Form_Factors(patch_div, MC_samples);
 

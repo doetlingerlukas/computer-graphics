@@ -1,7 +1,7 @@
 CC = g++
 LD = g++
 
-OBJ = Radiosity.o 
+OBJ = Radiosity.o Structs.o
 TARGET = Radiosity
 
 CFLAGS = -O3 -Wall -std=c++1y

@@ -37,6 +37,8 @@
 
 #include <unistd.h>
 
+#include "Structs.hpp"
+
 using namespace std;
 
 const double Over_M_PI = 1.0/M_PI;
@@ -51,84 +53,7 @@ void test_intersection();
 | Struct for standard vector operations in 3D 
 | (used for points, vectors, and colors)
 ------------------------------------------------------------------*/
-struct Vector 
-{
-    double x, y, z;           /* Position XYZ or color RGB */
 
-    Vector(const Vector &b) : x(b.x), y(b.y), z(b.z) {}
-    Vector(double x_=0, double y_=0, double z_=0) : x(x_), y(y_), z(z_) {}
-    
-    Vector operator+(const Vector &b) const 
-    {
-        return Vector(x + b.x, y + b.y, z + b.z);
-    }
-
-    Vector operator-(const Vector &b) const
-    {
-        return Vector(x - b.x, y - b.y, z - b.z);
-    }
-
-    Vector operator/(double c) const 
-    {
-        return Vector(x / c, y / c, z / c);
-    }
-
-    Vector operator*(double c) const 
-    {
-        return Vector(x * c, y * c, z * c);
-    }
-
-    friend Vector operator*(double c, const Vector &b) 
-    { 
-        return b * c; 
-    }
-
-    Vector MultComponents(const Vector &b) const
-    {
-        return Vector(x * b.x, y * b.y, z * b.z);
-    }
-
-    const double LengthSquared() const 
-    { 
-        return x*x + y*y + z*z; 
-    }
-
-    const double Length() const 
-    { 
-        return sqrt(LengthSquared()); 
-    } 
-
-    const Vector Normalized() const
-    {
-        return Vector(x, y, z) / sqrt(x*x + y*y + z*z);
-    }
-
-    const double Dot(const Vector &b) const 
-    {
-        return x * b.x + y * b.y + z * b.z;
-    }
-
-    const Vector Cross(const Vector &b) const
-    {
-        return Vector((y * b.z) - (z * b.y), 
-                      (z * b.x) - (x * b.z), 
-                      (x * b.y) - (y * b.x));
-    }
-    
-    const Vector Invert() const 
-    {
-		return Vector(-x, -y, -z);
-	}
-	
-	const bool Equals(const Vector &b) const
-	{
-		if(x == b.x && y == b.y && z == b.z){
-			return true;
-		} else {
-			return false;
-		}
-	}
-};
 
 typedef Vector Color;
 const Color BackgroundColor(0.0, 0.0, 0.0);
@@ -917,7 +842,7 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patch_div = 3; /* There will be 4^patch_div triangular patches. */
+    int patch_div = 2; /* There will be 4^patch_div triangular patches. */
     int MC_samples = 3; /* There will be MC_sample * MC_sample samples per patch */
 
     Calculate_Form_Factors(patch_div, MC_samples);

@@ -291,11 +291,11 @@ struct Triangle {
 		tri_patches = ts;
 	}
 
-    void init_patchs(const int num) 
+    void init_patchs(const int num_) 
     {
-        div_num = num;
+        div_num = num_;
         patch.clear();
-        patch.resize(4);
+        patch.resize(pow(4, num_));
         calc_patches();
     }
 	
@@ -526,7 +526,7 @@ void Calculate_Form_Factors(const int div_num,
     for (int i = 0; i < n; i ++) 
     {
         tris[i].init_patchs(div_num); 
-        patch_num += pow(4.0, div_num);
+        patch_num += pow(4, div_num);
     }
     
     std::cout << "Number of triangles: " << n << endl;
@@ -547,9 +547,9 @@ void Calculate_Form_Factors(const int div_num,
     {
         int patch_i = 0;
         for (int k = 0; k < i; k ++)
-            patch_i += 4;
+            patch_i += pow(4, div_num);
 
-        for (int ip = 0; ip < 4; ip ++) 
+        for (int ip = 0; ip < pow(4, div_num); ip ++) 
         {
 				int index = patch_i + ip;
                 patch_area[index] = tris[i].area / tris[i].patches.size(); 
@@ -918,7 +918,7 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patch_div = 1; /* There will be 4^patch_div triangular patches. */
+    int patch_div = 2; /* There will be 4^patch_div triangular patches. */
     int MC_samples = 3;
 
     Calculate_Form_Factors(patch_div, MC_samples);

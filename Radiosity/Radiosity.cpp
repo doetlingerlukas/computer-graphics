@@ -256,10 +256,14 @@ struct Triangle {
 		vector<vector<Vector>> ps;
 		vector<Triangle> ts;
 		
-		ps.push_back({a, b, c});
-		ts.push_back(Triangle(a, b - a, c - a, emission, color));
+		patches.push_back({a, b, c});
+		tri_patches.push_back(Triangle(a, b - a, c - a, emission, color));
 		
 		for(int d = 0; d < div_num; d++) {
+			ps = patches;
+			ts = tri_patches;
+			patches.clear();
+			tri_patches.clear();
 			unsigned int size  = ts.size();
 			
 			for(unsigned int e = 0; e < size; e++){
@@ -273,22 +277,17 @@ struct Triangle {
 				Triangle t4 = Triangle(t1.c, t2.c - t1.c, ts[e].c - t1.c, ts[e].emission,
 					ts[e].color);
 				
-				ts.push_back(t1);
-				ps.push_back({t1.a, t1.b, t1.c});
-				ts.push_back(t2);
-				ps.push_back({t2.a, t2.b, t2.c});
-				ts.push_back(t3);
-				ps.push_back({t3.a, t3.b, t3.c});
-				ts.push_back(t4);
-				ps.push_back({t4.a, t4.b, t4.c});
+				tri_patches.push_back(t1);
+				patches.push_back({t1.a, t1.b, t1.c});
+				tri_patches.push_back(t2);
+				patches.push_back({t2.a, t2.b, t2.c});
+				tri_patches.push_back(t3);
+				patches.push_back({t3.a, t3.b, t3.c});
+				tri_patches.push_back(t4);
+				patches.push_back({t4.a, t4.b, t4.c});
 				
-				ts.erase(ts.begin() + 0);
-				ps.erase(ps.begin() + 0);
 			}
 		}
-		
-		patches = ps;
-		tri_patches = ts;
 	}
 
     void init_patchs(const int num_) 
@@ -918,7 +917,7 @@ int main(int argc, char **argv) {
     Image img_interpolated(width, height);
 
     cout << "Calculating form factors" << endl;
-    int patch_div = 2; /* There will be 4^patch_div triangular patches. */
+    int patch_div = 3; /* There will be 4^patch_div triangular patches. */
     int MC_samples = 3;
 
     Calculate_Form_Factors(patch_div, MC_samples);

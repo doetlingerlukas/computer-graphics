@@ -54,5 +54,44 @@ struct Image {
     void Save(const string &filename);
 };
 
+double area_of_triangle(double a, double b, double c);
+Vector calc_normal(Vector a, Vector b, Vector c);
+
+struct Triangle {
+	Vector a, b, c;
+	Vector edge_a, edge_b;
+	Color emission, color;
+	Vector normal;
+	double area;
+	vector<Color> patch;
+	int div_num;
+	double a_len, b_len;
+	vector<vector<Vector>> patches;
+	vector<Triangle> tri_patches;
+	
+	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
+              const Color &emission_, const Color &color_);
+	
+	void calc_patches();
+    void init_patchs(const int num_);
+    double intersect(const Ray &ray);
+};
+
+struct Rectangle {
+    Vector p0;                     
+    Vector edge_a, edge_b;
+    Color emission, color;
+    Vector normal;
+    vector<Color> patch; 
+    int a_num, b_num; 
+    double a_len, b_len;    
+
+    Rectangle(const Vector p0_, const Vector &a_, const Vector &b_, 
+              const Color &emission_, const Color &color_);
+
+    Color sample_patch(int ia, int ib) const;
+    void init_patchs(const int a_num_, const int b_num_);
+    const double intersect(const Ray &ray);
+};
 
 #endif // _STRUCTS_H_

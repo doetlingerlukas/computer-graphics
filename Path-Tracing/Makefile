@@ -1,10 +1,10 @@
 CC = g++
 LD = g++
 
-OBJ = PathTracing.o 
+OBJ = PathTracing.o Structs.o
 TARGET = PathTracing
 
-CFLAGS = -O3 -Wall
+CFLAGS = -O3 -Wall -std=c++1y
 LDLIBS =
 INCLUDES = 
 
@@ -23,8 +23,11 @@ $(TARGET).o: $(TARGET).cpp
 
 clean:
 	rm -f *.o $(TARGET)
+	
+run: clean all
+		./PathTracing
 
-.PHONY: clean
+.PHONY: clean run
 
 # Dependencies
 $(TARGET): $(OBJ)

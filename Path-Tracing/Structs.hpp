@@ -79,21 +79,18 @@ struct Triangle {
     double intersect(const Ray &ray);
 };
 
-struct Rectangle {
-    Vector p0;                     
-    Vector edge_a, edge_b;
-    Color emission, color;
-    Vector normal;
-    vector<Color> patch; 
-    int a_num, b_num; 
-    double a_len, b_len;    
+enum Refl_t { DIFF, SPEC, REFR }; 
 
-    Rectangle(const Vector p0_, const Vector &a_, const Vector &b_, 
-              const Color &emission_, const Color &color_);
+struct Sphere {
+	double radius;       
+    Vector position; 
+    Color emission, color;      
+    Refl_t refl;     
+    
+    Sphere(double radius_, Vector position_, Vector emission_, 
+			Vector color_, Refl_t refl_);
 
-    Color sample_patch(int ia, int ib) const;
-    void init_patchs(const int a_num_, const int b_num_);
-    const double intersect(const Ray &ray);
+    double Intersect(const Ray &ray) const;
 };
 
 #endif // _STRUCTS_H_

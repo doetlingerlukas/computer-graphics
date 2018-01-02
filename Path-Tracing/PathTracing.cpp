@@ -29,53 +29,8 @@
 
 using namespace std;
 
-
+/* Define background color. */
 const Color BackgroundColor(0.0, 0.0, 0.0);
-
-/*------------------------------------------------------------------
-| Scene objects are spheres; material either perfectly diffuse, 
-| specular (mirror reflection) or transparent (refraction/reflection)
-| (DIFFuse, SPECular, REFRactive)
-------------------------------------------------------------------*/
-enum Refl_t { DIFF, SPEC, REFR }; 
-
-struct Sphere 
-{
-    double radius;       
-    Vector position; 
-    Color emission, color;      
-    Refl_t refl;     
-    
-    Sphere(double radius_, Vector position_, Vector emission_, 
-           Vector color_, Refl_t refl_):
-           radius(radius_), position(position_), emission(emission_), 
-           color(color_), refl(refl_) {}
-
-    double Intersect(const Ray &ray) const 
-    { 
-        /* Check for ray-sphere intersection by solving for t:
-            t^2*d.d + 2*t*(o-p).d + (o-p).(o-p) - R^2 = 0 */
-        Vector op = position - ray.org; 
-        double eps = 1e-4;
-        double b = op.Dot(ray.dir);
-        double radicant = b*b - op.Dot(op) + radius*radius;
-        if (radicant < 0.0) 
-            return 0.0;      /* No intersection */
-        else   
-            radicant = sqrt(radicant);
-        
-        double t;
-        t = b - radicant;    /* Check smaller root first */
-        if(t > eps)
-            return t;
-        
-        t = b + radicant;
-        if(t > eps)          /* Check second root */
-            return t;
-        
-        return 0.0;          /* No intersection in ray direction */  
-    }
-};
 
 /******************************************************************
 * Hard-coded scene definition: the geometry is composed of spheres

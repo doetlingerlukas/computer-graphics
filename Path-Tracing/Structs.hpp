@@ -11,6 +11,9 @@
 
 using namespace std;
 
+enum Refl_t { DIFF, SPEC, REFR }; 
+enum Type { TRI, SPH };
+
 struct Vector {
 	
     double x, y, z;			/* Position XYZ or color RGB */
@@ -78,8 +81,6 @@ struct Triangle {
     void init_patchs(const int num_);
     double intersect(const Ray &ray);
 };
-
-enum Refl_t { DIFF, SPEC, REFR }; 
 
 struct Sphere {
 	double radius;       

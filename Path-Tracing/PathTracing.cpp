@@ -40,8 +40,8 @@ const Color BackgroundColor(0.0, 0.0, 0.0);
 * - emitted light (light sources), surface reflectivity (~color), 
 *   material
 *******************************************************************/
-Sphere spheres[] = 
-{
+Sphere spheres[] = {
+	
     Sphere( 1e5, Vector( 1e5  +1,      40.8,      81.6),  Vector(), Vector(.75,.25,.25), DIFF), /* Left wall */
     Sphere( 1e5, Vector(-1e5 +99,      40.8,      81.6),  Vector(), Vector(.25,.25,.75), DIFF), /* Rght wall */
     Sphere( 1e5, Vector(      50,      40.8,       1e5),  Vector(), Vector(.75,.75,.75), DIFF), /* Back wall */
@@ -55,29 +55,58 @@ Sphere spheres[] =
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
+vector<Triangle> tris = {
+	Triangle(Vector(30.0,  0.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0,  40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Right: front-bottom
+	Triangle(Vector(30.0, 40.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0, -40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Right: back-top
+	Triangle(Vector(10.0,  0.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0,  40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Left:  back-bottom
+	Triangle(Vector(10.0, 40.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0, -40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Left:  front-top
+	Triangle(Vector(10.0,  0.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Front: bottom-left
+	Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Front: top-right
+	Triangle(Vector(30.0,  0.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Back:  bottom-right
+	Triangle(Vector(10.0, 40.0,  80.0), Vector( 20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Back:  top-left
+	Triangle(Vector(10.0, 40.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,   0.0, -20.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Top:   front-left
+	Triangle(Vector(30.0, 40.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,   0.0,  20.0),
+		Color(), Color(0.75, 0.75, 0.75)), // Top:   back-right
+};
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
 * returns true if intersection is found, as well as ray parameter
 * of intersection and id of intersected object
 *******************************************************************/
-bool Intersect(const Ray &ray, double &t, int &id)
+bool intersectScene(const Ray &ray, double &t, int &id, Type &type)
 {
-    const int n = int(sizeof(spheres) / sizeof(Sphere));
+    const int ns = int(sizeof(spheres) / sizeof(Sphere));
+    const unsigned int nt = tris.size();
     t = 1e20;
 
-    for (int i = 0; i < n; i ++) 
-    {
+    for (int i = 0; i < ns; i ++) {
         double d = spheres[i].Intersect(ray);
-        if (d > 0.0  && d < t) 
-        {
+        if (d > 0.0  && d < t) {
             t = d;
             id = i;
+            type = SPH;
+        }
+    }
+    for (unsigned int i = 0; i < nt; i ++) {
+        double d = tris[i].intersect(ray);
+        if (d > 0.0 && d < t) {
+            t  = d;
+            id = i;
+            type = TRI;
         }
     }
     return t < 1e20;
 }
-
 
 /******************************************************************
 * Recursive path tracing for computing radiance via Monte-Carlo
@@ -92,18 +121,19 @@ bool Intersect(const Ray &ray, double &t, int &id)
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
 *******************************************************************/
-Color Radiance(const Ray &ray, int depth, int E)
-{
+Color Radiance(const Ray &ray, int depth, int E) {
     depth++;
 
     int numSpheres = int(sizeof(spheres) / sizeof(Sphere));
 
     double t;                               
-    int id = 0;  
+    int id = 0; 
+    Type description_type; 
                              
-    if (!Intersect(ray, t, id))   /* No intersection with scene */
+    if (!intersectScene(ray, t, id, description_type)) {
         return BackgroundColor; 
-
+	}
+	
     const Sphere &obj = spheres[id];     
 
     Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
@@ -186,7 +216,7 @@ Color Radiance(const Ray &ray, int depth, int E)
             l = l.Normalized();
 
             /* Shoot shadow ray, check if intersection is with light source */
-            if (Intersect(Ray(hitpoint,l), t, id) && id==i)
+            if (intersectScene(Ray(hitpoint,l), t, id, description_type) && id==i)
             {  
                 double omega = 2*M_PI * (1 - cos_a_max);
 

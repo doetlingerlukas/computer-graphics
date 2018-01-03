@@ -20,12 +20,14 @@
 *******************************************************************/
 
 /* Standard includes */
+#include <algorithm>
 #include <cmath>   
 #include <cstdlib> 
 #include <iostream>
 #include <fstream>
 
 #include "Structs.hpp"
+#include "OBJReader.hpp"
 
 using namespace std;
 
@@ -83,8 +85,8 @@ vector<Triangle> tris = {
 * returns true if intersection is found, as well as ray parameter
 * of intersection and id of intersected object
 *******************************************************************/
-bool intersectScene(const Ray &ray, double &t, int &id, Type &type)
-{
+bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
+	
     const int ns = int(sizeof(spheres) / sizeof(Sphere));
     const unsigned int nt = tris.size();
     t = 1e20;
@@ -319,8 +321,14 @@ Color Radiance(const Ray &ray, int depth, int E) {
 * Rendered result saved as PPM image file
 *******************************************************************/
 
-int main(int argc, char *argv[]) 
-{
+int main(int argc, char *argv[]) {
+	
+	/*
+	vector<Triangle> ts = loadOBJ("box.obj");
+	for(Triangle t : ts){
+		cout << t.b.x << " " << t.b.y << " " << t.b.z << endl;
+	}*/
+	
     int width = 1024;
     int height = 768;
     int samples = 1;

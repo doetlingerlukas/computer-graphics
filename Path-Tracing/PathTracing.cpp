@@ -57,25 +57,25 @@ Sphere spheres[] = {
 
 vector<Triangle> tris = {
 	Triangle(Vector(30.0,  0.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Right: front-bottom
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Right: front-bottom
 	Triangle(Vector(30.0, 40.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Right: back-top
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Right: back-top
 	Triangle(Vector(10.0,  0.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Left:  back-bottom
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Left:  back-bottom
 	Triangle(Vector(10.0, 40.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Left:  front-top
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Left:  front-top
 	Triangle(Vector(10.0,  0.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Front: bottom-left
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Front: bottom-left
 	Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Front: top-right
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Front: top-right
 	Triangle(Vector(30.0,  0.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Back:  bottom-right
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Back:  bottom-right
 	Triangle(Vector(10.0, 40.0,  80.0), Vector( 20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Back:  top-left
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Back:  top-left
 	Triangle(Vector(10.0, 40.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,   0.0, -20.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Top:   front-left
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Top:   front-left
 	Triangle(Vector(30.0, 40.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,   0.0,  20.0),
-		Color(), Color(0.75, 0.75, 0.75)), // Top:   back-right
+		Color(), Color(0.75, 0.75, 0.75), REFR), // Top:   back-right
 };
 
 /******************************************************************
@@ -88,7 +88,8 @@ bool intersectScene(const Ray &ray, double &t, int &id, Type &type)
     const int ns = int(sizeof(spheres) / sizeof(Sphere));
     const unsigned int nt = tris.size();
     t = 1e20;
-
+	
+	/* Check for intersection with spheres in scene. */
     for (int i = 0; i < ns; i ++) {
         double d = spheres[i].Intersect(ray);
         if (d > 0.0  && d < t) {
@@ -97,6 +98,7 @@ bool intersectScene(const Ray &ray, double &t, int &id, Type &type)
             type = SPH;
         }
     }
+    /* Check for intersection with triangles in scene. */
     for (unsigned int i = 0; i < nt; i ++) {
         double d = tris[i].intersect(ray);
         if (d > 0.0 && d < t) {
@@ -134,30 +136,35 @@ Color Radiance(const Ray &ray, int depth, int E) {
         return BackgroundColor; 
 	}
 	
-    const Sphere &obj = spheres[id];     
+	bool isSphere = description_type == SPH ? true : false;
+	
+	Sphere obj_s = spheres[id];
+	Triangle obj_t = tris[id];
 
     Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
-    Vector normal = (hitpoint - obj.position).Normalized();  /* Normal at intersection */ 
+    Vector normal = isSphere ? 
+		(hitpoint - obj_s.position).Normalized() : obj_t.normal;  /* Normal at intersection */ 
     Vector nl = normal;
 
     /* Obtain flipped normal, if object hit from inside */
     if (normal.Dot(ray.dir) >= 0) 
-        nl = nl*-1.0;
+        nl = nl.Invert();
 
-    Color col = obj.color; 
+    Color col = isSphere ? obj_s.color : obj_t.color; 
 
     /* Maximum RGB reflectivity for Russian Roulette */
     double p = col.Max();
 
-    if (depth > 5 || !p)   /* After 5 bounces or if max reflectivity is zero */
-    {
+    if (depth > 5 || !p) {  /* After 5 bounces or if max reflectivity is zero */
+	
         if (drand48() < p)            /* Russian Roulette */
             col = col * (1/p);        /* Scale estimator to remain unbiased */
         else 
-            return obj.emission * E;  /* No further bounces, only return potential emission */
-    }
+			/* No further bounces, only return potential emission */
+            return (isSphere ? obj_s.emission : obj_t.emission) * E;  
+     }
 
-    if (obj.refl == DIFF)
+    if ((isSphere ? obj_s.refl : obj_t.refl) == DIFF)
     {                  
         /* Compute random reflection vector on hemisphere */
         double r1 = 2.0 * M_PI * drand48(); 
@@ -185,7 +192,8 @@ Color Radiance(const Ray &ray, int depth, int E) {
         for (int i = 0; i < numSpheres; i ++)
         {
             const Sphere &sphere = spheres[i];
-            if (sphere.emission.x <= 0 && sphere.emission.y <= 0 && sphere.emission.z <= 0) 
+            if (sphere.emission.x <= 0 && sphere.emission.y <= 0 && sphere.emission.z <= 0
+				&& !isSphere) 
                 continue; /* Skip objects that are not light sources */
       
             /* Randomly sample spherical light source from surface intersection */
@@ -227,13 +235,14 @@ Color Radiance(const Ray &ray, int depth, int E) {
    
         /* Return potential light emission, direct lighting, and indirect lighting (via
            recursive call for Monte-Carlo integration */      
-        return obj.emission * E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
+        return (isSphere ? obj_s.emission : obj_t.emission)
+			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
     } 
-    else if (obj.refl == SPEC) 
+    else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) 
     {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-        return obj.emission + 
+        return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
                                depth, 1));
     }
@@ -255,7 +264,8 @@ Color Radiance(const Ray &ray, int depth, int E) {
 
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0)  
-        return obj.emission + col.MultComponents( Radiance(reflRay, depth, 1));
+        return (isSphere ? obj_s.emission : obj_t.emission)
+			+ col.MultComponents( Radiance(reflRay, depth, 1));
 
     /* Otherwise reflection and/or refraction occurs */
     Vector tdir;
@@ -288,13 +298,16 @@ Color Radiance(const Ray &ray, int depth, int E) {
     double TP = Tr / (1 - P);
 
     if (depth < 3)   /* Initially both reflection and trasmission */
-        return obj.emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
-                                                 Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
+        return (isSphere ? obj_s.emission : obj_t.emission)
+			+ col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
+            Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
     else             /* Russian Roulette */ 
         if (drand48() < P)
-            return obj.emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
+            return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(reflRay, depth, 1) * RP);
         else
-            return obj.emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+            return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
 }
 
 

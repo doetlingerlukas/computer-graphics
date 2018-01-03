@@ -73,9 +73,10 @@ struct Triangle {
 	double a_len, b_len;
 	vector<vector<Vector> > patches;
 	vector<Triangle> tri_patches;
+	Refl_t refl;
 	
 	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
-              const Color &emission_, const Color &color_);
+              const Color &emission_, const Color &color_, Refl_t refl_);
 	
 	void calc_patches();
     void init_patchs(const int num_);

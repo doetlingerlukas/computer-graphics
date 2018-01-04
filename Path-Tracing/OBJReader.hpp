@@ -7,6 +7,6 @@
 
 using namespace std;
 
-vector<Triangle> loadOBJ(string filepath);
+vector<Triangle> loadOBJ(string filepath, Color c, Refl_t r);
 
 #endif // _OBJREADER_H_

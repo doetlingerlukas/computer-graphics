@@ -158,14 +158,12 @@ Triangle::Triangle( const Vector p0_, const Vector &a_, const Vector &b_,
 	area = area_of_triangle(a_to_b, a_to_c, b_to_c);
 }
 
-Triangle::Triangle( Vector a_, Vector b_, Vector c_):
-	a(a_), b(b_), c(c_) {
+Triangle::Triangle( Vector a_, Vector b_, Vector c_, Color color_, Refl_t refl_):
+	a(a_), b(b_), c(c_), color(color_), refl(refl_) {
 	
 	edge_a = b - a;
 	edge_b = c - a;
-	refl = DIFF;
 	emission = Color();
-	color = Color();
 	normal = calc_normal(a, b, c).Normalized();
 }
 

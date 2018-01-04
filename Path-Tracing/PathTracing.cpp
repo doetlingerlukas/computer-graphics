@@ -57,28 +57,7 @@ Sphere spheres[] = {
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
-vector<Triangle> tris = {
-	Triangle(Vector(30.0,  0.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Right: front-bottom
-	Triangle(Vector(30.0, 40.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Right: back-top
-	Triangle(Vector(10.0,  0.0,  80.0), Vector(  0.0, 0.0,  20.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Left:  back-bottom
-	Triangle(Vector(10.0, 40.0, 100.0), Vector(  0.0, 0.0, -20.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Left:  front-top
-	Triangle(Vector(10.0,  0.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Front: bottom-left
-	Triangle(Vector(30.0, 40.0, 100.0), Vector(-20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Front: top-right
-	Triangle(Vector(30.0,  0.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,  40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Back:  bottom-right
-	Triangle(Vector(10.0, 40.0,  80.0), Vector( 20.0, 0.0,   0.0), Vector(0.0, -40.0,   0.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Back:  top-left
-	Triangle(Vector(10.0, 40.0, 100.0), Vector( 20.0, 0.0,   0.0), Vector(0.0,   0.0, -20.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Top:   front-left
-	Triangle(Vector(30.0, 40.0,  80.0), Vector(-20.0, 0.0,   0.0), Vector(0.0,   0.0,  20.0),
-		Color(), Color(0.75, 0.75, 0.75), REFR), // Top:   back-right
-};
+vector<Triangle> tris = loadOBJ("box.obj", Color(0.25, 0.75, 0.0), REFR);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
@@ -322,12 +301,6 @@ Color Radiance(const Ray &ray, int depth, int E) {
 *******************************************************************/
 
 int main(int argc, char *argv[]) {
-	
-	/*
-	vector<Triangle> ts = loadOBJ("box.obj");
-	for(Triangle t : ts){
-		cout << t.b.x << " " << t.b.y << " " << t.b.z << endl;
-	}*/
 	
     int width = 1024;
     int height = 768;

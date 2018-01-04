@@ -1,6 +1,6 @@
 #include "OBJReader.hpp"
 
-vector<Triangle> loadOBJ(string filepath) {
+vector<Triangle> loadOBJ(string filepath, Color c, Refl_t r) {
 	
 	ifstream obj_file(filepath);
 	string line;
@@ -29,7 +29,7 @@ vector<Triangle> loadOBJ(string filepath) {
 			getline(iss, f3, '/');
 			
 			faces.push_back(Triangle(vertex[atof(f1.c_str()) - 1], 
-				vertex[atof(f2.c_str()) - 1], vertex[atof(f2.c_str()) - 1]));
+				vertex[atof(f2.c_str()) - 1], vertex[atof(f3.c_str()) - 1], c, r));
 		}
 	}
 	

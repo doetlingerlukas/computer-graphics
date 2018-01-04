@@ -77,7 +77,7 @@ struct Triangle {
 	
 	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
               const Color &emission_, const Color &color_, Refl_t refl_);
-    Triangle( Vector a_, Vector b_, Vector c_);
+    Triangle( Vector a_, Vector b_, Vector c_, Color color_, Refl_t refl_);
 	
 	void calc_patches();
     void init_patchs(const int num_);

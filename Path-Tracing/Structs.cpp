@@ -144,8 +144,8 @@ Vector calc_normal(Vector a, Vector b, Vector c){
 }
 
 Triangle::Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
-					const Color &emission_, const Color &color_) :
-	a(p0_), edge_a(a_), edge_b(b_), emission(emission_), color(color_){
+					const Color &emission_, const Color &color_, Refl_t refl_) :
+	a(p0_), edge_a(a_), edge_b(b_), emission(emission_), color(color_), refl(refl_) {
 		
 	b = a + edge_a;
 	c = a + edge_b;
@@ -158,12 +158,21 @@ Triangle::Triangle( const Vector p0_, const Vector &a_, const Vector &b_,
 	area = area_of_triangle(a_to_b, a_to_c, b_to_c);
 }
 
+Triangle::Triangle( Vector a_, Vector b_, Vector c_, Color color_, Refl_t refl_):
+	a(a_), b(b_), c(c_), color(color_), refl(refl_) {
+	
+	edge_a = b - a;
+	edge_b = c - a;
+	emission = Color();
+	normal = calc_normal(a, b, c).Normalized();
+}
+
 void Triangle::calc_patches() {
 	vector<vector<Vector>> ps;
 	vector<Triangle> ts;
 		
 	patches.push_back({a, b, c});
-	tri_patches.push_back(Triangle(a, b - a, c - a, emission, color));
+	tri_patches.push_back(Triangle(a, b - a, c - a, emission, color, refl));
 		
 	for(int d = 0; d < div_num; d++) {
 		ps = patches;
@@ -175,13 +184,13 @@ void Triangle::calc_patches() {
 		for(unsigned int e = 0; e < size; e++){
 			/* divide triangle in 4 subtriangles */
 			Triangle t1 = Triangle(ts[e].a, (ts[e].a + (ts[e].edge_a / 2)) - ts[e].a,
-				(ts[e].a + (ts[e].edge_b / 2)) - ts[e].a, ts[e].emission, ts[e].color);
+				(ts[e].a + (ts[e].edge_b / 2)) - ts[e].a, ts[e].emission, ts[e].color, ts[e].refl);
 			Triangle t2 = Triangle(t1.b, ts[e].b - t1.b, 
-				(t1.b + (ts[e].edge_b / 2)) - t1.b, ts[e].emission, ts[e].color);
+				(t1.b + (ts[e].edge_b / 2)) - t1.b, ts[e].emission, ts[e].color, ts[e].refl);
 			Triangle t3 = Triangle(t2.c, t1.c - t2.c, t2.a - t2.c, ts[e].emission,
-				ts[e].color);
+				ts[e].color, ts[e].refl);
 			Triangle t4 = Triangle(t1.c, t2.c - t1.c, ts[e].c - t1.c, ts[e].emission,
-				ts[e].color);
+				ts[e].color, ts[e].refl);
 			
 			tri_patches.push_back(t1);
 			patches.push_back({t1.a, t1.b, t1.c});
@@ -272,5 +281,5 @@ double Sphere::Intersect(const Ray &ray) const {
 		return t;
         
 	return 0.0;			/* No intersection in ray direction */  
-}
-
+}	
+	

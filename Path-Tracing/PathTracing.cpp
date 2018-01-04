@@ -20,12 +20,14 @@
 *******************************************************************/
 
 /* Standard includes */
+#include <algorithm>
 #include <cmath>   
 #include <cstdlib> 
 #include <iostream>
 #include <fstream>
 
 #include "Structs.hpp"
+#include "OBJReader.hpp"
 
 using namespace std;
 
@@ -40,8 +42,8 @@ const Color BackgroundColor(0.0, 0.0, 0.0);
 * - emitted light (light sources), surface reflectivity (~color), 
 *   material
 *******************************************************************/
-Sphere spheres[] = 
-{
+Sphere spheres[] = {
+	
     Sphere( 1e5, Vector( 1e5  +1,      40.8,      81.6),  Vector(), Vector(.75,.25,.25), DIFF), /* Left wall */
     Sphere( 1e5, Vector(-1e5 +99,      40.8,      81.6),  Vector(), Vector(.25,.25,.75), DIFF), /* Rght wall */
     Sphere( 1e5, Vector(      50,      40.8,       1e5),  Vector(), Vector(.75,.75,.75), DIFF), /* Back wall */
@@ -55,29 +57,39 @@ Sphere spheres[] =
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
+vector<Triangle> tris = loadOBJ("box.obj", Color(0.25, 0.75, 0.0), REFR);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
 * returns true if intersection is found, as well as ray parameter
 * of intersection and id of intersected object
 *******************************************************************/
-bool Intersect(const Ray &ray, double &t, int &id)
-{
-    const int n = int(sizeof(spheres) / sizeof(Sphere));
+bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
+	
+    const int ns = int(sizeof(spheres) / sizeof(Sphere));
+    const unsigned int nt = tris.size();
     t = 1e20;
-
-    for (int i = 0; i < n; i ++) 
-    {
+	
+	/* Check for intersection with spheres in scene. */
+    for (int i = 0; i < ns; i ++) {
         double d = spheres[i].Intersect(ray);
-        if (d > 0.0  && d < t) 
-        {
+        if (d > 0.0  && d < t) {
             t = d;
             id = i;
+            type = SPH;
+        }
+    }
+    /* Check for intersection with triangles in scene. */
+    for (unsigned int i = 0; i < nt; i ++) {
+        double d = tris[i].intersect(ray);
+        if (d > 0.0 && d < t) {
+            t  = d;
+            id = i;
+            type = TRI;
         }
     }
     return t < 1e20;
 }
-
 
 /******************************************************************
 * Recursive path tracing for computing radiance via Monte-Carlo
@@ -92,42 +104,48 @@ bool Intersect(const Ray &ray, double &t, int &id)
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
 *******************************************************************/
-Color Radiance(const Ray &ray, int depth, int E)
-{
+Color Radiance(const Ray &ray, int depth, int E) {
     depth++;
 
     int numSpheres = int(sizeof(spheres) / sizeof(Sphere));
 
     double t;                               
-    int id = 0;  
+    int id = 0; 
+    Type description_type; 
                              
-    if (!Intersect(ray, t, id))   /* No intersection with scene */
+    if (!intersectScene(ray, t, id, description_type)) {
         return BackgroundColor; 
-
-    const Sphere &obj = spheres[id];     
+	}
+	
+	bool isSphere = description_type == SPH ? true : false;
+	
+	Sphere obj_s = spheres[id];
+	Triangle obj_t = tris[id];
 
     Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
-    Vector normal = (hitpoint - obj.position).Normalized();  /* Normal at intersection */ 
+    Vector normal = isSphere ? 
+		(hitpoint - obj_s.position).Normalized() : obj_t.normal;  /* Normal at intersection */ 
     Vector nl = normal;
 
     /* Obtain flipped normal, if object hit from inside */
     if (normal.Dot(ray.dir) >= 0) 
-        nl = nl*-1.0;
+        nl = nl.Invert();
 
-    Color col = obj.color; 
+    Color col = isSphere ? obj_s.color : obj_t.color; 
 
     /* Maximum RGB reflectivity for Russian Roulette */
     double p = col.Max();
 
-    if (depth > 5 || !p)   /* After 5 bounces or if max reflectivity is zero */
-    {
+    if (depth > 5 || !p) {  /* After 5 bounces or if max reflectivity is zero */
+	
         if (drand48() < p)            /* Russian Roulette */
             col = col * (1/p);        /* Scale estimator to remain unbiased */
         else 
-            return obj.emission * E;  /* No further bounces, only return potential emission */
-    }
+			/* No further bounces, only return potential emission */
+            return (isSphere ? obj_s.emission : obj_t.emission) * E;  
+     }
 
-    if (obj.refl == DIFF)
+    if ((isSphere ? obj_s.refl : obj_t.refl) == DIFF)
     {                  
         /* Compute random reflection vector on hemisphere */
         double r1 = 2.0 * M_PI * drand48(); 
@@ -155,7 +173,8 @@ Color Radiance(const Ray &ray, int depth, int E)
         for (int i = 0; i < numSpheres; i ++)
         {
             const Sphere &sphere = spheres[i];
-            if (sphere.emission.x <= 0 && sphere.emission.y <= 0 && sphere.emission.z <= 0) 
+            if (sphere.emission.x <= 0 && sphere.emission.y <= 0 && sphere.emission.z <= 0
+				&& !isSphere) 
                 continue; /* Skip objects that are not light sources */
       
             /* Randomly sample spherical light source from surface intersection */
@@ -186,7 +205,7 @@ Color Radiance(const Ray &ray, int depth, int E)
             l = l.Normalized();
 
             /* Shoot shadow ray, check if intersection is with light source */
-            if (Intersect(Ray(hitpoint,l), t, id) && id==i)
+            if (intersectScene(Ray(hitpoint,l), t, id, description_type) && id==i)
             {  
                 double omega = 2*M_PI * (1 - cos_a_max);
 
@@ -197,13 +216,14 @@ Color Radiance(const Ray &ray, int depth, int E)
    
         /* Return potential light emission, direct lighting, and indirect lighting (via
            recursive call for Monte-Carlo integration */      
-        return obj.emission * E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
+        return (isSphere ? obj_s.emission : obj_t.emission)
+			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
     } 
-    else if (obj.refl == SPEC) 
+    else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) 
     {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
-        return obj.emission + 
+        return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
                                depth, 1));
     }
@@ -225,7 +245,8 @@ Color Radiance(const Ray &ray, int depth, int E)
 
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0)  
-        return obj.emission + col.MultComponents( Radiance(reflRay, depth, 1));
+        return (isSphere ? obj_s.emission : obj_t.emission)
+			+ col.MultComponents( Radiance(reflRay, depth, 1));
 
     /* Otherwise reflection and/or refraction occurs */
     Vector tdir;
@@ -258,13 +279,16 @@ Color Radiance(const Ray &ray, int depth, int E)
     double TP = Tr / (1 - P);
 
     if (depth < 3)   /* Initially both reflection and trasmission */
-        return obj.emission + col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
-                                                 Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
+        return (isSphere ? obj_s.emission : obj_t.emission)
+			+ col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
+            Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
     else             /* Russian Roulette */ 
         if (drand48() < P)
-            return obj.emission + col.MultComponents(Radiance(reflRay, depth, 1) * RP);
+            return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(reflRay, depth, 1) * RP);
         else
-            return obj.emission + col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+            return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
 }
 
 
@@ -276,8 +300,8 @@ Color Radiance(const Ray &ray, int depth, int E)
 * Rendered result saved as PPM image file
 *******************************************************************/
 
-int main(int argc, char *argv[]) 
-{
+int main(int argc, char *argv[]) {
+	
     int width = 1024;
     int height = 768;
     int samples = 1;

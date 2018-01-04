@@ -11,6 +11,9 @@
 
 using namespace std;
 
+enum Refl_t { DIFF, SPEC, REFR }; 
+enum Type { TRI, SPH };
+
 struct Vector {
 	
     double x, y, z;			/* Position XYZ or color RGB */
@@ -70,16 +73,16 @@ struct Triangle {
 	double a_len, b_len;
 	vector<vector<Vector> > patches;
 	vector<Triangle> tri_patches;
+	Refl_t refl;
 	
 	Triangle( const Vector p0_, const Vector &a_, const Vector &b_, 
-              const Color &emission_, const Color &color_);
+              const Color &emission_, const Color &color_, Refl_t refl_);
+    Triangle( Vector a_, Vector b_, Vector c_, Color color_, Refl_t refl_);
 	
 	void calc_patches();
     void init_patchs(const int num_);
     double intersect(const Ray &ray);
 };
-
-enum Refl_t { DIFF, SPEC, REFR }; 
 
 struct Sphere {
 	double radius;       

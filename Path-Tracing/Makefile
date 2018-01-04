@@ -1,10 +1,10 @@
 CC = g++
 LD = g++
 
-OBJ = PathTracing.o Structs.o
+OBJ = PathTracing.o Structs.o OBJReader.o
 TARGET = PathTracing
 
-CFLAGS = -O3 -Wall -std=c++1y
+CFLAGS = -O3 -Wall -Wextra -std=c++1y 
 LDLIBS =
 INCLUDES = 
 

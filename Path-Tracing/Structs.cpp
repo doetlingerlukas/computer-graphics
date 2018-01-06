@@ -73,6 +73,11 @@ Vector& Vector::clamp() {
 	return *this;   
 }
 
+Vector Vector::Interpolate(double alpha, const Vector &b) const {
+	return Vector((x*alpha + b.x*(1-alpha)), (y*alpha + b.y*(1-alpha)), 
+			(z*alpha + b.z*(1-alpha))) / 2;
+}
+
 /*------------------------------------------------------------------
 | Structure for rays (e.g. viewing ray, ray tracing).
 ------------------------------------------------------------------*/

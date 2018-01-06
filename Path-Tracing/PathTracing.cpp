@@ -51,13 +51,13 @@ Sphere spheres[] = {
     Sphere( 1e5, Vector(      50,       1e5,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Floor */
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
-    Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
+    Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  REFR), /* Mirror sphere */
+    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(0,1,0.75)*.999,  GLOS), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
-vector<Triangle> tris = loadOBJ("box.obj", Color(0.25, 0.75, 0.0), REFR);
+vector<Triangle> tris = loadOBJ("box.obj", Color(0.5, 1.0, 0.0), REFR);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
@@ -145,8 +145,9 @@ Color Radiance(const Ray &ray, int depth, int E) {
             return (isSphere ? obj_s.emission : obj_t.emission) * E;  
      }
 
-    if ((isSphere ? obj_s.refl : obj_t.refl) == DIFF)
-    {                  
+    if ((isSphere ? obj_s.refl : obj_t.refl) == DIFF 
+		|| (isSphere ? obj_s.refl : obj_t.refl) == GLOS) {
+			                  
         /* Compute random reflection vector on hemisphere */
         double r1 = 2.0 * M_PI * drand48(); 
         double r2 = drand48(); 
@@ -213,20 +214,27 @@ Color Radiance(const Ray &ray, int depth, int E) {
                 e = e + col.MultComponents(sphere.emission * l.Dot(nl) * omega) * M_1_PI; 
             }
         }
+        
+        if ((isSphere ? obj_s.refl : obj_t.refl) == GLOS) {
+			
+			return (isSphere ? obj_s.emission : obj_t.emission) * E + e + col.Interpolate(0.2,
+				col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * 
+				normal.Dot(ray.dir)), depth, 1)));
+		}
    
         /* Return potential light emission, direct lighting, and indirect lighting (via
            recursive call for Monte-Carlo integration */      
         return (isSphere ? obj_s.emission : obj_t.emission)
 			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
-    } 
-    else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) 
-    {  
+			
+    }  else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
         return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
-                               depth, 1));
-    }
+			depth, 1));
+                               
+    }     
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  /* Prefect reflection */  
@@ -320,8 +328,8 @@ int main(int argc, char *argv[]) {
     Image img(width, height);
 
     /* Loop over image rows */
-    for (int y = 0; y < height; y ++) 
-    { 
+    for (int y = 0; y < height; y ++) {
+		 
         cout << "\rRendering (" << samples * 4 << " spp) " << (100.0 * y / (height - 1)) << "%     ";
         srand(y * y * y);
  

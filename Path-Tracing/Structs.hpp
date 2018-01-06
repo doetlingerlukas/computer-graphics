@@ -11,7 +11,7 @@
 
 using namespace std;
 
-enum Refl_t { DIFF, SPEC, REFR }; 
+enum Refl_t { DIFF, SPEC, REFR, GLOS }; 
 enum Type { TRI, SPH };
 
 struct Vector {
@@ -38,6 +38,7 @@ struct Vector {
 	bool Equals(const Vector &b) const;
 	double Max();
     Vector& clamp();
+    Vector Interpolate(double alpha, const Vector &b) const;
 };
 
 typedef Vector Color;

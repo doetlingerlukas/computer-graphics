@@ -51,8 +51,8 @@ Sphere spheres[] = {
     Sphere( 1e5, Vector(      50,       1e5,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Floor */
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
-    Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  GLOS), /* Mirror sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  GLOS), /* Glas sphere */
+    Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
+    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
@@ -100,14 +100,17 @@ bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
 * (possibly via specular reflection, refraction), controlled by 
 * parameter E = 0/1;  
 * on diffuse surfaces light sources are explicitely sampled;
-* for transparent objects, Schlick´s approximation is employed;
+* for transparent objects, Schlickï¿½s approximation is employed;
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
 *******************************************************************/
-Color Radiance(const Ray &ray, int depth, int E) {
+Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     depth++;
 
     int numSpheres = int(sizeof(spheres) / sizeof(Sphere));
+    
+    double aperture = 40;
+    double focal_length = 50;
 
     double t;                               
     int id = 0; 
@@ -124,7 +127,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
 
     Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
     Vector normal = isSphere ? 
-		(hitpoint - obj_s.position).Normalized() : obj_t.normal;  /* Normal at intersection */ 
+		(hitpoint - obj_s.position).Normalized() : obj_t.normal;
     Vector nl = normal;
 
     /* Obtain flipped normal, if object hit from inside */
@@ -132,6 +135,35 @@ Color Radiance(const Ray &ray, int depth, int E) {
         nl = nl.Invert();
 
     Color col = isSphere ? obj_s.color : obj_t.color; 
+    
+    /* Calculation for Thin-Lense Depth of Filed. */
+	if (depth == 1 && thinLense) {
+		Vector focal_point = ray.org - Vector(0.0, 0.0, focal_length);
+		/* Check if hitpoint is outside DOF */
+		if (hitpoint.z < (focal_point.z - aperture) || (focal_point.z + aperture) < hitpoint.z) {
+			/* Determine blur factor. */
+			double blur_factor = hitpoint.z < (focal_point.z - aperture) ?
+				(focal_point.z-aperture) - hitpoint.z : hitpoint.z - (focal_point.z+aperture);
+			
+			/* Set up local orthogonal coordinate system su,sv,sw */
+			Vector sw = ray.dir;
+			Vector su = fabs(sw.x) > 0.1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0);
+			su = (su.Cross(ray.dir)).Normalized();
+			Vector sv = sw.Cross(su);
+		
+			double cos_a_max = cos(0.005 + (blur_factor*0.00002));
+			double eps1 = drand48();
+			double eps2 = drand48();
+			double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
+			double sin_a = sqrt(1.0 - cos_a * cos_a);
+			double phi = 2.0*M_PI * eps2;
+			Vector l = su * cos(phi) * sin_a + 
+					   sv * sin(phi) * sin_a + 
+					   sw * cos_a;
+			l = l.Normalized();
+			return Radiance(Ray(ray.org, l), depth-1, E, false);
+		}
+	}
 
     /* Maximum RGB reflectivity for Russian Roulette */
     double p = col.Max();
@@ -194,6 +226,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
             /* Create random sample direction l towards spherical light source */
             double cos_a_max = sqrt(1.0 - sphere.radius * sphere.radius / 
                                (hitpoint - sphere.position).Dot(hitpoint-sphere.position));
+            cos_a_max = cos_a_max != cos_a_max ? 1 : cos_a_max;
             
             double eps1 = drand48();
             double eps2 = drand48();
@@ -206,8 +239,10 @@ Color Radiance(const Ray &ray, int depth, int E) {
             l = l.Normalized();
 
             /* Shoot shadow ray, check if intersection is with light source */
-            if (intersectScene(Ray(hitpoint,l), t, id, description_type) && id==i)
-            {  
+            Type temp_type;
+            if (intersectScene(Ray(hitpoint,l), t, id, temp_type) && id == i && 
+				description_type == temp_type) {
+					  
                 double omega = 2*M_PI * (1 - cos_a_max);
 
                 /* Add diffusely reflected light from light source; note constant BRDF 1/PI */
@@ -218,20 +253,20 @@ Color Radiance(const Ray &ray, int depth, int E) {
         /* Return potential light emission, direct lighting, and indirect lighting (via
            recursive call for Monte-Carlo integration */      
         return (isSphere ? obj_s.emission : obj_t.emission)
-			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
+			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0, false));
 			
     } else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
         return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
-			depth, 1));
+			depth, 1, false));
 			
     } else if ((isSphere ? obj_s.refl : obj_t.refl) == GLOS) {
 		/* Set up local orthogonal coordinate system su,sv,sw */
 		Vector sw = ray.dir - normal * 2 * normal.Dot(ray.dir);
 		Vector su;
-            
+		
 		if(fabs(sw.x) > 0.1) su = Vector(0.0, 1.0, 0.0);
 		else su = Vector(1.0, 0.0, 0.0);
 
@@ -250,7 +285,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
 		l = l.Normalized();
 		
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
-            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1));
+            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
 	}
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */
@@ -271,7 +306,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0)  
         return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents( Radiance(reflRay, depth, 1));
+			+ col.MultComponents( Radiance(reflRay, depth, 1, false));
 
     /* Otherwise reflection and/or refraction occurs */
     Vector tdir;
@@ -282,7 +317,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
     else
         tdir = (ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t))).Normalized();
 
-    /* Determine R0 for Schlick´s approximation */
+    /* Determine R0 for Schlickï¿½s approximation */
     double a = nt - nc;
     double b = nt + nc;
     double R0 = a*a / (b*b);
@@ -294,7 +329,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
     else
         c = 1 - tdir.Dot(normal);
 
-    /* Compute Schlick´s approximation of Fresnel equation */ 
+    /* Compute Schlickï¿½s approximation of Fresnel equation */ 
     double Re = R0 + (1 - R0) *c*c*c*c*c;   /* Reflectance */
     double Tr = 1 - Re;                     /* Transmittance */
 
@@ -305,15 +340,15 @@ Color Radiance(const Ray &ray, int depth, int E) {
 
     if (depth < 3)   /* Initially both reflection and trasmission */
         return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
-            Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
+			+ col.MultComponents(Radiance(reflRay, depth, 1, false) * Re + 
+            Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr);
     else             /* Russian Roulette */ 
         if (drand48() < P)
             return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(reflRay, depth, 1) * RP);
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false) * RP);
         else
             return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1, false) * TP);
 }
 
 
@@ -330,10 +365,15 @@ int main(int argc, char *argv[]) {
     int width = 1024;
     int height = 768;
     int samples = 1;
+    bool thinLense = false;
 
     if(argc == 2)
-        samples = atoi(argv[1]);
-     
+        samples = atoi(argv[1]);  
+	else if(argc == 3) {
+		samples = atoi(argv[1]); 
+		thinLense = argv[2][0] == 't' ? true : false;
+	}
+        
     /* Set camera origin and viewing direction (negative z direction) */
     Ray camera(Vector(50.0, 52.0, 295.6), Vector(0.0, -0.042612, -1.0).Normalized());
 
@@ -393,7 +433,7 @@ int main(int argc, char *argv[]) {
 
                         /* Accumulate radiance */
                         accumulated_radiance = accumulated_radiance + 
-                            Radiance( Ray(start, dir), 0, 1) / samples;
+                            Radiance( Ray(start, dir), 0, 1, thinLense) / samples;
                     } 
                     
                     accumulated_radiance = accumulated_radiance.clamp() * 0.25;

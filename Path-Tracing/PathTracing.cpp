@@ -31,9 +31,6 @@
 
 using namespace std;
 
-/* Define background color. */
-const Color BackgroundColor(0.0, 0.0, 0.0);
-
 /******************************************************************
 * Hard-coded scene definition: the geometry is composed of spheres
 * (i.e. Cornell box walls are part of very large spheres). 
@@ -52,12 +49,12 @@ Sphere spheres[] = {
     Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
 
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
+    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  GLOS), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
-vector<Triangle> tris = loadOBJ("box.obj", Color(0.5, 1.0, 0.0), REFR);
+vector<Triangle> tris = loadOBJ("box.obj", Color(0.5, 1.0, 0.0), GLOS);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
@@ -104,6 +101,26 @@ bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
 *******************************************************************/
+
+/* Sample a vector around a given vector based on an angle. */
+Vector sampleVector(Vector vec, double max_angle) {
+	Vector sw = vec;
+	Vector su = fabs(sw.x) > 0.1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0);
+	su = (su.Cross(sw)).Normalized();
+	Vector sv = sw.Cross(su);
+	
+	double cos_a_max = max_angle;
+	double eps1 = drand48();
+	double eps2 = drand48();
+	double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
+	double sin_a = sqrt(1.0 - cos_a * cos_a);
+	double phi = 2.0*M_PI * eps2;
+	Vector l = su * cos(phi) * sin_a + 
+			   sv * sin(phi) * sin_a + 
+			   sw * cos_a;
+	return l.Normalized();
+}
+
 Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     depth++;
 
@@ -115,26 +132,26 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     double t;                               
     int id = 0; 
     Type description_type; 
-                             
+               
     if (!intersectScene(ray, t, id, description_type)) {
-        return BackgroundColor; 
+        return Color(0.0, 0.0, 0.0); 
 	}
 	
 	bool isSphere = description_type == SPH ? true : false;
 	
 	Sphere obj_s = isSphere ? spheres[id] : spheres[0];
 	Triangle obj_t = isSphere ? tris[0] : tris[id];
+	
+	Color col = isSphere ? obj_s.color : obj_t.color;
 
-    Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
-    Vector normal = isSphere ? 
-		(hitpoint - obj_s.position).Normalized() : obj_t.normal;
+	/* Intersection point */
+    Vector hitpoint = ray.org + ray.dir * t;
+    
+    /* Calculate normals. */
+    Vector normal = isSphere ? (hitpoint - obj_s.position).Normalized() : obj_t.normal;
     Vector nl = normal;
-
-    /* Obtain flipped normal, if object hit from inside */
-    if (normal.Dot(ray.dir) >= 0 && isSphere) 
-        nl = nl.Invert();
-
-    Color col = isSphere ? obj_s.color : obj_t.color; 
+    if (normal.Dot(ray.dir) >= 0) 
+        nl = nl.Invert(); 
     
     /* Calculation for Thin-Lense Depth of Filed. */
 	if (depth == 1 && thinLense) {
@@ -145,29 +162,15 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 			double blur_factor = hitpoint.z < (focal_point.z - aperture) ?
 				(focal_point.z-aperture) - hitpoint.z : hitpoint.z - (focal_point.z+aperture);
 			
-			/* Set up local orthogonal coordinate system su,sv,sw */
-			Vector sw = ray.dir;
-			Vector su = fabs(sw.x) > 0.1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0);
-			su = (su.Cross(ray.dir)).Normalized();
-			Vector sv = sw.Cross(su);
-		
 			double cos_a_max = cos(0.005 + (blur_factor*0.00018));
-			double eps1 = drand48();
-			double eps2 = drand48();
-			double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
-			double sin_a = sqrt(1.0 - cos_a * cos_a);
-			double phi = 2.0*M_PI * eps2;
-			Vector l = su * cos(phi) * sin_a + 
-					   sv * sin(phi) * sin_a + 
-					   sw * cos_a;
-			l = l.Normalized();
+			Vector l = sampleVector(ray.dir, cos_a_max);
+			
 			return Radiance(Ray(ray.org, l), depth-1, E, false);
 		}
 	}
 
     /* Maximum RGB reflectivity for Russian Roulette */
     double p = col.Max();
-
     if (depth > 5 || !p) {  /* After 5 bounces or if max reflectivity is zero */
 	
         if (drand48() < p)            /* Russian Roulette */
@@ -186,13 +189,8 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
         
         /* Set up local orthogonal coordinate system u,v,w on surface */
         Vector w = nl; 
-        Vector u;
-        
-        if(fabs(w.x) > .1)
-            u = Vector(0.0, 1.0, 0.0);
-        else
-            u = (Vector(1.0, 0.0, 0.0).Cross(w)).Normalized(); 
-
+        Vector u = fabs(w.x) > .1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0); 
+        u = (u.Cross(w)).Normalized();
         Vector v = w.Cross(u);  
 
         /* Random reflection vector d */
@@ -204,39 +202,18 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
         Vector e;
         for (int i = 0; i < numSpheres; i ++) {
 			
-            const Sphere &sphere = spheres[i];
+            Sphere sphere = spheres[i];
             if (sphere.emission.x <= 0 && sphere.emission.y <= 0 && sphere.emission.z <= 0
 				&& !isSphere) 
                 continue; /* Skip objects that are not light sources */
       
             /* Randomly sample spherical light source from surface intersection */
-
-            /* Set up local orthogonal coordinate system su,sv,sw towards light source */
-            Vector sw = sphere.position - hitpoint;
-            Vector su;
-            
-            if(fabs(sw.x) > 0.1)
-                su = Vector(0.0, 1.0, 0.0);
-            else
-                su = Vector(1.0, 0.0, 0.0);
-
-            su = (su.Cross(sw)).Normalized();
-            Vector sv = sw.Cross(su);
-
             /* Create random sample direction l towards spherical light source */
             double cos_a_max = sqrt(1.0 - sphere.radius * sphere.radius / 
                                (hitpoint - sphere.position).Dot(hitpoint-sphere.position));
             cos_a_max = cos_a_max != cos_a_max ? 1 : cos_a_max;
             
-            double eps1 = drand48();
-            double eps2 = drand48();
-            double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
-            double sin_a = sqrt(1.0 - cos_a * cos_a);
-            double phi = 2.0*M_PI * eps2;
-            Vector l = su * cos(phi) * sin_a + 
-                       sv * sin(phi) * sin_a + 
-                       sw * cos_a;
-            l = l.Normalized();
+            Vector l = sampleVector(sphere.position - hitpoint,	cos_a_max);
 
             /* Shoot shadow ray, check if intersection is with light source */
             Type temp_type;
@@ -246,7 +223,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
                 double omega = 2*M_PI * (1 - cos_a_max);
 
                 /* Add diffusely reflected light from light source; note constant BRDF 1/PI */
-                e = e + col.MultComponents(sphere.emission * l.Dot(nl) * omega) * M_1_PI; 
+                e = e + col.MultComponents(sphere.emission * l.Dot(nl) * omega) / M_PI; 
             }
         }
    
@@ -263,26 +240,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 			depth, 1, false));
 			
     } else if ((isSphere ? obj_s.refl : obj_t.refl) == GLOS) {
-		/* Set up local orthogonal coordinate system su,sv,sw */
-		Vector sw = ray.dir - normal * 2 * normal.Dot(ray.dir);
-		Vector su;
-		
-		if(fabs(sw.x) > 0.1) su = Vector(0.0, 1.0, 0.0);
-		else su = Vector(1.0, 0.0, 0.0);
-
-		su = (su.Cross(nl)).Normalized();
-		Vector sv = sw.Cross(su);
-		
-		double cos_a_max = cos(0.15);
-		double eps1 = drand48();
-		double eps2 = drand48();
-		double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
-		double sin_a = sqrt(1.0 - cos_a * cos_a);
-		double phi = 2.0*M_PI * eps2;
-		Vector l = su * cos(phi) * sin_a + 
-				   sv * sin(phi) * sin_a + 
-				   sw * cos_a;
-		l = l.Normalized();
+		Vector l = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.15));
 		
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));

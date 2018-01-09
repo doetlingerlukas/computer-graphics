@@ -168,7 +168,7 @@ Triangle::Triangle( Vector a_, Vector b_, Vector c_, Color color_, Refl_t refl_)
 	
 	edge_a = b - a;
 	edge_b = c - a;
-	emission = Color();
+	emission = Color(0.0, 0.0, 0.0);
 	normal = calc_normal(a, b, c).Normalized();
 }
 

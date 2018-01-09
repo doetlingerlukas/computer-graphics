@@ -109,7 +109,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 
     int numSpheres = int(sizeof(spheres) / sizeof(Sphere));
     
-    double aperture = 40;
+    double aperture = 30;
     double focal_length = 50;
 
     double t;                               
@@ -131,7 +131,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     Vector nl = normal;
 
     /* Obtain flipped normal, if object hit from inside */
-    if (normal.Dot(ray.dir) >= 0) 
+    if (normal.Dot(ray.dir) >= 0 && isSphere) 
         nl = nl.Invert();
 
     Color col = isSphere ? obj_s.color : obj_t.color; 
@@ -151,7 +151,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 			su = (su.Cross(ray.dir)).Normalized();
 			Vector sv = sw.Cross(su);
 		
-			double cos_a_max = cos(0.005 + (blur_factor*0.00002));
+			double cos_a_max = cos(0.005 + (blur_factor*0.00018));
 			double eps1 = drand48();
 			double eps2 = drand48();
 			double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
@@ -220,7 +220,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
             else
                 su = Vector(1.0, 0.0, 0.0);
 
-            su = (su.Cross(w)).Normalized();
+            su = (su.Cross(sw)).Normalized();
             Vector sv = sw.Cross(su);
 
             /* Create random sample direction l towards spherical light source */
@@ -293,12 +293,9 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     bool into = normal.Dot(nl) > 0;       /* Bool for checking if ray from outside going in */
     double nc = 1;                        /* Index of refraction of air (approximately) */  
     double nt = 1.5;                      /* Index of refraction of glass (approximately) */
-    double nnt;
 
-    if(into)      /* Set ratio depending on hit from inside or outside */
-        nnt = nc/nt;
-    else
-        nnt = nt/nc;
+    /* Set ratio depending on hit from inside or outside */
+    double nnt = into ? nc/nt : nt/nc;
 
     double ddn = ray.dir.Dot(nl);
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);

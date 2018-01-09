@@ -31,9 +31,6 @@
 
 using namespace std;
 
-/* Define background color. */
-const Color BackgroundColor(0.0, 0.0, 0.0);
-
 /******************************************************************
 * Hard-coded scene definition: the geometry is composed of spheres
 * (i.e. Cornell box walls are part of very large spheres). 
@@ -42,36 +39,42 @@ const Color BackgroundColor(0.0, 0.0, 0.0);
 * - emitted light (light sources), surface reflectivity (~color), 
 *   material
 *******************************************************************/
-Sphere spheres[] = {
+vector<Sphere> spheres = {
 	
-    Sphere( 1e5, Vector( 1e5  +1,      40.8,      81.6),  Vector(), Vector(.75,.25,.25), DIFF), /* Left wall */
-    Sphere( 1e5, Vector(-1e5 +99,      40.8,      81.6),  Vector(), Vector(.25,.25,.75), DIFF), /* Rght wall */
-    Sphere( 1e5, Vector(      50,      40.8,       1e5),  Vector(), Vector(.75,.75,.75), DIFF), /* Back wall */
-    Sphere( 1e5, Vector(      50,      40.8, -1e5 +170),  Vector(), Vector(),            DIFF), /* Front wall */
-    Sphere( 1e5, Vector(      50,       1e5,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Floor */
-    Sphere( 1e5, Vector(      50,-1e5 +81.6,      81.6),  Vector(), Vector(.75,.75,.75), DIFF), /* Ceiling */
-
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
+    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  GLOS), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
-vector<Triangle> tris = loadOBJ("box.obj", Color(0.25, 0.75, 0.0), REFR);
+vector<Triangle> tris = {
+  /* Cornell Box walls */
+  Triangle(Vector(  0.0,  0.0,   0.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Back:   bottom-left
+  Triangle(Vector(100.0, 80.0,   0.0), Vector(-100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Back:   top-right
+  Triangle(Vector(  0.0,  0.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,   0.0, -170.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Bottom: front-left
+  Triangle(Vector(100.0,  0.0,   0.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,   0.0,  170.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Bottom: back-right
+  Triangle(Vector(  0.0, 80.0,   0.0), Vector( 100.0, 0.0,    0.0), Vector(0.0,   0.0,  170.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Top:    back-left
+  Triangle(Vector(100.0, 80.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,   0.0, -170.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Top:    front-right
+  Triangle(Vector(  0.0,  0.0, 170.0), Vector(   0.0, 0.0, -170.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.75, 0.25, 0.25), DIFF), // Left:   front-bottom
+  Triangle(Vector(  0.0, 80.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.25, 0.25), DIFF), // Left:   back-top
+  Triangle(Vector(100.0,  0.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.25, 0.25, 0.75), DIFF), // Right:  back-bottom
+  Triangle(Vector(100.0, 80.0, 170.0), Vector(   0.0, 0.0, -170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.25, 0.75), DIFF), // Right:  front-top
+  Triangle(Vector(100.0,  0.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.25, 0.75, 0.25), DIFF), // Front:  bottom-right
+  Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.75, 0.25), DIFF), // Front:  top-left
+};
+
+vector<Triangle> box = loadOBJ("box.obj", Color(0.5, 1.0, 0.0), DIFF);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
 * returns true if intersection is found, as well as ray parameter
 * of intersection and id of intersected object
 *******************************************************************/
-bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
-	
-    const int ns = int(sizeof(spheres) / sizeof(Sphere));
-    const unsigned int nt = tris.size();
+bool intersectScene(const Ray &ray, double &t, size_t &id, Type &type) {
     t = 1e20;
 	
 	/* Check for intersection with spheres in scene. */
-    for (int i = 0; i < ns; i ++) {
+    for (size_t i = 0; i < spheres.size(); i ++) {
         double d = spheres[i].Intersect(ray);
         if (d > 0.0  && d < t) {
             t = d;
@@ -80,7 +83,7 @@ bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
         }
     }
     /* Check for intersection with triangles in scene. */
-    for (unsigned int i = 0; i < nt; i ++) {
+    for (size_t i = 0; i < tris.size(); i ++) {
         double d = tris[i].intersect(ray);
         if (d > 0.0 && d < t) {
             t  = d;
@@ -100,42 +103,78 @@ bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
 * (possibly via specular reflection, refraction), controlled by 
 * parameter E = 0/1;  
 * on diffuse surfaces light sources are explicitely sampled;
-* for transparent objects, Schlick´s approximation is employed;
+* for transparent objects, Schlickï¿½s approximation is employed;
 * for first 3 bounces obtain reflected and refracted component,
 * afterwards one of the two is chosen randomly   
 *******************************************************************/
-Color Radiance(const Ray &ray, int depth, int E) {
-    depth++;
 
-    int numSpheres = int(sizeof(spheres) / sizeof(Sphere));
+/* Sample a vector around a given vector based on an angle. */
+Vector sampleVector(Vector vec, double max_angle) {
+	Vector sw = vec;
+	Vector su = fabs(sw.x) > 0.1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0);
+	su = (su.Cross(sw)).Normalized();
+	Vector sv = sw.Cross(su);
+	
+	double cos_a_max = max_angle;
+	double eps1 = drand48();
+	double eps2 = drand48();
+	double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
+	double sin_a = sqrt(1.0 - cos_a * cos_a);
+	double phi = 2.0*M_PI * eps2;
+	Vector l = su * cos(phi) * sin_a + 
+			   sv * sin(phi) * sin_a + 
+			   sw * cos_a;
+	return l.Normalized();
+}
+
+Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
+    depth++;
+    
+    double aperture = 30;
+    double focal_length = 50;
 
     double t;                               
-    int id = 0; 
+    size_t id = 0; 
     Type description_type; 
-                             
+               
     if (!intersectScene(ray, t, id, description_type)) {
-        return BackgroundColor; 
+        return Color(0.0, 0.0, 0.0); 
 	}
 	
 	bool isSphere = description_type == SPH ? true : false;
 	
-	Sphere obj_s = spheres[id];
-	Triangle obj_t = tris[id];
+	Sphere obj_s = isSphere ? spheres[id] : spheres[0];
+	Triangle obj_t = isSphere ? tris[0] : tris[id];
+	
+	Color col = isSphere ? obj_s.color : obj_t.color;
 
-    Vector hitpoint = ray.org + ray.dir * t;    /* Intersection point */
-    Vector normal = isSphere ? 
-		(hitpoint - obj_s.position).Normalized() : obj_t.normal;  /* Normal at intersection */ 
+	/* Intersection point */
+    Vector hitpoint = ray.org + ray.dir * t;
+    
+    /* Calculate normals. */
+    Vector normal = isSphere ? (hitpoint - obj_s.position).Normalized() : obj_t.normal;
     Vector nl = normal;
-
-    /* Obtain flipped normal, if object hit from inside */
     if (normal.Dot(ray.dir) >= 0) 
-        nl = nl.Invert();
-
-    Color col = isSphere ? obj_s.color : obj_t.color; 
+        nl = nl.Invert(); 
+    
+    /* Calculation for Thin-Lense Depth of Filed. */
+	if (depth == 1 && thinLense == true) {
+		Vector focal_point = ray.org - Vector(0.0, 0.0, focal_length);
+		/* Check if hitpoint is outside DOF */
+		if (hitpoint.z < (focal_point.z - aperture) || (focal_point.z + aperture) < hitpoint.z) {
+			/* Determine blur factor. */
+			double blur_factor = hitpoint.z < (focal_point.z - aperture) ?
+				(focal_point.z-aperture) - hitpoint.z : hitpoint.z - (focal_point.z+aperture);
+			
+			double cos_a_max = cos(0.005 + (blur_factor*0.00018));
+			Vector l = sampleVector(ray.dir, cos_a_max);
+			
+			return Radiance(Ray(ray.org, l), depth-1, E, false);
+		}
+	}
 
     /* Maximum RGB reflectivity for Russian Roulette */
     double p = col.Max();
-
     if (depth > 5 || !p) {  /* After 5 bounces or if max reflectivity is zero */
 	
         if (drand48() < p)            /* Russian Roulette */
@@ -145,8 +184,8 @@ Color Radiance(const Ray &ray, int depth, int E) {
             return (isSphere ? obj_s.emission : obj_t.emission) * E;  
      }
 
-    if ((isSphere ? obj_s.refl : obj_t.refl) == DIFF)
-    {                  
+    if ((isSphere ? obj_s.refl : obj_t.refl) == DIFF) {
+			                  
         /* Compute random reflection vector on hemisphere */
         double r1 = 2.0 * M_PI * drand48(); 
         double r2 = drand48(); 
@@ -154,13 +193,8 @@ Color Radiance(const Ray &ray, int depth, int E) {
         
         /* Set up local orthogonal coordinate system u,v,w on surface */
         Vector w = nl; 
-        Vector u;
-        
-        if(fabs(w.x) > .1)
-            u = Vector(0.0, 1.0, 0.0);
-        else
-            u = (Vector(1.0, 0.0, 0.0).Cross(w)).Normalized(); 
-
+        Vector u = fabs(w.x) > 0.1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0); 
+        u = (u.Cross(w)).Normalized();
         Vector v = w.Cross(u);  
 
         /* Random reflection vector d */
@@ -170,75 +204,59 @@ Color Radiance(const Ray &ray, int depth, int E) {
 
         /* Explicit computation of direct lighting */
         Vector e;
-        for (int i = 0; i < numSpheres; i ++)
-        {
-            const Sphere &sphere = spheres[i];
+        for (size_t i = 0; i < spheres.size(); i ++) {
+			
+            Sphere sphere = spheres[i];
             if (sphere.emission.x <= 0 && sphere.emission.y <= 0 && sphere.emission.z <= 0
 				&& !isSphere) 
                 continue; /* Skip objects that are not light sources */
       
             /* Randomly sample spherical light source from surface intersection */
-
-            /* Set up local orthogonal coordinate system su,sv,sw towards light source */
-            Vector sw = sphere.position - hitpoint;
-            Vector su;
-            
-            if(fabs(sw.x) > 0.1)
-                su = Vector(0.0, 1.0, 0.0);
-            else
-                su = Vector(1.0, 0.0, 0.0);
-
-            su = (su.Cross(w)).Normalized();
-            Vector sv = sw.Cross(su);
-
             /* Create random sample direction l towards spherical light source */
             double cos_a_max = sqrt(1.0 - sphere.radius * sphere.radius / 
-                                    (hitpoint - sphere.position).Dot(hitpoint-sphere.position));
-            double eps1 = drand48();
-            double eps2 = drand48();
-            double cos_a = 1.0 - eps1 + eps1 * cos_a_max;
-            double sin_a = sqrt(1.0 - cos_a * cos_a);
-            double phi = 2.0*M_PI * eps2;
-            Vector l = su * cos(phi) * sin_a + 
-                       sv * sin(phi) * sin_a + 
-                       sw * cos_a;
-            l = l.Normalized();
+                               (hitpoint - sphere.position).Dot(hitpoint-sphere.position));
+            cos_a_max = cos_a_max != cos_a_max ? 1 : cos_a_max;
+            
+            Vector l = sampleVector(sphere.position - hitpoint,	cos_a_max);
 
             /* Shoot shadow ray, check if intersection is with light source */
-            if (intersectScene(Ray(hitpoint,l), t, id, description_type) && id==i)
-            {  
+            Type temp_type;
+            if (intersectScene(Ray(hitpoint,l), t, id, temp_type) && id == i) {
+					  
                 double omega = 2*M_PI * (1 - cos_a_max);
 
                 /* Add diffusely reflected light from light source; note constant BRDF 1/PI */
-                e = e + col.MultComponents(sphere.emission * l.Dot(nl) * omega) * M_1_PI; 
+                e = e + col.MultComponents(sphere.emission * l.Dot(nl) * omega) / M_PI; 
             }
         }
    
         /* Return potential light emission, direct lighting, and indirect lighting (via
            recursive call for Monte-Carlo integration */      
         return (isSphere ? obj_s.emission : obj_t.emission)
-			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0));
-    } 
-    else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) 
-    {  
+			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0, false));
+			
+    } else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
         return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
-                               depth, 1));
-    }
+			depth, 1, false));
+			
+    } else if ((isSphere ? obj_s.refl : obj_t.refl) == GLOS) {
+		Vector l = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.15));
+		
+		return (isSphere ? obj_s.emission : obj_t.emission) + 
+            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
+	}
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  /* Prefect reflection */  
     bool into = normal.Dot(nl) > 0;       /* Bool for checking if ray from outside going in */
     double nc = 1;                        /* Index of refraction of air (approximately) */  
     double nt = 1.5;                      /* Index of refraction of glass (approximately) */
-    double nnt;
 
-    if(into)      /* Set ratio depending on hit from inside or outside */
-        nnt = nc/nt;
-    else
-        nnt = nt/nc;
+    /* Set ratio depending on hit from inside or outside */
+    double nnt = into ? nc/nt : nt/nc;
 
     double ddn = ray.dir.Dot(nl);
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
@@ -246,7 +264,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0)  
         return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents( Radiance(reflRay, depth, 1));
+			+ col.MultComponents( Radiance(reflRay, depth, 1, false));
 
     /* Otherwise reflection and/or refraction occurs */
     Vector tdir;
@@ -257,7 +275,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
     else
         tdir = (ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t))).Normalized();
 
-    /* Determine R0 for Schlick´s approximation */
+    /* Determine R0 for Schlickï¿½s approximation */
     double a = nt - nc;
     double b = nt + nc;
     double R0 = a*a / (b*b);
@@ -269,7 +287,7 @@ Color Radiance(const Ray &ray, int depth, int E) {
     else
         c = 1 - tdir.Dot(normal);
 
-    /* Compute Schlick´s approximation of Fresnel equation */ 
+    /* Compute Schlickï¿½s approximation of Fresnel equation */ 
     double Re = R0 + (1 - R0) *c*c*c*c*c;   /* Reflectance */
     double Tr = 1 - Re;                     /* Transmittance */
 
@@ -280,15 +298,15 @@ Color Radiance(const Ray &ray, int depth, int E) {
 
     if (depth < 3)   /* Initially both reflection and trasmission */
         return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(reflRay, depth, 1) * Re + 
-            Radiance(Ray(hitpoint, tdir), depth, 1) * Tr);
+			+ col.MultComponents(Radiance(reflRay, depth, 1, false) * Re + 
+            Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr);
     else             /* Russian Roulette */ 
         if (drand48() < P)
             return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(reflRay, depth, 1) * RP);
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false) * RP);
         else
             return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1) * TP);
+				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1, false) * TP);
 }
 
 
@@ -302,13 +320,20 @@ Color Radiance(const Ray &ray, int depth, int E) {
 
 int main(int argc, char *argv[]) {
 	
+	for(Triangle t : box) {tris.push_back(t);}
+	
     int width = 1024;
     int height = 768;
     int samples = 1;
+    bool thinLense = false;
 
     if(argc == 2)
-        samples = atoi(argv[1]);
-     
+        samples = atoi(argv[1]);  
+	else if(argc == 3) {
+		samples = atoi(argv[1]); 
+		thinLense = argv[2][0] == 't' ? true : false;
+	}
+        
     /* Set camera origin and viewing direction (negative z direction) */
     Ray camera(Vector(50.0, 52.0, 295.6), Vector(0.0, -0.042612, -1.0).Normalized());
 
@@ -320,8 +345,8 @@ int main(int argc, char *argv[]) {
     Image img(width, height);
 
     /* Loop over image rows */
-    for (int y = 0; y < height; y ++) 
-    { 
+    for (int y = 0; y < height; y ++) {
+		 
         cout << "\rRendering (" << samples * 4 << " spp) " << (100.0 * y / (height - 1)) << "%     ";
         srand(y * y * y);
  
@@ -368,7 +393,7 @@ int main(int argc, char *argv[]) {
 
                         /* Accumulate radiance */
                         accumulated_radiance = accumulated_radiance + 
-                            Radiance( Ray(start, dir), 0, 1) / samples;
+                            Radiance( Ray(start, dir), 0, 1, thinLense) / samples;
                     } 
                     
                     accumulated_radiance = accumulated_radiance.clamp() * 0.25;

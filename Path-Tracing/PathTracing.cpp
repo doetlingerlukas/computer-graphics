@@ -39,7 +39,7 @@ using namespace std;
 * - emitted light (light sources), surface reflectivity (~color), 
 *   material
 *******************************************************************/
-Sphere spheres[] = {
+vector<Sphere> spheres = {
 	
     Sphere( 1e5, Vector( 1e5  +1,      40.8,      81.6),  Vector(), Vector(.75,.25,.25), DIFF), /* Left wall */
     Sphere( 1e5, Vector(-1e5 +99,      40.8,      81.6),  Vector(), Vector(.25,.25,.75), DIFF), /* Rght wall */
@@ -54,21 +54,18 @@ Sphere spheres[] = {
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
-vector<Triangle> tris = loadOBJ("box.obj", Color(0.5, 1.0, 0.0), GLOS);
+vector<Triangle> tris = loadOBJ("box.obj", Color(0.5, 1.0, 0.0), DIFF);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
 * returns true if intersection is found, as well as ray parameter
 * of intersection and id of intersected object
 *******************************************************************/
-bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
-	
-    const int ns = int(sizeof(spheres) / sizeof(Sphere));
-    const unsigned int nt = tris.size();
+bool intersectScene(const Ray &ray, double &t, size_t &id, Type &type) {
     t = 1e20;
 	
 	/* Check for intersection with spheres in scene. */
-    for (int i = 0; i < ns; i ++) {
+    for (size_t i = 0; i < spheres.size(); i ++) {
         double d = spheres[i].Intersect(ray);
         if (d > 0.0  && d < t) {
             t = d;
@@ -77,7 +74,7 @@ bool intersectScene(const Ray &ray, double &t, int &id, Type &type) {
         }
     }
     /* Check for intersection with triangles in scene. */
-    for (unsigned int i = 0; i < nt; i ++) {
+    for (size_t i = 0; i < tris.size(); i ++) {
         double d = tris[i].intersect(ray);
         if (d > 0.0 && d < t) {
             t  = d;
@@ -123,14 +120,12 @@ Vector sampleVector(Vector vec, double max_angle) {
 
 Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     depth++;
-
-    int numSpheres = int(sizeof(spheres) / sizeof(Sphere));
     
     double aperture = 30;
     double focal_length = 50;
 
     double t;                               
-    int id = 0; 
+    size_t id = 0; 
     Type description_type; 
                
     if (!intersectScene(ray, t, id, description_type)) {
@@ -154,7 +149,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
         nl = nl.Invert(); 
     
     /* Calculation for Thin-Lense Depth of Filed. */
-	if (depth == 1 && thinLense) {
+	if (depth == 1 && thinLense == true) {
 		Vector focal_point = ray.org - Vector(0.0, 0.0, focal_length);
 		/* Check if hitpoint is outside DOF */
 		if (hitpoint.z < (focal_point.z - aperture) || (focal_point.z + aperture) < hitpoint.z) {
@@ -189,7 +184,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
         
         /* Set up local orthogonal coordinate system u,v,w on surface */
         Vector w = nl; 
-        Vector u = fabs(w.x) > .1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0); 
+        Vector u = fabs(w.x) > 0.1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0); 
         u = (u.Cross(w)).Normalized();
         Vector v = w.Cross(u);  
 
@@ -200,7 +195,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 
         /* Explicit computation of direct lighting */
         Vector e;
-        for (int i = 0; i < numSpheres; i ++) {
+        for (size_t i = 0; i < spheres.size(); i ++) {
 			
             Sphere sphere = spheres[i];
             if (sphere.emission.x <= 0 && sphere.emission.y <= 0 && sphere.emission.z <= 0
@@ -217,8 +212,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 
             /* Shoot shadow ray, check if intersection is with light source */
             Type temp_type;
-            if (intersectScene(Ray(hitpoint,l), t, id, temp_type) && id == i && 
-				description_type == temp_type) {
+            if (intersectScene(Ray(hitpoint,l), t, id, temp_type) && id == i) {
 					  
                 double omega = 2*M_PI * (1 - cos_a_max);
 

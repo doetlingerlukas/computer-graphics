@@ -4,7 +4,7 @@ LD = g++
 OBJ = PathTracing.o Structs.o OBJReader.o
 TARGET = PathTracing
 
-CFLAGS = -O3 -Wall -Wextra -std=c++1y 
+CFLAGS = -O3 -Wall -Wextra -std=c++1y -fopenmp
 LDLIBS =
 INCLUDES = 
 
@@ -14,9 +14,6 @@ VPATH =
 
 # Rules
 all: $(TARGET)
-
-$(TARGET).o: $(TARGET).cpp
-	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) $(INCLUDES) -c $^ -o $@
@@ -31,4 +28,4 @@ run: clean all
 
 # Dependencies
 $(TARGET): $(OBJ)
-
+	$(CC) $(CFLAGS) $^ -o $@

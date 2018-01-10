@@ -11,7 +11,7 @@
 
 using namespace std;
 
-enum Refl_t { DIFF, SPEC, REFR, GLOS }; 
+enum Refl_t { DIFF, SPEC, REFR, GLOS, TRSL }; 
 enum Type { TRI, SPH };
 
 struct Vector {

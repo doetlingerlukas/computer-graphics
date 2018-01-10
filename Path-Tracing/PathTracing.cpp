@@ -42,7 +42,7 @@ using namespace std;
 vector<Sphere> spheres = {
 	
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  GLOS), /* Glas sphere */
+    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  TRSL), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
@@ -63,7 +63,7 @@ vector<Triangle> tris = {
   Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.75, 0.25), DIFF), // Front:  top-left
 };
 
-vector<Triangle> box = loadOBJ("box.obj", Color(0.5, 1.0, 0.0), DIFF);
+vector<Triangle> box = loadOBJ("box.obj", Color(1, 1.0, 1.0)*0.999, TRSL);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene;
@@ -220,8 +220,10 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
             Vector l = sampleVector(sphere.position - hitpoint,	cos_a_max);
 
             /* Shoot shadow ray, check if intersection is with light source */
+            size_t index = id;
+            double t_;
             Type temp_type;
-            if (intersectScene(Ray(hitpoint,l), t, id, temp_type) && id == i) {
+            if (intersectScene(Ray(hitpoint,l), t_, index, temp_type) && index == i) {
 					  
                 double omega = 2*M_PI * (1 - cos_a_max);
 
@@ -247,6 +249,24 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 		
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
+            
+	} else if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
+		bool into = normal.Dot(nl) > 0;
+		double nc = 1;  
+		double nt = 1.2;
+				
+		double nnt = into ? nc/nt : nt/nc;
+
+		double ddn = ray.dir.Dot(nl);
+		double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
+		Vector transmvec = into ?
+			ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t)) :
+			ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t));
+		
+		Vector l = sampleVector(transmvec, cos(0.09));
+		
+		return (isSphere ? obj_s.emission : obj_t.emission) + 
+            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
 	}
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */
@@ -260,20 +280,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 
     double ddn = ray.dir.Dot(nl);
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
-
+	
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0)  
         return (isSphere ? obj_s.emission : obj_t.emission)
 			+ col.MultComponents( Radiance(reflRay, depth, 1, false));
 
     /* Otherwise reflection and/or refraction occurs */
-    Vector tdir;
-
-    /* Determine transmitted ray direction for refraction */
-    if(into)
-        tdir = (ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t))).Normalized();
-    else
-        tdir = (ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t))).Normalized();
+    /* Determine transmitted ray direction for refraction */    
+    Vector tdir = into ?
+        (ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t))).Normalized() :
+		(ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t))).Normalized();
 
     /* Determine R0 for Schlick�s approximation */
     double a = nt - nc;
@@ -281,32 +298,32 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     double R0 = a*a / (b*b);
   
     /* Cosine of correct angle depending on outside/inside */
-    double c;
-    if(into)
-        c = 1 + ddn;
-    else
-        c = 1 - tdir.Dot(normal);
-
+    double c = into ? (1 + ddn) : (1 - tdir.Dot(normal));
+	
     /* Compute Schlick�s approximation of Fresnel equation */ 
     double Re = R0 + (1 - R0) *c*c*c*c*c;   /* Reflectance */
     double Tr = 1 - Re;                     /* Transmittance */
-
+	
     /* Probability for selecting reflectance or transmittance */
     double P = .25 + .5 * Re;
     double RP = Re / P;         /* Scaling factors for unbiased estimator */
     double TP = Tr / (1 - P);
 
-    if (depth < 3)   /* Initially both reflection and trasmission */
-        return (isSphere ? obj_s.emission : obj_t.emission)
+    if (depth < 3) {  
+		/* Initially both reflection and trasmission */
+		return (isSphere ? obj_s.emission : obj_t.emission)
 			+ col.MultComponents(Radiance(reflRay, depth, 1, false) * Re + 
-            Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr);
-    else             /* Russian Roulette */ 
+			Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr);
+    
+    } else {
+		/* Russian Roulette */ 
         if (drand48() < P)
             return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false) * RP);
         else
             return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1, false) * TP);
+	}
 }
 
 

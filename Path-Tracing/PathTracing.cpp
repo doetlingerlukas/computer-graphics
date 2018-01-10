@@ -253,7 +253,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 	} else if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
 		bool into = normal.Dot(nl) > 0;
 		double nc = 1;  
-		double nt = 1.2;
+		double nt = 1.5;
 				
 		double nnt = into ? nc/nt : nt/nc;
 
@@ -263,10 +263,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 			ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t)) :
 			ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t));
 		
-		Vector l = sampleVector(transmvec, cos(0.09));
+		Vector l = sampleVector(transmvec, cos(0.25));
+		Vector g = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.5));
+		
+		if (depth >= 3) {
+			return (isSphere ? obj_s.emission : obj_t.emission) + 
+				col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
+		}
 		
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
-            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
+            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false) +
+            Radiance(Ray(hitpoint, g), depth, 1, false) * 0.8);
 	}
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */

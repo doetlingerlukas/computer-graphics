@@ -4,14 +4,15 @@
 *
 * Description: This program demonstrates global illumination rendering
 * based on the path tracing method. The intergral in the rendering
-* equation is approximated via Monte-Carlo integration; explicit 
-* direct lighting is included to improve quality; the rendered image 
+* equation is approximated via Monte-Carlo integration. Explicit 
+* direct lighting is included to improve quality. The rendered image 
 * is saved in PPM format.
 *
 * The code is largely based on the software smallpt by Kevin Beason,
 * released under the MIT License.
-*
-* Advanced Computer Graphics Proseminar WS 2017
+* 
+* Code was extended by Manuel Buchauer, Davide De Sclavis and Lukas Dötlinger
+* during the Advanced Computer Graphics Proseminar WS 2017.
 * 
 * Interactive Graphics and Simulation Group
 * Department of Computer Science
@@ -32,12 +33,9 @@
 using namespace std;
 
 /******************************************************************
-* Hard-coded scene definition: the geometry is composed of spheres
-* (i.e. Cornell box walls are part of very large spheres). 
-* These are defined by:
-* - radius, center 
-* - emitted light (light sources), surface reflectivity (~color), 
-*   material
+* Hard-coded scene definition: The geometry is composed of spheres
+* and triangles.
+* Scene definitions may also be loaded with the included OBJ loader.
 *******************************************************************/
 vector<Sphere> spheres = {
 	
@@ -66,9 +64,9 @@ vector<Triangle> tris = {
 vector<Triangle> box = loadOBJ("box.obj", Color(1, 1.0, 1.0)*0.999, TRSL);
 
 /******************************************************************
-* Check for closest intersection of a ray with the scene;
-* returns true if intersection is found, as well as ray parameter
-* of intersection and id of intersected object
+* Check for closest intersection of a ray with the scene.
+* Returns true if intersection is found, as well as ray parameter
+* of intersection and id of intersected object.
 *******************************************************************/
 bool intersectScene(const Ray &ray, double &t, size_t &id, Type &type) {
     t = 1e20;
@@ -95,20 +93,10 @@ bool intersectScene(const Ray &ray, double &t, size_t &id, Type &type) {
 }
 
 /******************************************************************
-* Recursive path tracing for computing radiance via Monte-Carlo
-* integration; only considers perfectly diffuse, specular or 
-* transparent materials; 
-* after 5 bounces Russian Roulette is used to possibly terminate rays;  
-* emitted light from light source only included on first direct hit 
-* (possibly via specular reflection, refraction), controlled by 
-* parameter E = 0/1;  
-* on diffuse surfaces light sources are explicitely sampled;
-* for transparent objects, Schlickï¿½s approximation is employed;
-* for first 3 bounces obtain reflected and refracted component,
-* afterwards one of the two is chosen randomly   
+* Function to sample a vector around a given vector based on
+* an angle. Used for computation of glossy and translucent 
+* materials in Radiance function.
 *******************************************************************/
-
-/* Sample a vector around a given vector based on an angle. */
 Vector sampleVector(Vector vec, double max_angle) {
 	Vector sw = vec;
 	Vector su = fabs(sw.x) > 0.1 ? Vector(0.0, 1.0, 0.0) : Vector(1.0, 0.0, 0.0);
@@ -126,6 +114,18 @@ Vector sampleVector(Vector vec, double max_angle) {
 			   sw * cos_a;
 	return l.Normalized();
 }
+
+/******************************************************************
+* Recursive path tracing for computing radiance via Monte-Carlo
+* integration, considering diffuse, specular, glossy, transparent
+* or translucent material.
+* After 5 bounces Russian Roulette is used to possibly terminate rays. 
+* Emitted light from light source only included on first direct hit.
+* On diffuse surfaces light sources are explicitely sampled.
+* For transparent and translucent objects, Schlickï¿½s approximation
+* is employed.
+* A more detailed explaination is to be found in the README.
+*******************************************************************/
 
 Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     depth++;
@@ -184,6 +184,9 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
             return (isSphere ? obj_s.emission : obj_t.emission) * E;  
      }
 
+	/**
+	 * Object is diffuse.
+	 **/
     if ((isSphere ? obj_s.refl : obj_t.refl) == DIFF) {
 			                  
         /* Compute random reflection vector on hemisphere */
@@ -202,7 +205,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
                     v * sin(r1) * r2s + 
                     w * sqrt(1 - r2)).Normalized();  
 
-        /* Explicit computation of direct lighting */
+        /** Explicit computation of direct lighting **/
         Vector e;
         for (size_t i = 0; i < spheres.size(); i ++) {
 			
@@ -231,70 +234,50 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
                 e = e + col.MultComponents(sphere.emission * l.Dot(nl) * omega) / M_PI; 
             }
         }
-   
         /* Return potential light emission, direct lighting, and indirect lighting (via
            recursive call for Monte-Carlo integration */      
         return (isSphere ? obj_s.emission : obj_t.emission)
 			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0, false));
-			
+	
+	/**
+	 * Object is mirror like. Perfect specular reflection.
+	 **/
     } else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) {  
         /* Return light emission mirror reflection (via recursive call using perfect
            reflection vector) */
         return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
 			depth, 1, false));
-			
+	
+	/**
+	 * Object is glossy. Non perfect reflection, due to distributed rays about the
+	 * specular reflection direction.
+	 **/
     } else if ((isSphere ? obj_s.refl : obj_t.refl) == GLOS) {
 		Vector l = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.15));
 		
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
-            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
-            
-	} /*else if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
-		bool into = normal.Dot(nl) > 0;
-		double nc = 1;  
-		double nt = 1.5;
-				
-		double nnt = into ? nc/nt : nt/nc;
+            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));   
+	}
 
-		double ddn = ray.dir.Dot(nl);
-		double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
-		Vector transmvec = into ?
-			ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t)) :
-			ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t));
-		
-		Vector l = sampleVector(transmvec, cos(0.25));
-		Vector g = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.5));
-		
-		if (depth >= 3) {
-			return (isSphere ? obj_s.emission : obj_t.emission) + 
-				col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
-		}
-		
-		return (isSphere ? obj_s.emission : obj_t.emission) + 
-            col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false) +
-            Radiance(Ray(hitpoint, g), depth, 1, false) * 0.8);
-	}*/
-
-    /* Otherwise object transparent, i.e. assumed dielectric glass material */
-    Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  /* Prefect reflection */  
-    bool into = normal.Dot(nl) > 0;       /* Bool for checking if ray from outside going in */
+    /** 
+     * Otherwise object transparent or translucent, i.e. assumed dielectric glass material. 
+     **/
+    Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  
+    bool into = normal.Dot(nl) > 0;
     double nc = 1;                        /* Index of refraction of air (approximately) */  
     double nt = 1.5;                      /* Index of refraction of glass (approximately) */
 
-    /* Set ratio depending on hit from inside or outside */
     double nnt = into ? nc/nt : nt/nc;
-
     double ddn = ray.dir.Dot(nl);
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
 
-    /* Otherwise reflection and/or refraction occurs */
     /* Determine transmitted ray direction for refraction */    
     Vector tdir = into ?
         (ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t))) :
 		(ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t)));
 		
-	
+	/* Determine sampled transmittance and reflectance vectors for translucency. */
 	Vector sampled_tdir;
 	Vector sampled_spec;
 	if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
@@ -303,10 +286,16 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 	}
 	
 	/* Check for total internal reflection, if so only reflect */
-    if (cos2t < 0 && (isSphere ? obj_s.refl : obj_t.refl) == TRSL)  
-        return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(Ray(hitpoint, sampled_spec), depth, 1, false));
-		
+    if (cos2t < 0) { 
+		if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
+			return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(Ray(hitpoint, sampled_spec), depth, 1, false));
+		} else {
+			return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false));
+		}
+	}
+	
     /* Determine R0 for Schlickï¿½s approximation */
     double a = nt - nc;
     double b = nt + nc;
@@ -326,6 +315,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     double TP = Tr / (1 - P);
     
     if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
+		/* Translucency */
 		if (depth >= 3) {
 			if (drand48() < P)
 				return (isSphere ? obj_s.emission : obj_t.emission)
@@ -339,16 +329,15 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, sampled_tdir), depth, 1, false) * Tr +
             Radiance(Ray(hitpoint, sampled_spec), depth, 1, false) * Re);
-            
+		
 	} else {
+		/* Transparancy */
 		if (depth < 3) {  
-			/* Initially both reflection and trasmission */
 			return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false) * Re + 
 				Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr);
 		
 		} else {
-			/* Russian Roulette */ 
 			if (drand48() < P)
 				return (isSphere ? obj_s.emission : obj_t.emission)
 					+ col.MultComponents(Radiance(reflRay, depth, 1, false) * RP);
@@ -361,11 +350,11 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 
 
 /******************************************************************
-* Main routine: Computation of path tracing image (2x2 subpixels)
-* Key parameters
+* Main routine: Computation of path tracing image (2x2 subpixels).
+* Key parameters:
 * - Image dimensions: width, height 
 * - Number of samples per subpixel (non-uniform filtering): samples 
-* Rendered result saved as PPM image file
+* Rendered result saved as PPM image file.
 *******************************************************************/
 
 int main(int argc, char *argv[]) {

@@ -40,7 +40,7 @@ using namespace std;
 vector<Sphere> spheres = {
 	
     Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  TRSL), /* Glas sphere */
+    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
@@ -61,7 +61,7 @@ vector<Triangle> tris = {
   Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.75, 0.25), DIFF), // Front:  top-left
 };
 
-vector<Triangle> box = loadOBJ("box.obj", Color(1, 1.0, 1.0)*0.999, TRSL);
+vector<Triangle> box = loadOBJ("box.obj", Color(1, 1.0, 1.0)*0.999, DIFF);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene.
@@ -131,12 +131,12 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     depth++;
     
     double aperture = 30;
-    double focal_length = 50;
+    double focal_length = 60;
 
     double t;                               
     size_t id = 0; 
     Type description_type; 
-               
+    
     if (!intersectScene(ray, t, id, description_type)) {
         return Color(0.0, 0.0, 0.0); 
 	}
@@ -162,9 +162,22 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 		Vector focal_point = ray.org - Vector(0.0, 0.0, focal_length);
 		/* Check if hitpoint is outside DOF */
 		if (hitpoint.z < (focal_point.z - aperture) || (focal_point.z + aperture) < hitpoint.z) {
+			/* https://en.wikipedia.org/wiki/Circle_of_confusion */
+			double obj_dis = fabs(hitpoint.z - ray.org.z);
+			double img_dis = focal_length * obj_dis / (obj_dis - focal_length);
+			double focus_obj_dis = focal_length * img_dis / (img_dis - focal_length);
+			double m = img_dis / focus_obj_dis;
+			double C = aperture * fabs(obj_dis - focus_obj_dis) / obj_dis;
+			double c = C * m;
+			double N = focal_length / aperture;
+			double dof = 2 * N * c * (m + 1) / (pow(m, 2) - pow(N * c / focal_length, 2));
+			
 			/* Determine blur factor. */
-			double blur_factor = hitpoint.z < (focal_point.z - aperture) ?
-				(focal_point.z-aperture) - hitpoint.z : hitpoint.z - (focal_point.z+aperture);
+			Vector dof_border = hitpoint.z < (focal_point.z - aperture) ?
+				Vector(focal_point.x, focal_point.y, focal_point.z - aperture) :
+				Vector(focal_point.x, focal_point.y, focal_point.z + aperture);
+				
+			double blur_factor = (dof_border - hitpoint).Length() + dof;
 			
 			double cos_a_max = cos(0.005 + (blur_factor*0.00018));
 			Vector l = sampleVector(ray.dir, cos_a_max);

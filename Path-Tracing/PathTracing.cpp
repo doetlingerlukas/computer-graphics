@@ -250,7 +250,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false));
             
-	} else if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
+	} /*else if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
 		bool into = normal.Dot(nl) > 0;
 		double nc = 1;  
 		double nt = 1.5;
@@ -274,7 +274,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 		return (isSphere ? obj_s.emission : obj_t.emission) + 
             col.MultComponents(Radiance(Ray(hitpoint, l), depth, 1, false) +
             Radiance(Ray(hitpoint, g), depth, 1, false) * 0.8);
-	}
+	}*/
 
     /* Otherwise object transparent, i.e. assumed dielectric glass material */
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  /* Prefect reflection */  
@@ -287,24 +287,33 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 
     double ddn = ray.dir.Dot(nl);
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
-	
-    /* Check for total internal reflection, if so only reflect */
-    if (cos2t < 0)  
-        return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents( Radiance(reflRay, depth, 1, false));
 
     /* Otherwise reflection and/or refraction occurs */
     /* Determine transmitted ray direction for refraction */    
     Vector tdir = into ?
-        (ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t))).Normalized() :
-		(ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t))).Normalized();
-
+        (ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t))) :
+		(ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t)));
+		
+	
+	Vector sampled_tdir;
+	Vector sampled_spec;
+	if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
+		sampled_tdir = sampleVector(tdir, cos(0.25));
+		sampled_spec = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.125));
+	}
+	
+	/* Check for total internal reflection, if so only reflect */
+    if (cos2t < 0 && (isSphere ? obj_s.refl : obj_t.refl) == TRSL)  
+        return (isSphere ? obj_s.emission : obj_t.emission)
+			+ col.MultComponents(Radiance(Ray(hitpoint, sampled_spec), depth, 1, false));
+		
     /* Determine R0 for Schlick�s approximation */
     double a = nt - nc;
     double b = nt + nc;
     double R0 = a*a / (b*b);
   
     /* Cosine of correct angle depending on outside/inside */
+    tdir = tdir.Normalized();
     double c = into ? (1 + ddn) : (1 - tdir.Dot(normal));
 	
     /* Compute Schlick�s approximation of Fresnel equation */ 
@@ -315,21 +324,38 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     double P = .25 + .5 * Re;
     double RP = Re / P;         /* Scaling factors for unbiased estimator */
     double TP = Tr / (1 - P);
-
-    if (depth < 3) {  
-		/* Initially both reflection and trasmission */
-		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(reflRay, depth, 1, false) * Re + 
-			Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr);
     
-    } else {
-		/* Russian Roulette */ 
-        if (drand48() < P)
-            return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(reflRay, depth, 1, false) * RP);
-        else
-            return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1, false) * TP);
+    if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
+		if (depth >= 3) {
+			if (drand48() < P)
+				return (isSphere ? obj_s.emission : obj_t.emission)
+					+ col.MultComponents(Radiance(Ray(hitpoint, sampled_spec),
+					depth, 1, false) * RP);
+			else
+				return (isSphere ? obj_s.emission : obj_t.emission)
+					+ col.MultComponents(Radiance(Ray(hitpoint,sampled_tdir),
+					depth, 1, false) * TP);
+		}
+		return (isSphere ? obj_s.emission : obj_t.emission) + 
+            col.MultComponents(Radiance(Ray(hitpoint, sampled_tdir), depth, 1, false) * Tr +
+            Radiance(Ray(hitpoint, sampled_spec), depth, 1, false) * Re);
+            
+	} else {
+		if (depth < 3) {  
+			/* Initially both reflection and trasmission */
+			return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false) * Re + 
+				Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr);
+		
+		} else {
+			/* Russian Roulette */ 
+			if (drand48() < P)
+				return (isSphere ? obj_s.emission : obj_t.emission)
+					+ col.MultComponents(Radiance(reflRay, depth, 1, false) * RP);
+			else
+				return (isSphere ? obj_s.emission : obj_t.emission)
+					+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1, false) * TP);
+		}
 	}
 }
 

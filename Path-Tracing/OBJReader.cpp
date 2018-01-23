@@ -35,3 +35,27 @@ vector<Triangle> loadOBJ(string filepath, Color c, Refl_t r) {
 	
 	return faces;
 }
+
+vector<Triangle> translateOBJ(vector<Triangle> obj, Vector t_v) {
+	
+	vector<Triangle> to_return;
+	
+	for(Triangle t : obj) {
+		to_return.push_back(Triangle(t.a + t_v, t.b + t_v, t.c + t_v, t.color, t.refl));
+	}
+	
+	return to_return;
+}
+
+vector<Triangle> scaleOBJ(vector<Triangle> obj, double s) {
+	
+	vector<Triangle> to_return;
+	
+	for(Triangle t : obj) {
+		to_return.push_back(Triangle(t.a * s, t.b * s, t.c * s, t.color, t.refl));
+	}
+	
+	return to_return;
+}
+
+

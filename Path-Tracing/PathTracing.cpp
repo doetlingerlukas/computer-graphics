@@ -39,8 +39,8 @@ using namespace std;
 *******************************************************************/
 vector<Sphere> spheres = {
 	
-    Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
-    Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  REFR), /* Glas sphere */
+    //Sphere(16.5, Vector(27, 16.5, 47), Vector(), Vector(1,1,1)*.999,  SPEC), /* Mirror sphere */
+    //Sphere(16.5, Vector(73, 16.5, 78), Vector(), Vector(1,1,1)*.999,  TRSL), /* Glas sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
@@ -61,7 +61,8 @@ vector<Triangle> tris = {
   Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.75, 0.25), DIFF), // Front:  top-left
 };
 
-vector<Triangle> box = loadOBJ("box.obj", Color(1, 1.0, 1.0)*0.999, DIFF);
+vector<Triangle> box = 
+	scaleOBJ(loadOBJ("deer.obj", Color(1, 1.0, 1.0)*0.999, GLOS), 0.05);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene.

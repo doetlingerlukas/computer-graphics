@@ -42,9 +42,9 @@ using namespace std;
 *******************************************************************/
 vector<Sphere> spheres = {
 	
-    Sphere(22.0, Vector(50, 22, 100), Vector(), Vector(1,1,1)*.999,  REFR), /* Mirror sphere */
-    Sphere(22.0 - film_diameter, Vector(50, 22 + film_diameter, 100), 
-		Vector(), Vector(1,0.5,0)*.999,  REFR), /* Glas sphere */
+    Sphere(22.0, Vector(50, 22, 100), Vector(), Vector(1,1,1)*.999,  REFR), /* Outer sphere */
+    //Sphere(22.0 - film_diameter, Vector(50, 22, 100), Vector(), 
+		//Vector(1,1,1)*.999,  SPEC), /* Inner sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
@@ -128,7 +128,7 @@ Vector sampleVector(Vector vec, double max_angle) {
 * is employed.
 * A more detailed explaination is to be found in the README.
 *******************************************************************/
-double color_of_wave(const Ray &ray, int depth, int E, Wave wave){
+double color_of_wave(const Ray &ray, int depth, int E, Wave wave) {
 	if (wave == R) {
 		return (Radiance(ray, depth, E, false)).x;
 	} else if (wave == G) {
@@ -259,8 +259,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
            recursive call for Monte-Carlo integration */      
         return (isSphere ? obj_s.emission : obj_t.emission)
 			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0, false));
-    }
-
+			
+    /**
+	 * Object is mirror like. Perfect specular reflection.
+	 **/
+    } else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) {  
+        /* Return light emission mirror reflection (via recursive call using perfect
+           reflection vector) */
+        return (isSphere ? obj_s.emission : obj_t.emission) + 
+            col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
+			depth, 1, false));
+	}
     
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  
     bool into = normal.Dot(nl) > 0;
@@ -280,8 +289,8 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
 	Vector sampled_tdir;
 	Vector sampled_spec;
 	if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
-		sampled_tdir = sampleVector(tdir, cos(0.005));
-		sampled_spec = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.005));
+		sampled_tdir = sampleVector(tdir, cos(0.25));
+		sampled_spec = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.125));
 	}
 	
 	/* Check for total internal reflection, if so only reflect */
@@ -311,28 +320,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense) {
     
 	/* Transparancy */
 	if (depth < 3) {  
-		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(
-			Color(color_of_wave(Ray(hitpoint, sampled_spec), depth, 1, R),
-				  color_of_wave(Ray(hitpoint, sampled_spec), depth, 1, G),
-				  color_of_wave(Ray(hitpoint, sampled_spec), depth, 1, B)) * Re + 
-			Color(color_of_wave(Ray(hitpoint, sampled_tdir), depth, 1, R),
-				  color_of_wave(Ray(hitpoint, sampled_tdir), depth, 1, G),
-				  color_of_wave(Ray(hitpoint, sampled_tdir), depth, 1, B)) * Tr);
+		return Color(((isSphere ? obj_s.emission : obj_t.emission)
+			+ col.MultComponents(Radiance(reflRay, depth, 1, false) * Re + 
+			Radiance(Ray(hitpoint, tdir), depth, 1, false) * Tr)).x, 0, 0);
 		
 	} else {
 		if (drand48() < P)
-			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(
-				Color(color_of_wave(Ray(hitpoint, sampled_spec), depth, 1, R),
-					  color_of_wave(Ray(hitpoint, sampled_spec), depth, 1, G),
-				      color_of_wave(Ray(hitpoint, sampled_spec), depth, 1, B)) * RP);
+			return Color(((isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false) * RP)).x, 0, 0);
 		else
-			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(
-				Color(color_of_wave(Ray(hitpoint, sampled_tdir), depth, 1, R),
-					  color_of_wave(Ray(hitpoint, sampled_tdir), depth, 1, G),
-					  color_of_wave(Ray(hitpoint, sampled_tdir), depth, 1, B)) * TP);
+			return Color(((isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1, false) * TP)).x, 0, 0);
 	}
 }
 

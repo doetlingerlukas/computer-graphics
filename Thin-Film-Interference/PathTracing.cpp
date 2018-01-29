@@ -33,7 +33,7 @@
 using namespace std;
 
 /* Film diameter is 1 Mikrometer. */
-#define film_diameter 0.0000001
+#define film_diameter 0.01
 
 /******************************************************************
 * Hard-coded scene definition: The geometry is composed of spheres
@@ -43,10 +43,10 @@ using namespace std;
 vector<Sphere> spheres = {
 	
     Sphere(22.0, Vector(50, 22, 100), Vector(), Vector(1,1,1)*.999,  REFR), /* Outer sphere */
-    Sphere(22.0 - 4, Vector(50, 22, 100), Vector(), 
-		Vector(1,1,1)*.999,  REFR), /* Inner sphere */
+    //Sphere(22.0 - 4, Vector(50, 22, 100), Vector(), 
+		//Vector(1,1,1)*.999,  REFR), /* Inner sphere */
 
-    Sphere( 1.5, Vector(50, 81.6-16.5-5.5, 161.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
+    Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
 vector<Triangle> tris = {
@@ -128,17 +128,6 @@ Vector sampleVector(Vector vec, double max_angle) {
 * is employed.
 * A more detailed explaination is to be found in the README.
 *******************************************************************/
-double color_of_wave(const Ray &ray, int depth, int E, Wave wave) {
-	if (wave == R) {
-		//return (Radiance(ray, depth, E, false)).x;
-	} else if (wave == G) {
-		//return (Radiance(ray, depth, E, false)).y;
-	} else {
-		//return (Radiance(ray, depth, E, false)).z;
-	}
-	return 0.0;
-}
-
 Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
     depth++;
     
@@ -289,57 +278,59 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
     double ddn = ray.dir.Dot(nl);
     double cos2t = 1 - nnt * nnt * (1 - ddn*ddn);
 
-    /* Determine transmitted ray direction for refraction */    
+    /* Determine transmitted ray direction */    
     Vector tdir = into ?
         (ray.dir * nnt - normal * (ddn * nnt + sqrt(cos2t))) :
 		(ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t)));
 		
-	/* Determine sampled transmittance and reflectance vectors for translucency. */
-	Vector sampled_tdir;
-	Vector sampled_spec;
-	if ((isSphere ? obj_s.refl : obj_t.refl) == TRSL) {
-		sampled_tdir = sampleVector(tdir, cos(0.25));
-		sampled_spec = sampleVector(ray.dir - normal * 2 * normal.Dot(ray.dir), cos(0.125));
-	}
 	
-	/* Check for total internal reflection, if so only reflect */
+	/* Thin film */
+	double theta1 = acos((normal.Dot(ray.org - hitpoint))/
+		(normal.Length() * (ray.org - hitpoint).Length()));
+	double theta2 = asin(nnt * sin(theta1));
+	Vector inner_hitpoint = hitpoint + tdir.Normalized() * (film_diameter/cos(theta2));
+	Vector inner_normal = isSphere ? 
+		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
+	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
+	
+	Vector inner_nl = inner_normal;
+    if (inner_normal.Dot(inner_rdir) >= 0) {inner_nl = inner_nl.Invert();}
+    double inner_ddn = inner_rdir.Dot(inner_nl);
+    double inner_cos2t = 1 - (nt/nc) * (nt/nc) * (1 - ddn * ddn);
+    
+    /* Point and vector for inner reflected ray. */
+	Vector tdir2 = (inner_rdir * (nt/nc) + inner_normal * 
+		(ddn * (nt/nc) + sqrt(inner_cos2t))).Normalized();
+	Vector refr_point2 = inner_hitpoint + inner_rdir.Normalized() * 
+		(film_diameter/cos(theta2));
+    
+    /*
+    cout << tdir.x << " " << tdir.y << " " << tdir.z << endl;
+    cout << inner_rdir.x << " " << inner_rdir.y << " " << inner_rdir.z << endl;
+    cout << hitpoint.x << " " << hitpoint.y << " " << hitpoint.z << endl;
+    cout << inner_hitpoint.x << " " << inner_hitpoint.y << " " << inner_hitpoint.z << endl;
+    cout << endl;
+    */
+    
+    /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0) { 
 		return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
+			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
 	}
-	
-    /* Determine R0 for Schlick�s approximation */
-    double a = nt - nc;
-    double b = nt + nc;
-    double R0 = a*a / (b*b);
-  
-    /* Cosine of correct angle depending on outside/inside */
-    tdir = tdir.Normalized();
-    double c = into ? (1 + ddn) : (1 - tdir.Dot(normal));
-	
-    /* Compute Schlick�s approximation of Fresnel equation */ 
-    double Re = R0 + (1 - R0) *c*c*c*c*c;   /* Reflectance */
-    double Tr = 1 - Re;                     /* Transmittance */
-	
-    /* Probability for selecting reflectance or transmittance */
-    double P = .25 + .5 * Re;
-    double RP = Re / P;         /* Scaling factors for unbiased estimator */
-    double TP = Tr / (1 - P);
-    
     
 	/* Transparancy */
 	if (depth < 3) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave) * Re + 
-			Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * Tr);
+			+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave) * 0.5 + 
+			Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.5);
 		
 	} else {
-		if (drand48() < P)
+		if (drand48() < 0.5)
 			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave) * RP);
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		else
 			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint,tdir), depth, 1, false, wave) * TP);
+				+ col.MultComponents(Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave));
 	}
 }
 

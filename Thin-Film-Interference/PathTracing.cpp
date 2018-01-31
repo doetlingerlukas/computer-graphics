@@ -33,7 +33,7 @@
 using namespace std;
 
 /* Film diameter is 1 Mikrometer. */
-#define film_diameter 0.01
+#define film_diameter 0.005
 
 /******************************************************************
 * Hard-coded scene definition: The geometry is composed of spheres
@@ -293,17 +293,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
 	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
 	
+	/*
 	Vector inner_nl = inner_normal;
     if (inner_normal.Dot(inner_rdir) >= 0) {inner_nl = inner_nl.Invert();}
     double inner_ddn = inner_rdir.Dot(inner_nl);
     double inner_cos2t = 1 - (nt/nc) * (nt/nc) * (1 - ddn * ddn);
-    
-    /* Point and vector for inner reflected ray. */
+
 	Vector tdir2 = (inner_rdir * (nt/nc) + inner_normal * 
 		(ddn * (nt/nc) + sqrt(inner_cos2t))).Normalized();
 	Vector refr_point2 = inner_hitpoint + inner_rdir.Normalized() * 
 		(film_diameter/cos(theta2));
-    
+    */
     /*
     cout << tdir.x << " " << tdir.y << " " << tdir.z << endl;
     cout << inner_rdir.x << " " << inner_rdir.y << " " << inner_rdir.z << endl;
@@ -314,15 +314,21 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
     
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0) { 
+		if (depth > 1) {
+			return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
+		}
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
+			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.5
+			+ Radiance(reflRay, depth, 1, false, wave) * 0.5);
 	}
     
 	/* Transparancy */
 	if (depth < 3) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave) * 0.5 + 
-			Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.5);
+			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * 0.05 + 
+			Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.1) +
+			Radiance(Ray(inner_hitpoint, tdir), depth, 1, false, wave) * 0.85);
 		
 	} else {
 		if (drand48() < 0.5)

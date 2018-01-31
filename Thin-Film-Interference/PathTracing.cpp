@@ -261,10 +261,10 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 			depth, 1, false, wave));
 	}
     
-    Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir));  
+    Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)); 
     bool into = normal.Dot(nl) > 0;
-    double nc = 1;                        /* Index of refraction of air (approximately) */  
-    double nt = 1.5;                      /* Index of refraction of soap film (approximately) */
+    double nc = 1; 
+    double nt = 1.5;
 	
 	if (wave == R) {
 		double vr = drand48();
@@ -296,9 +296,14 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
 	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
     
+    double R = 0.03;
+    if ((theta1*theta1) > 40) {
+		R = 0.15;
+	}
+    
     /* Check for total internal reflection, if so only reflect */
     if (cos2t < 0) {
-		if (depth > 2) {
+		if (depth > 3) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		}
@@ -307,12 +312,11 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 			+ Radiance(reflRay, depth, 1, false, wave) * 0.95);
 	}
     
-	/* Transparancy */
 	if (depth < 3) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * 0.03 
-			+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.03)
-			+ Radiance(Ray(inner_hitpoint, tdir), depth, 1, false, wave) * 0.94);
+			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * R 
+			+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * R)
+			+ Radiance(Ray(inner_hitpoint, tdir), depth, 1, false, wave) * (1-R*2));
 		
 	} else {
 		if (drand48() < 0.5)

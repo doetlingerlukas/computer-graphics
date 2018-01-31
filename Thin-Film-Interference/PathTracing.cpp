@@ -42,11 +42,9 @@ using namespace std;
 *******************************************************************/
 vector<Sphere> spheres = {
 	
-    Sphere(22.0, Vector(50, 22, 100), Vector(), Vector(1,1,1)*.999,  REFR), /* Outer sphere */
-    //Sphere(22.0 - 4, Vector(50, 22, 100), Vector(), 
-		//Vector(1,1,1)*.999,  REFR), /* Inner sphere */
+    Sphere(22.0, Vector(50, 22, 90), Vector(), Vector(1,1,1)*.999,  REFR), /* Outer sphere */
 
-    Sphere( 1.5, Vector(50, 81.6-16.5, 81.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
+    Sphere( 1.5, Vector(50, 81.6-16.5-10, 161.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
 vector<Triangle> tris = {
@@ -61,9 +59,11 @@ vector<Triangle> tris = {
   Triangle(Vector(  0.0, 80.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.25, 0.25), DIFF), // Left:   back-top
   Triangle(Vector(100.0,  0.0,   0.0), Vector(   0.0, 0.0,  170.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.25, 0.25, 0.75), DIFF), // Right:  back-bottom
   Triangle(Vector(100.0, 80.0, 170.0), Vector(   0.0, 0.0, -170.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.25, 0.75), DIFF), // Right:  front-top
-  Triangle(Vector(100.0,  0.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.25, 0.75, 0.25), DIFF), // Front:  bottom-right
-  Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.25, 0.75, 0.25), DIFF), // Front:  top-left
+  Triangle(Vector(100.0,  0.0, 170.0), Vector(-100.0, 0.0,    0.0), Vector(0.0,  80.0,    0.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Front:  bottom-right
+  Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Front:  top-left
 };
+
+vector<Triangle> plane = loadOBJ("plane.obj", Color(1, 1, 1)*0.999, REFR);
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene.
@@ -267,11 +267,14 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
     double nt = 1.5;                      /* Index of refraction of soap film (approximately) */
 	
 	if (wave == R) {
-		nt = 1.519;
+		double vr = drand48();
+		nt = 1.51 + (vr/10) - 0.02;
 	} else if (wave == G) {
-		nt = 1.526;
+		double vg = drand48();
+		nt = 1.57 + (vg/10) - 0.02;
 	} else if (wave == B) {
-		nt = 1.535;
+		double vb = drand48();
+		nt = 1.63 + (vb/10) - 0.02;
 	}
 	
     double nnt = into ? nc/nt : nt/nc;
@@ -292,43 +295,24 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 	Vector inner_normal = isSphere ? 
 		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
 	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
-	
-	/*
-	Vector inner_nl = inner_normal;
-    if (inner_normal.Dot(inner_rdir) >= 0) {inner_nl = inner_nl.Invert();}
-    double inner_ddn = inner_rdir.Dot(inner_nl);
-    double inner_cos2t = 1 - (nt/nc) * (nt/nc) * (1 - ddn * ddn);
-
-	Vector tdir2 = (inner_rdir * (nt/nc) + inner_normal * 
-		(ddn * (nt/nc) + sqrt(inner_cos2t))).Normalized();
-	Vector refr_point2 = inner_hitpoint + inner_rdir.Normalized() * 
-		(film_diameter/cos(theta2));
-    */
-    /*
-    cout << tdir.x << " " << tdir.y << " " << tdir.z << endl;
-    cout << inner_rdir.x << " " << inner_rdir.y << " " << inner_rdir.z << endl;
-    cout << hitpoint.x << " " << hitpoint.y << " " << hitpoint.z << endl;
-    cout << inner_hitpoint.x << " " << inner_hitpoint.y << " " << inner_hitpoint.z << endl;
-    cout << endl;
-    */
     
     /* Check for total internal reflection, if so only reflect */
-    if (cos2t < 0) { 
-		if (depth > 1) {
+    if (cos2t < 0) {
+		if (depth > 2) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		}
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.5
-			+ Radiance(reflRay, depth, 1, false, wave) * 0.5);
+			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.05
+			+ Radiance(reflRay, depth, 1, false, wave) * 0.95);
 	}
     
 	/* Transparancy */
 	if (depth < 3) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * 0.05 + 
-			Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.1) +
-			Radiance(Ray(inner_hitpoint, tdir), depth, 1, false, wave) * 0.85);
+			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * 0.03 
+			+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.03)
+			+ Radiance(Ray(inner_hitpoint, tdir), depth, 1, false, wave) * 0.94);
 		
 	} else {
 		if (drand48() < 0.5)
@@ -350,6 +334,8 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 *******************************************************************/
 
 int main(int argc, char *argv[]) {
+	
+	//for(Triangle t : plane) {tris.push_back(t);}
 	
     int width = 1024;
     int height = 768;

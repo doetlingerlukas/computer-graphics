@@ -42,7 +42,7 @@ using namespace std;
 *******************************************************************/
 vector<Sphere> spheres = {
 	
-    Sphere(22.0, Vector(50, 22, 90), Vector(), Vector(1,1,1)*0.999,  OFILM), /* Outer sphere */
+    Sphere(22.0, Vector(50, 22, 90), Vector(), Vector(1,1,1)*0.999,  SFILM), /* Outer sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5-10, 161.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
@@ -128,11 +128,8 @@ Vector sampleVector(Vector vec, double max_angle) {
 * is employed.
 * A more detailed explaination is to be found in the README.
 *******************************************************************/
-Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
+Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
     depth++;
-    
-    double aperture = 30;
-    double focal_length = 60;
 
     double t;                               
     size_t id = 0; 
@@ -156,36 +153,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
     Vector normal = isSphere ? (hitpoint - obj_s.position).Normalized() : obj_t.normal;
     Vector nl = normal;
     if (normal.Dot(ray.dir) >= 0) 
-        nl = nl.Invert(); 
-    
-    /* Calculation for Thin-Lense Depth of Filed. */
-	if (depth == 1 && thinLense == true) {
-		Vector focal_point = ray.org - Vector(0.0, 0.0, focal_length);
-		/* Check if hitpoint is outside DOF */
-		if (hitpoint.z < (focal_point.z - aperture) || (focal_point.z + aperture) < hitpoint.z) {
-			/* https://en.wikipedia.org/wiki/Circle_of_confusion */
-			double obj_dis = fabs(hitpoint.z - ray.org.z);
-			double img_dis = focal_length * obj_dis / (obj_dis - focal_length);
-			double focus_obj_dis = focal_length * img_dis / (img_dis - focal_length);
-			double m = img_dis / focus_obj_dis;
-			double C = aperture * fabs(obj_dis - focus_obj_dis) / obj_dis;
-			double c = C * m;
-			double N = focal_length / aperture;
-			double dof = 2 * N * c * (m + 1) / (pow(m, 2) - pow(N * c / focal_length, 2));
-			
-			/* Determine blur factor. */
-			Vector dof_border = hitpoint.z < (focal_point.z - aperture) ?
-				Vector(focal_point.x, focal_point.y, focal_point.z - aperture) :
-				Vector(focal_point.x, focal_point.y, focal_point.z + aperture);
-				
-			double blur_factor = (dof_border - hitpoint).Length() + dof;
-			
-			double cos_a_max = cos(0.005 + (blur_factor*0.00018));
-			Vector l = sampleVector(ray.dir, cos_a_max);
-			
-			return Radiance(Ray(ray.org, l), depth-1, E, false, wave);
-		}
-	}
+        nl = nl.Invert();
 
     /* Maximum RGB reflectivity for Russian Roulette */
     double p = col.Max();
@@ -250,16 +218,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
         return (isSphere ? obj_s.emission : obj_t.emission)
 			* E + e + col.MultComponents(Radiance(Ray(hitpoint,d), depth, 0, false, wave));
 			
-    /**
-	 * Object is mirror like. Perfect specular reflection.
-	 **/
-    } else if ((isSphere ? obj_s.refl : obj_t.refl) == SPEC) {  
-        /* Return light emission mirror reflection (via recursive call using perfect
-           reflection vector) */
-        return (isSphere ? obj_s.emission : obj_t.emission) + 
-            col.MultComponents(Radiance(Ray(hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)),
-			depth, 1, false, wave));
-	}
+    }
     
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)); 
     bool into = normal.Dot(nl) > 0;
@@ -268,13 +227,13 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 	
 	if (wave == R) {
 		double vr = drand48();
-		nt = 1.51 + (vr/10) - 0.02;
+		nt = 1.51 + (vr/100) * 2 - 0.002;
 	} else if (wave == G) {
 		double vg = drand48();
-		nt = 1.57 + (vg/10) - 0.02;
+		nt = 1.52 + (vg/100) * 2 - 0.002;
 	} else if (wave == B) {
 		double vb = drand48();
-		nt = 1.63 + (vb/10) - 0.02;
+		nt = 1.53 + (vb/100) * 2 - 0.002;
 	}
 	
     double nnt = into ? nc/nt : nt/nc;
@@ -324,30 +283,27 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 	}
     
     /* Check for total internal reflection, if so only reflect */
-    if (cos2t < 0 && depth < 3) {
-		if (false) {
+    bool reflect = true;
+    if (theta1 < 4.5 || theta1 > 100) {
+		reflect = false;
+	}
+    
+    if (cos2t < 0) {
+		if (notInFilm) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		}
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.4
-			+ Radiance(Ray(hitpoint, ray.org.Normalized()), depth, 1, false, wave) * 0.6);
-	}
-    
-	if (depth < 2) {  
+			+ col.MultComponents((Radiance(Ray(hitpoint, tdir), depth, 1, false, wave)
+			+ Radiance(Ray(inner_hitpoint2, inner_rdir2), depth, 1, false, wave)) * 0.5);
+	} 
+	if (reflect) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * 0.3 
-			+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.3)
-			+ Radiance(Ray(hitpoint, ray.org.Normalized()), depth, 1, false, wave) * 0.4);
-		
+			+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave) * 0.5 
+			+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.5);
 	} else {
-		if (drand48() < 0.5)
-			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
-		else
-			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint, ray.org.Normalized()),
-				depth, 1, false, wave));
+		return (isSphere ? obj_s.emission : obj_t.emission)
+		+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, true, wave));
 	}
 }
 

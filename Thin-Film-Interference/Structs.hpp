@@ -98,6 +98,6 @@ struct Sphere {
     double Intersect(const Ray &ray) const;
 };
 
-Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave);
+Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave);
 
 #endif // _STRUCTS_H_

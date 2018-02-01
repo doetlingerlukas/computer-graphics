@@ -11,7 +11,7 @@
 * The code is largely based on the software smallpt by Kevin Beason,
 * released under the MIT License.
 * 
-* Code was extended by Manuel Buchauer, Davide De Sclavis and Lukas Dötlinger
+* Code was extended by Manuel Buchauer, Davide De Sclavis and Lukas Dï¿½tlinger
 * during the Advanced Computer Graphics Proseminar WS 2017.
 * 
 * Interactive Graphics and Simulation Group
@@ -255,17 +255,10 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
 	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
     
-    double t1 = acos((normal.Dot(inner_rdir))/
-		(normal.Length() * (inner_rdir).Length()));
-	double t2 = asin(nnt * sin(t1));
-    Vector inner_hitpoint2 = hitpoint + reflRay.dir.Normalized() * (film_diameter/cos(t2));
-    Vector inner_rdir2 = reflRay.dir - inner_normal * 2 * inner_normal.Dot(reflRay.dir);
-    
     if ((isSphere ? obj_s.refl : obj_t.refl) == OFILM) {
 		if (cos2t < 0) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.5
-				+ Radiance(Ray(inner_hitpoint2, inner_rdir2), depth, 1, false, wave) * 0.5);
+				+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
 		}
 		if (depth < 2) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
@@ -294,8 +287,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		}
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents((Radiance(Ray(hitpoint, tdir), depth, 1, false, wave)
-			+ Radiance(Ray(inner_hitpoint2, inner_rdir2), depth, 1, false, wave)) * 0.5);
+			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
 	} 
 	if (reflect) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)

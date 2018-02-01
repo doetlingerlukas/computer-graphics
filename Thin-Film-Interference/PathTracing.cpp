@@ -11,7 +11,7 @@
 * The code is largely based on the software smallpt by Kevin Beason,
 * released under the MIT License.
 * 
-* Code was extended by Manuel Buchauer, Davide De Sclavis and Lukas Dï¿½tlinger
+* Code was extended by Manuel Buchauer, Davide De Sclavis and Lukas Dötlinger
 * during the Advanced Computer Graphics Proseminar WS 2017.
 * 
 * Interactive Graphics and Simulation Group
@@ -63,7 +63,9 @@ vector<Triangle> tris = {
   Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Front:  top-left
 };
 
-vector<Triangle> plane = loadOBJ("plane.obj", Color(1, 1, 1)*0.999, REFR);
+vector<Triangle> plane = 
+	translateOBJ(scaleOBJ(loadOBJ("goat.obj", Color(0.75, 0.75, 0.75)*0.999, DIFF), 0.08), 
+	Vector(40.0, 0.0, 80.0));
 
 /******************************************************************
 * Check for closest intersection of a ray with the scene.
@@ -227,13 +229,13 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 	
 	if (wave == R) {
 		double vr = drand48();
-		nt = 1.51 + (vr/100) * 2 - 0.002;
+		nt = 1.51 + (vr/10) - 0.02;
 	} else if (wave == G) {
 		double vg = drand48();
-		nt = 1.52 + (vg/100) * 2 - 0.002;
+		nt = 1.57 + (vg/10) - 0.02;
 	} else if (wave == B) {
 		double vb = drand48();
-		nt = 1.53 + (vb/100) * 2 - 0.002;
+		nt = 1.63 + (vb/10) - 0.02;
 	}
 	
     double nnt = into ? nc/nt : nt/nc;
@@ -255,10 +257,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
 	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
     
+    double t1 = acos((normal.Dot(inner_rdir))/(normal.Length() * (inner_rdir).Length()));
+	double t2 = asin(nnt * sin(t1));
+    Vector inner_hitpoint2 = hitpoint + reflRay.dir.Normalized() * (film_diameter/cos(t2));
+    Vector inner_rdir2 = reflRay.dir - inner_normal * 2 * inner_normal.Dot(reflRay.dir);
+ 
+    
     if ((isSphere ? obj_s.refl : obj_t.refl) == OFILM) {
 		if (cos2t < 0) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
+				+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.5
+				+ Radiance(Ray(inner_hitpoint2, inner_rdir2), depth, 1, false, wave) * 0.5);
 		}
 		if (depth < 2) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
@@ -287,7 +296,9 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		}
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
+			+ col.MultComponents((Radiance(Ray(hitpoint, tdir), depth, 1, false, wave)
+			+ Radiance(Ray(inner_hitpoint2, inner_rdir2), depth, 1, false, wave)) * 0.5);
+ 
 	} 
 	if (reflect) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)

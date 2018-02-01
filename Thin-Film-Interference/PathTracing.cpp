@@ -268,13 +268,13 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 	
 	if (wave == R) {
 		double vr = drand48();
-		nt = 1.31 + (vr/10) - 0.02;
+		nt = 1.51 + (vr/10) - 0.02;
 	} else if (wave == G) {
 		double vg = drand48();
-		nt = 1.37 + (vg/10) - 0.02;
+		nt = 1.57 + (vg/10) - 0.02;
 	} else if (wave == B) {
 		double vb = drand48();
-		nt = 1.43 + (vb/10) - 0.02;
+		nt = 1.63 + (vb/10) - 0.02;
 	}
 	
     double nnt = into ? nc/nt : nt/nc;
@@ -296,11 +296,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
 	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
     
+    double t1 = acos((normal.Dot(inner_rdir))/
+		(normal.Length() * (inner_rdir).Length()));
+	double t2 = asin(nnt * sin(t1));
+    Vector inner_hitpoint2 = hitpoint + reflRay.dir.Normalized() * (film_diameter/cos(t2));
+    Vector inner_rdir2 = reflRay.dir - inner_normal * 2 * inner_normal.Dot(reflRay.dir);
     
     if ((isSphere ? obj_s.refl : obj_t.refl) == OFILM) {
 		if (cos2t < 0) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
+				+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.5
+				+ Radiance(Ray(inner_hitpoint2, inner_rdir2), depth, 1, false, wave) * 0.5);
 		}
 		if (depth < 2) {
 			return (isSphere ? obj_s.emission : obj_t.emission)

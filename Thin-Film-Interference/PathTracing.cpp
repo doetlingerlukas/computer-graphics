@@ -32,7 +32,7 @@
 
 using namespace std;
 
-/* Film diameter is 1 Mikrometer. */
+/* Film diameter */
 #define film_diameter 0.005
 
 /******************************************************************
@@ -42,9 +42,9 @@ using namespace std;
 *******************************************************************/
 vector<Sphere> spheres = {
 	
-    Sphere(22.0, Vector(50, 22, 90), Vector(), Vector(1,1,1)*0.999,  SFILM), /* Outer sphere */
+    Sphere(22.0, Vector(50, 22, 90), Vector(), Vector(1,1,1)*0.999,  OFILM), /* Outer sphere */
 
-    Sphere( 1.5, Vector(50, 81.6-16.5-10, 161.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
+    Sphere( 1.5, Vector(50, 81.6-16.5-20, 161.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
 
 vector<Triangle> tris = {
@@ -63,7 +63,7 @@ vector<Triangle> tris = {
   Triangle(Vector(  0.0, 80.0, 170.0), Vector( 100.0, 0.0,    0.0), Vector(0.0, -80.0,    0.0), Color(), Color(0.75, 0.75, 0.75), DIFF), // Front:  top-left
 };
 
-vector<Triangle> plane = 
+vector<Triangle> goat = 
 	translateOBJ(scaleOBJ(loadOBJ("goat.obj", Color(0.75, 0.75, 0.75)*0.999, DIFF), 0.08), 
 	Vector(40.0, 0.0, 80.0));
 
@@ -121,8 +121,7 @@ Vector sampleVector(Vector vec, double max_angle) {
 
 /******************************************************************
 * Recursive path tracing for computing radiance via Monte-Carlo
-* integration, considering diffuse, specular, glossy, transparent
-* or translucent material.
+* integration, considering diffuse or thin film materials.
 * After 5 bounces Russian Roulette is used to possibly terminate rays. 
 * Emitted light from light source only included on first direct hit.
 * On diffuse surfaces light sources are explicitely sampled.
@@ -248,7 +247,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 		(ray.dir * nnt + normal * (ddn * nnt + sqrt(cos2t)));
 		
 	
-	/* Thin film */
+	/* Thin film calculations */
 	double theta1 = acos((normal.Dot(ray.org - hitpoint))/
 		(normal.Length() * (ray.org - hitpoint).Length()));
 	double theta2 = asin(nnt * sin(theta1));
@@ -262,7 +261,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
     Vector inner_hitpoint2 = hitpoint + reflRay.dir.Normalized() * (film_diameter/cos(t2));
     Vector inner_rdir2 = reflRay.dir - inner_normal * 2 * inner_normal.Dot(reflRay.dir);
  
-    
+    /* Thin film reflective */
     if ((isSphere ? obj_s.refl : obj_t.refl) == OFILM) {
 		if (cos2t < 0) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
@@ -284,7 +283,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 		}
 	}
     
-    /* Check for total internal reflection, if so only reflect */
+    /* Reflect only at certain angles */
     bool reflect = true;
     if (theta1 < 4.5 || theta1 > 100) {
 		reflect = false;
@@ -321,7 +320,8 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 
 int main(int argc, char *argv[]) {
 	
-	//for(Triangle t : plane) {tris.push_back(t);}
+	/* Add loaded obj to triangle-rendering-vector */
+	//for(Triangle t : goat) {tris.push_back(t);}
 	
     int width = 1024;
     int height = 768;

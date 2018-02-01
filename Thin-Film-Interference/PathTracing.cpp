@@ -42,7 +42,7 @@ using namespace std;
 *******************************************************************/
 vector<Sphere> spheres = {
 	
-    Sphere(22.0, Vector(50, 22, 90), Vector(), Vector(1,1,1)*.999,  REFR), /* Outer sphere */
+    Sphere(22.0, Vector(50, 22, 90), Vector(), Vector(1,1,1)*0.999,  OFILM), /* Outer sphere */
 
     Sphere( 1.5, Vector(50, 81.6-16.5-10, 161.6), Vector(4,4,4)*100, Vector(), DIFF), /* Light */
 };
@@ -268,13 +268,13 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 	
 	if (wave == R) {
 		double vr = drand48();
-		nt = 1.51 + (vr/10) - 0.02;
+		nt = 1.31 + (vr/10) - 0.02;
 	} else if (wave == G) {
 		double vg = drand48();
-		nt = 1.57 + (vg/10) - 0.02;
+		nt = 1.37 + (vg/10) - 0.02;
 	} else if (wave == B) {
 		double vb = drand48();
-		nt = 1.63 + (vb/10) - 0.02;
+		nt = 1.43 + (vb/10) - 0.02;
 	}
 	
     double nnt = into ? nc/nt : nt/nc;
@@ -296,27 +296,43 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 		(inner_hitpoint - obj_s.position).Normalized() : obj_t.normal;
 	Vector inner_rdir = tdir - inner_normal * 2 * inner_normal.Dot(tdir);
     
-    double R = 0.03;
-    if ((theta1*theta1) > 40) {
-		R = 0.15;
+    
+    if ((isSphere ? obj_s.refl : obj_t.refl) == OFILM) {
+		if (cos2t < 0) {
+			return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave));
+		}
+		if (depth < 2) {
+			return (isSphere ? obj_s.emission : obj_t.emission)
+				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave) * 0.5 
+				+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.5);
+		} else {
+			if (drand48() < 0.5)
+				return (isSphere ? obj_s.emission : obj_t.emission)
+					+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
+			else
+				return (isSphere ? obj_s.emission : obj_t.emission)
+					+ col.MultComponents(Radiance(Ray(inner_hitpoint, inner_rdir),
+					depth, 1, false, wave));
+		}
 	}
     
     /* Check for total internal reflection, if so only reflect */
-    if (cos2t < 0) {
-		if (depth > 3) {
+    if (cos2t < 0 && depth < 3) {
+		if (false) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		}
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.05
-			+ Radiance(reflRay, depth, 1, false, wave) * 0.95);
+			+ col.MultComponents(Radiance(Ray(hitpoint, tdir), depth, 1, false, wave) * 0.4
+			+ Radiance(Ray(hitpoint, ray.org.Normalized()), depth, 1, false, wave) * 0.6);
 	}
     
-	if (depth < 3) {  
+	if (depth < 2) {  
 		return (isSphere ? obj_s.emission : obj_t.emission)
-			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * R 
-			+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * R)
-			+ Radiance(Ray(inner_hitpoint, tdir), depth, 1, false, wave) * (1-R*2));
+			+ col.MultComponents((Radiance(reflRay, depth, 1, false, wave) * 0.3 
+			+ Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave) * 0.3)
+			+ Radiance(Ray(hitpoint, ray.org.Normalized()), depth, 1, false, wave) * 0.4);
 		
 	} else {
 		if (drand48() < 0.5)
@@ -324,7 +340,8 @@ Color Radiance(const Ray &ray, int depth, int E, bool thinLense, Wave wave) {
 				+ col.MultComponents(Radiance(reflRay, depth, 1, false, wave));
 		else
 			return (isSphere ? obj_s.emission : obj_t.emission)
-				+ col.MultComponents(Radiance(Ray(inner_hitpoint, inner_rdir), depth, 1, false, wave));
+				+ col.MultComponents(Radiance(Ray(hitpoint, ray.org.Normalized()),
+				depth, 1, false, wave));
 	}
 }
 

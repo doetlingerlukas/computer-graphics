@@ -11,7 +11,7 @@
 
 using namespace std;
 
-enum Refl_t { DIFF, SPEC, REFR, GLOS, TRSL }; 
+enum Refl_t { DIFF, SPEC, REFR, OFILM, SFILM }; 
 enum Type { TRI, SPH };
 enum Wave { R, G, B };
 

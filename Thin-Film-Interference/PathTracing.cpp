@@ -226,7 +226,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
     double nc = 1; 
     double nt = 1.5;
     
-    double nf = 1.3;
+    double nf = 1.5;
 	
 	if (wave == R) {
 		double vr = drand48();
@@ -269,9 +269,8 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 	Vector new_hitpoint = outer_hitpoint + fdir.Normalized() * (film_diameter/cos(theta2));
 	
 	Vector inner_refl = fdir - normal * 2 * normal.Dot(fdir);
-	theta2 = acos((normal.Dot(inner_refl))/
-		(normal.Length() * (inner_refl).Length()));
-	Vector refl_hitpoint = new_hitpoint + inner_refl * (film_diameter/cos(theta2));
+	
+	Vector refl_hitpoint = new_hitpoint + inner_refl * (film_diameter/cos(theta1));
 	double n = nf/nc;
 	double d = inner_refl.Dot(nl);
 	double c = 1 - n * n * (1 - d*d);
@@ -300,7 +299,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 			return (isSphere ? obj_s.emission : obj_t.emission)
 				+ col.MultComponents(
 				  Radiance(Ray(outer_hitpoint, reflRay.dir), depth, 1, false, wave) * 0.5 
-				+ Radiance(Ray(refl_hitpoint, outer_refl), depth, 1, false, wave) * 0.5);
+				+ Radiance(Ray(refl_hitpoint, reflRay.dir), depth, 1, false, wave) * 0.5);
 		} else {
 			if (drand48() < 0.5)
 				return (isSphere ? obj_s.emission : obj_t.emission)
@@ -309,7 +308,7 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
 			else
 				return (isSphere ? obj_s.emission : obj_t.emission)
 					+ col.MultComponents(
-					  Radiance(Ray(inner_hitpoint2, inner_rdir2), depth, 1, false, wave));
+					  Radiance(Ray(refl_hitpoint, reflRay.dir), depth, 1, false, wave));
 		}
 	}
     

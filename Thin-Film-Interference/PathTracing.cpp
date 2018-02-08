@@ -32,8 +32,9 @@
 
 using namespace std;
 
-/* Film diameter */
-#define film_diameter 0.25
+/* Film diameter and refraction index */
+#define film_diameter 0.05
+#define film_refraction_index 1.8
 
 /******************************************************************
 * Hard-coded scene definition: The geometry is composed of spheres
@@ -224,17 +225,17 @@ Color Radiance(const Ray &ray, int depth, int E, bool notInFilm, Wave wave) {
     Ray reflRay (hitpoint, ray.dir - normal * 2 * normal.Dot(ray.dir)); 
     bool into = normal.Dot(nl) > 0;
     double nc = 1; 
-    double nt = 1.5;
+    double nt = film_refraction_index;
 	
 	if (wave == R) {
 		double vr = drand48();
-		nt = 1.51 + (vr/10) - 0.02;
+		nt = nt + 0.01 + (vr/10) - 0.02;
 	} else if (wave == G) {
 		double vg = drand48();
-		nt = 1.57 + (vg/10) - 0.02;
+		nt = nt + 0.07 + (vg/10) - 0.02;
 	} else if (wave == B) {
 		double vb = drand48();
-		nt = 1.63 + (vb/10) - 0.02;
+		nt = nt + 0.13 + (vb/10) - 0.02;
 	}
 	
     double nnt = into ? nc/nt : nt/nc;

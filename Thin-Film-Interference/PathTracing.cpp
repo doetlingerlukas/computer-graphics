@@ -33,7 +33,7 @@
 using namespace std;
 
 /* Film diameter */
-#define film_diameter 0.005
+#define film_diameter 0.25
 
 /******************************************************************
 * Hard-coded scene definition: The geometry is composed of spheres
@@ -337,7 +337,7 @@ int main(int argc, char *argv[]) {
     
     /* Set camera origin and viewing direction (negative z direction) */
     Ray camera(Vector(50.0, 52.0, 295.6), Vector(0.0, -0.042612, -1.0).Normalized());
-
+	
     /* Image edge vectors for pixel sampling */
     Vector cx = Vector(width * 0.5135 / height);
     Vector cy = (cx.Cross(camera.dir)).Normalized() * 0.5135;
@@ -389,7 +389,7 @@ int main(int argc, char *argv[]) {
                                      camera.dir;
                         
                         /* Extend camera ray to start inside box */
-                        Vector start = camera.org + dir * 130.0;
+                        Vector start = camera.org + Vector(0,-10.0,-50.0) + dir * 130.0;
 
                         dir = dir.Normalized();
 
